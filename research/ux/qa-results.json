@@ -1,0 +1,19 @@
+{
+  "checked_at": "2026-10-20T17:00:30.388Z",
+  "browser": "Microsoft Edge / Playwright",
+  "checks": [
+    "360px feed: no horizontal overflow",
+    "360px detail: no horizontal overflow",
+    "360px chat: no horizontal overflow",
+    "390px feed: no horizontal overflow",
+    "390px detail: no horizontal overflow",
+    "390px chat: no horizontal overflow",
+    "430px feed: no horizontal overflow",
+    "430px detail: no horizontal overflow",
+    "430px chat: no horizontal overflow",
+    "Feed → detail → chat; expand/collapse preserves messages; empty input ignored; error/retry without duplicate: passed",
+    "6 news items; all importance levels; 2 fictional bank reviews; event-specific details/chat; isolated histories: passed",
+    "Citation anchor and external source URL: passed",
+    "Browser JS errors: 0"
+  ]
+}

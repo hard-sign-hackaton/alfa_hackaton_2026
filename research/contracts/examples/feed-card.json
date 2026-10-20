@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.1.0",
+  "company_id": "demo-company-01",
+  "profile_version": "demo-v1",
+  "event_id": "demo-credit",
+  "insight_id": "demo-insight-credit",
+  "insight_version": "demo-v1",
+  "content_status": "ready",
+  "effect_title": "Оборотное финансирование может стать дороже",
+  "importance": "high",
+  "analyzed_at": "2026-10-20T12:00:00+05:00",
+  "is_demo": true,
+  "limitations": [
+    "Все материалы вымышлены. Наличие кредита не подтверждено."
+  ],
+  "event_summary": "Вымышленный сценарий: ставки по новым кредитным линиям увеличиваются.",
+  "publisher": "Демо · финансовая сводка",
+  "published_at": "2026-10-20T12:00:00+05:00",
+  "source_id": "demo-news-credit",
+  "source_url": null
+}

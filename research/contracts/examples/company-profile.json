@@ -1,0 +1,65 @@
+{
+  "schema_version": "0.1.0",
+  "company_id": "demo-company-01",
+  "company_label": "ООО «УралКонструкции»",
+  "profile_version": "demo-v1",
+  "profile_as_of": "2026-10-20T12:00:00+05:00",
+  "is_demo": true,
+  "features": [
+    {
+      "id": "industry",
+      "label": "Отрасль",
+      "value": "Производство металлоконструкций",
+      "unit": null,
+      "period": null,
+      "status": "known",
+      "provenance": {
+        "kind": "demo",
+        "locator": "demo-profile/industry",
+        "as_of": "2026-10-20T12:00:00+05:00"
+      }
+    },
+    {
+      "id": "region",
+      "label": "Регион",
+      "value": "Свердловская область",
+      "unit": null,
+      "period": null,
+      "status": "known",
+      "provenance": {
+        "kind": "demo",
+        "locator": "demo-profile/region",
+        "as_of": "2026-10-20T12:00:00+05:00"
+      }
+    },
+    {
+      "id": "revenue",
+      "label": "Выручка",
+      "value": 18000000000,
+      "unit": "RUB",
+      "period": "2025",
+      "status": "known",
+      "provenance": {
+        "kind": "demo",
+        "locator": "demo-profile/revenue",
+        "as_of": "2026-10-20T12:00:00+05:00"
+      }
+    },
+    {
+      "id": "debt",
+      "label": "Средний остаток долга",
+      "value": null,
+      "unit": "RUB",
+      "period": "2026",
+      "status": "unknown",
+      "provenance": {
+        "kind": "demo",
+        "locator": "demo-profile/debt",
+        "as_of": "2026-10-20T12:00:00+05:00"
+      }
+    }
+  ],
+  "limitations": [
+    "Вымышленная компания; структура реального датасета не проверена."
+  ]
+}

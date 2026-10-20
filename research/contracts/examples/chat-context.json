@@ -1,0 +1,528 @@
+{
+  "schema_version": "0.1.0",
+  "conversation_id": "demo-conversation-credit",
+  "company_id": "demo-company-01",
+  "event_id": "demo-credit",
+  "insight_version": "demo-v1",
+  "is_demo": true,
+  "context_snapshot": {
+    "snapshot_id": "demo-snapshot-credit",
+    "created_at": "2026-10-20T12:00:00+05:00",
+    "company": {
+      "schema_version": "0.1.0",
+      "company_id": "demo-company-01",
+      "company_label": "ООО «УралКонструкции»",
+      "profile_version": "demo-v1",
+      "profile_as_of": "2026-10-20T12:00:00+05:00",
+      "is_demo": true,
+      "features": [
+        {
+          "id": "industry",
+          "label": "Отрасль",
+          "value": "Производство металлоконструкций",
+          "unit": null,
+          "period": null,
+          "status": "known",
+          "provenance": {
+            "kind": "demo",
+            "locator": "demo-profile/industry",
+            "as_of": "2026-10-20T12:00:00+05:00"
+          }
+        },
+        {
+          "id": "region",
+          "label": "Регион",
+          "value": "Свердловская область",
+          "unit": null,
+          "period": null,
+          "status": "known",
+          "provenance": {
+            "kind": "demo",
+            "locator": "demo-profile/region",
+            "as_of": "2026-10-20T12:00:00+05:00"
+          }
+        },
+        {
+          "id": "revenue",
+          "label": "Выручка",
+          "value": 18000000000,
+          "unit": "RUB",
+          "period": "2025",
+          "status": "known",
+          "provenance": {
+            "kind": "demo",
+            "locator": "demo-profile/revenue",
+            "as_of": "2026-10-20T12:00:00+05:00"
+          }
+        },
+        {
+          "id": "debt",
+          "label": "Средний остаток долга",
+          "value": null,
+          "unit": "RUB",
+          "period": "2026",
+          "status": "unknown",
+          "provenance": {
+            "kind": "demo",
+            "locator": "demo-profile/debt",
+            "as_of": "2026-10-20T12:00:00+05:00"
+          }
+        }
+      ],
+      "limitations": [
+        "Вымышленная компания; структура реального датасета не проверена."
+      ]
+    },
+    "event": {
+      "schema_version": "0.1.0",
+      "event_id": "demo-credit",
+      "original_title": "Вымышленный сценарий пересмотра кредитных ставок",
+      "text": "В учебном сценарии ставки по новым кредитным линиям увеличиваются на 1 п. п.",
+      "summary": "Вымышленный сценарий: ставки по новым кредитным линиям увеличиваются.",
+      "published_at": "2026-10-20T12:00:00+05:00",
+      "collected_at": "2026-10-20T12:00:00+05:00",
+      "is_fictional": true,
+      "sources": [
+        {
+          "id": "demo-news-credit",
+          "kind": "news",
+          "title": "Вымышленный сценарий пересмотра кредитных ставок",
+          "publisher": "Демо · финансовая сводка",
+          "url": null,
+          "locator": "demo:demo-news-credit",
+          "published_at": "2026-10-20T12:00:00+05:00",
+          "retrieved_at": "2026-10-20T12:00:00+05:00",
+          "forecast_period": null,
+          "is_fictional": true,
+          "availability": "available",
+          "fragments": [
+            {
+              "id": "demo-news-credit-f1",
+              "text": "В учебном сценарии ставки по новым кредитным линиям увеличиваются на 1 п. п.",
+              "locator": "paragraph:1"
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "fact-credit",
+          "text": "В учебном сценарии ставки по новым кредитным линиям увеличиваются на 1 п. п.",
+          "kind": "source_fact",
+          "evidence": [
+            {
+              "source_id": "demo-news-credit",
+              "fragment_id": "demo-news-credit-f1"
+            }
+          ],
+          "feature_ids": [],
+          "assumptions": [],
+          "limitations": []
+        }
+      ],
+      "limitations": [
+        "Нет реальной публикации; сценарий создан для проверки UX."
+      ]
+    },
+    "insight": {
+      "schema_version": "0.1.0",
+      "insight_id": "demo-insight-credit",
+      "insight_version": "demo-v1",
+      "company_id": "demo-company-01",
+      "profile_version": "demo-v1",
+      "event_id": "demo-credit",
+      "content_status": "ready",
+      "analyzed_at": "2026-10-20T12:00:00+05:00",
+      "is_demo": true,
+      "effect_title": "Оборотное финансирование может стать дороже",
+      "importance": "high",
+      "importance_reason": "Потенциальный эффект на стоимость оборотных средств; наличие кредита пока не подтверждено.",
+      "conclusion": {
+        "id": "conclusion-credit",
+        "text": "Если планируется новая кредитная линия, стоимость финансирования может вырасти.",
+        "kind": "ai_inference",
+        "evidence": [
+          {
+            "source_id": "demo-news-credit",
+            "fragment_id": "demo-news-credit-f1"
+          },
+          {
+            "source_id": "demo-bank-credit",
+            "fragment_id": "demo-bank-credit-f1"
+          }
+        ],
+        "feature_ids": [
+          "revenue"
+        ],
+        "assumptions": [
+          "Компания планирует новое заимствование"
+        ],
+        "limitations": [
+          "Наличие кредита не установлено"
+        ]
+      },
+      "event_facts": [
+        {
+          "id": "fact-credit",
+          "text": "В учебном сценарии ставки по новым кредитным линиям увеличиваются на 1 п. п.",
+          "kind": "source_fact",
+          "evidence": [
+            {
+              "source_id": "demo-news-credit",
+              "fragment_id": "demo-news-credit-f1"
+            }
+          ],
+          "feature_ids": [],
+          "assumptions": [],
+          "limitations": []
+        }
+      ],
+      "relevance_reasons": [
+        {
+          "feature_ids": [
+            "industry",
+            "revenue"
+          ],
+          "explanation": "Производственный бизнес может нуждаться в оборотном финансировании. Размер компании не доказывает наличие кредита."
+        }
+      ],
+      "consequences": [
+        {
+          "id": "consequence-credit",
+          "text": "Возможен рост процентных расходов по новому финансированию.",
+          "kind": "ai_inference",
+          "evidence": [
+            {
+              "source_id": "demo-news-credit",
+              "fragment_id": "demo-news-credit-f1"
+            }
+          ],
+          "feature_ids": [],
+          "assumptions": [],
+          "limitations": []
+        }
+      ],
+      "horizon": "При новом заимствовании или пересмотре ставки",
+      "risks": [
+        {
+          "id": "risk-credit",
+          "text": "Возможное увеличение процентных расходов.",
+          "kind": "ai_inference",
+          "evidence": [
+            {
+              "source_id": "demo-news-credit",
+              "fragment_id": "demo-news-credit-f1"
+            }
+          ],
+          "feature_ids": [],
+          "assumptions": [],
+          "limitations": []
+        }
+      ],
+      "risks_note": null,
+      "opportunities": [
+        {
+          "id": "opportunity-credit",
+          "text": "Сравнить предложения до подписания кредитного договора.",
+          "kind": "ai_inference",
+          "evidence": [
+            {
+              "source_id": "demo-news-credit",
+              "fragment_id": "demo-news-credit-f1"
+            }
+          ],
+          "feature_ids": [],
+          "assumptions": [],
+          "limitations": []
+        }
+      ],
+      "opportunities_note": null,
+      "quantitative_estimate": {
+        "value": 5000000,
+        "unit": "RUB",
+        "period": "1 год",
+        "formula": "average_debt * rate_delta",
+        "inputs": [
+          {
+            "name": "average_debt",
+            "value": 500000000,
+            "unit": "RUB",
+            "period": "1 год",
+            "provenance": {
+              "kind": "demo",
+              "locator": "assumption:average_debt",
+              "as_of": "2026-10-20T12:00:00+05:00"
+            }
+          },
+          {
+            "name": "rate_delta",
+            "value": 0.01,
+            "unit": "fraction_per_year",
+            "period": "1 год",
+            "provenance": {
+              "kind": "demo",
+              "locator": "demo-news-credit",
+              "as_of": "2026-10-20T12:00:00+05:00"
+            }
+          }
+        ],
+        "assumptions": [
+          "Средний долг 500 млн ₽ — условное допущение, не данные компании.",
+          "Изменение ставки действует весь год."
+        ],
+        "limitations": [
+          "Без комиссий и графика погашения."
+        ],
+        "is_illustrative": true
+      },
+      "missing_data": [
+        "Фактический остаток долга",
+        "Даты и условия пересмотра ставок"
+      ],
+      "bank": {
+        "status": "found",
+        "position": {
+          "id": "bank-position-credit",
+          "text": "В вымышленном обзоре предполагается сохранение повышенной стоимости краткосрочного финансирования.",
+          "kind": "bank_position",
+          "evidence": [
+            {
+              "source_id": "demo-bank-credit",
+              "fragment_id": "demo-bank-credit-f1"
+            }
+          ],
+          "feature_ids": [],
+          "assumptions": [],
+          "limitations": []
+        },
+        "interpretation": {
+          "id": "bank-interpretation-credit",
+          "text": "Сценарий усиливает внимание к датам пересмотра ставок, но не подтверждает рост расходов компании.",
+          "kind": "ai_inference",
+          "evidence": [
+            {
+              "source_id": "demo-bank-credit",
+              "fragment_id": "demo-bank-credit-f1"
+            }
+          ],
+          "feature_ids": [],
+          "assumptions": [],
+          "limitations": []
+        },
+        "source_ids": [
+          "demo-bank-credit"
+        ],
+        "note": "Вымышленный обзор для демонстрации, не реальная позиция Альфа-Банка."
+      },
+      "checks": [
+        {
+          "text": "Проверить планы заимствований.",
+          "purpose": "Установить применимость события.",
+          "required_data": [
+            "План финансирования"
+          ]
+        },
+        {
+          "text": "Уточнить даты пересмотра ставок.",
+          "purpose": "Определить горизонт эффекта.",
+          "required_data": [
+            "Кредитные договоры"
+          ]
+        }
+      ],
+      "suggested_questions": [
+        "Что проверить в первую очередь?",
+        "Какие данные нужны для оценки эффекта?"
+      ],
+      "sources": [
+        {
+          "id": "demo-news-credit",
+          "kind": "news",
+          "title": "Вымышленный сценарий пересмотра кредитных ставок",
+          "publisher": "Демо · финансовая сводка",
+          "url": null,
+          "locator": "demo:demo-news-credit",
+          "published_at": "2026-10-20T12:00:00+05:00",
+          "retrieved_at": "2026-10-20T12:00:00+05:00",
+          "forecast_period": null,
+          "is_fictional": true,
+          "availability": "available",
+          "fragments": [
+            {
+              "id": "demo-news-credit-f1",
+              "text": "В учебном сценарии ставки по новым кредитным линиям увеличиваются на 1 п. п.",
+              "locator": "paragraph:1"
+            }
+          ]
+        },
+        {
+          "id": "demo-bank-credit",
+          "kind": "bank",
+          "title": "Стоимость денег: сценарий для промышленности",
+          "publisher": "Альфа-Банк · вымышленный пример",
+          "url": null,
+          "locator": "demo:demo-bank-credit",
+          "published_at": "2026-10-20T12:00:00+05:00",
+          "retrieved_at": "2026-10-20T12:00:00+05:00",
+          "forecast_period": "IV квартал 2026",
+          "is_fictional": true,
+          "availability": "available",
+          "fragments": [
+            {
+              "id": "demo-bank-credit-f1",
+              "text": "В вымышленном обзоре предполагается сохранение повышенной стоимости краткосрочного финансирования.",
+              "locator": "paragraph:1"
+            }
+          ]
+        }
+      ],
+      "limitations": [
+        "Все материалы вымышлены. Наличие кредита не подтверждено."
+      ],
+      "trace": [
+        {
+          "id": "trace-profile",
+          "timestamp": "2026-10-20T12:00:00+05:00",
+          "action": "Проверить контекст компании",
+          "tool": "demo-fixture",
+          "input_ids": [
+            "demo-company-01"
+          ],
+          "output_ids": [
+            "industry",
+            "revenue"
+          ],
+          "result_summary": "Подготовленный пример, реальных инструментальных обращений и LLM-вызовов не было.",
+          "status": "success",
+          "checks": [
+            "Демо-данные явно обозначены"
+          ],
+          "correction": null
+        },
+        {
+          "id": "trace-news",
+          "timestamp": "2026-10-20T12:00:00+05:00",
+          "action": "Сопоставить событие и материал банка",
+          "tool": "demo-fixture",
+          "input_ids": [
+            "demo-news-credit",
+            "demo-bank-credit"
+          ],
+          "output_ids": [
+            "conclusion-credit"
+          ],
+          "result_summary": "Подготовленный пример, реальных инструментальных обращений и LLM-вызовов не было.",
+          "status": "success",
+          "checks": [
+            "Демо-данные явно обозначены"
+          ],
+          "correction": null
+        },
+        {
+          "id": "trace-check",
+          "timestamp": "2026-10-20T12:00:00+05:00",
+          "action": "Проверить основания и допущения",
+          "tool": "demo-fixture",
+          "input_ids": [
+            "conclusion-credit"
+          ],
+          "output_ids": [
+            "demo-insight-credit"
+          ],
+          "result_summary": "Подготовленный пример, реальных инструментальных обращений и LLM-вызовов не было.",
+          "status": "success",
+          "checks": [
+            "Демо-данные явно обозначены"
+          ],
+          "correction": null
+        }
+      ]
+    }
+  },
+  "messages": [
+    {
+      "message_id": "message-user-1",
+      "role": "user",
+      "text": "Кредит пока не планируем.",
+      "created_at": "2026-10-20T12:00:00+05:00",
+      "message_status": "complete",
+      "claims": [],
+      "trace": [],
+      "retry_of": null
+    },
+    {
+      "message_id": "message-ai-1",
+      "role": "assistant",
+      "text": "По вашему уточнению прямое влияние сейчас ограничено. Это уточнение действует только в текущем диалоге.",
+      "created_at": "2026-10-20T12:00:00+05:00",
+      "message_status": "complete",
+      "claims": [
+        {
+          "id": "chat-claim-1",
+          "text": "Кредит не планируется — со слов пользователя.",
+          "kind": "user_data",
+          "evidence": [],
+          "feature_ids": [
+            "credit_planned"
+          ],
+          "assumptions": [],
+          "limitations": []
+        },
+        {
+          "id": "chat-claim-2",
+          "text": "Прямое влияние сценария сейчас ограничено.",
+          "kind": "ai_inference",
+          "evidence": [],
+          "feature_ids": [
+            "credit_planned"
+          ],
+          "assumptions": [
+            "Уточнение пользователя актуально"
+          ],
+          "limitations": []
+        }
+      ],
+      "trace": [
+        {
+          "id": "trace-chat",
+          "timestamp": "2026-10-20T12:00:00+05:00",
+          "action": "Учесть уточнение пользователя",
+          "tool": "demo-fixture",
+          "input_ids": [
+            "message-user-1"
+          ],
+          "output_ids": [
+            "message-ai-1"
+          ],
+          "result_summary": "Подготовленный пример, реальных инструментальных обращений и LLM-вызовов не было.",
+          "status": "success",
+          "checks": [
+            "Демо-данные явно обозначены"
+          ],
+          "correction": null
+        }
+      ],
+      "retry_of": null
+    }
+  ],
+  "user_clarifications": [
+    {
+      "feature": {
+        "id": "credit_planned",
+        "label": "Планируется кредит",
+        "value": false,
+        "unit": null,
+        "period": null,
+        "status": "known",
+        "provenance": {
+          "kind": "user",
+          "locator": "message-user-1",
+          "as_of": "2026-10-20T12:00:00+05:00"
+        }
+      },
+      "message_id": "message-user-1",
+      "scope": "conversation",
+      "status": "active"
+    }
+  ]
+}

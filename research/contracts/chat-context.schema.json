@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "chat-context",
+  "description": "U01 v0.1: черновой контракт для согласования командой.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "company_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "insight_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "is_demo": {
+      "type": "boolean"
+    },
+    "context_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "snapshot_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "company": {
+          "$ref": "company-profile.schema.json"
+        },
+        "event": {
+          "$ref": "news-event.schema.json"
+        },
+        "insight": {
+          "$ref": "insight.schema.json"
+        }
+      },
+      "required": [
+        "snapshot_id",
+        "created_at",
+        "company",
+        "event",
+        "insight"
+      ]
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "enum": [
+              "user",
+              "assistant"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "message_status": {
+            "enum": [
+              "sending",
+              "complete",
+              "failed"
+            ]
+          },
+          "claims": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/claim"
+            }
+          },
+          "trace": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/trace_step"
+            }
+          },
+          "retry_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "message_id",
+          "role",
+          "text",
+          "created_at",
+          "message_status",
+          "claims",
+          "trace",
+          "retry_of"
+        ]
+      }
+    },
+    "user_clarifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "feature": {
+            "$ref": "common.schema.json#/$defs/feature"
+          },
+          "message_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scope": {
+            "const": "conversation"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "superseded"
+            ]
+          }
+        },
+        "required": [
+          "feature",
+          "message_id",
+          "scope",
+          "status"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "conversation_id",
+    "company_id",
+    "event_id",
+    "insight_version",
+    "is_demo",
+    "context_snapshot",
+    "messages",
+    "user_clarifications"
+  ]
+}
