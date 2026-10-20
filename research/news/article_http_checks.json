@@ -1,0 +1,50 @@
+[
+  {
+    "source": "kommersant",
+    "url": "https://www.kommersant.ru/doc/9043110",
+    "checked_at": "2026-10-20T16:00:56.561644+00:00",
+    "status": 200,
+    "text_chars": 1043,
+    "result": "ok"
+  },
+  {
+    "source": "kommersant",
+    "url": "https://www.kommersant.ru/doc/9043106",
+    "checked_at": "2026-10-20T16:00:58.306554+00:00",
+    "status": 200,
+    "text_chars": 1099,
+    "result": "ok"
+  },
+  {
+    "source": "kommersant",
+    "url": "https://www.kommersant.ru/doc/9043090",
+    "checked_at": "2026-10-20T16:00:59.578735+00:00",
+    "status": 200,
+    "text_chars": 981,
+    "result": "ok"
+  },
+  {
+    "source": "vedomosti",
+    "url": "https://www.vedomosti.ru/business/news/2026/10/20/1238594-tsena-na-gaz",
+    "checked_at": "2026-10-20T16:01:00.886670+00:00",
+    "status": 200,
+    "text_chars": 1568,
+    "result": "ok"
+  },
+  {
+    "source": "vedomosti",
+    "url": "https://www.vedomosti.ru/business/news/2026/10/20/1238595-fas-vozbudila-del",
+    "checked_at": "2026-10-20T16:01:18.572988+00:00",
+    "status": 200,
+    "text_chars": 1117,
+    "result": "ok"
+  },
+  {
+    "source": "vedomosti",
+    "url": "https://www.vedomosti.ru/finance/news/2026/10/20/1238577-gosduma-prinyala-proekt",
+    "checked_at": "2026-10-20T16:01:19.824053+00:00",
+    "status": 200,
+    "text_chars": 1721,
+    "result": "ok"
+  }
+]

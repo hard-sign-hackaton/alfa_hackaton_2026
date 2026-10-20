@@ -1,0 +1,56 @@
+[
+  {
+    "source": "kommersant",
+    "url": "https://www.kommersant.ru/doc/9043110",
+    "checked_at": "2026-10-20T16:02:01.152244+00:00",
+    "mode": "offline_snapshot",
+    "status": null,
+    "text_chars": 1043,
+    "result": "ok"
+  },
+  {
+    "source": "kommersant",
+    "url": "https://www.kommersant.ru/doc/9043106",
+    "checked_at": "2026-10-20T16:02:01.651293+00:00",
+    "mode": "offline_snapshot",
+    "status": null,
+    "text_chars": 1099,
+    "result": "ok"
+  },
+  {
+    "source": "kommersant",
+    "url": "https://www.kommersant.ru/doc/9043090",
+    "checked_at": "2026-10-20T16:02:02.172568+00:00",
+    "mode": "offline_snapshot",
+    "status": null,
+    "text_chars": 981,
+    "result": "ok"
+  },
+  {
+    "source": "vedomosti",
+    "url": "https://www.vedomosti.ru/business/news/2026/10/20/1238594-tsena-na-gaz",
+    "checked_at": "2026-10-20T16:02:02.693088+00:00",
+    "mode": "offline_snapshot",
+    "status": null,
+    "text_chars": 1568,
+    "result": "ok"
+  },
+  {
+    "source": "vedomosti",
+    "url": "https://www.vedomosti.ru/business/news/2026/10/20/1238595-fas-vozbudila-del",
+    "checked_at": "2026-10-20T16:02:02.845981+00:00",
+    "mode": "offline_snapshot",
+    "status": null,
+    "text_chars": 1117,
+    "result": "ok"
+  },
+  {
+    "source": "vedomosti",
+    "url": "https://www.vedomosti.ru/finance/news/2026/10/20/1238577-gosduma-prinyala-proekt",
+    "checked_at": "2026-10-20T16:02:03.037638+00:00",
+    "mode": "offline_snapshot",
+    "status": null,
+    "text_chars": 1721,
+    "result": "ok"
+  }
+]
