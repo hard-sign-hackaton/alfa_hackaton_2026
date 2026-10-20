@@ -1,0 +1,118 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+    },
+    "provenance": {
+      "enum": [
+        "synthetic_demo",
+        "dataset"
+      ],
+      "title": "Provenance",
+      "type": "string"
+    },
+    "source_ref": {
+      "minLength": 1,
+      "title": "Source Ref",
+      "type": "string"
+    },
+    "okved_codes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Okved Codes",
+      "type": "array"
+    },
+    "okved_names": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Okved Names",
+      "type": "array"
+    },
+    "registration_region": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Registration Region"
+    },
+    "ownership_form": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Ownership Form"
+    },
+    "annual_revenue_rub": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Annual Revenue Rub"
+    },
+    "banking_services": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Banking Services",
+      "type": "array"
+    },
+    "trade_countries": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Trade Countries"
+    },
+    "development_stage": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Development Stage"
+    }
+  },
+  "required": [
+    "id",
+    "provenance",
+    "source_ref",
+    "okved_codes",
+    "okved_names",
+    "registration_region",
+    "ownership_form",
+    "annual_revenue_rub",
+    "banking_services",
+    "trade_countries",
+    "development_stage"
+  ],
+  "title": "CompanyProfile",
+  "type": "object"
+}

@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+**/.env
+**/.env.*
+**/__pycache__
+**/*.pyc
+**/.venv
+research/ai/private_data
+research/ai/live_results
+research/ai/results

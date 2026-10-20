@@ -1,0 +1,42 @@
+name: alfa-hackaton
+
+services:
+  ai:
+    build: .
+    image: alfa-hackaton-research:local
+    init: true
+    network_mode: none
+    volumes:
+      - ./research/ai/results:/output
+
+  ai-tests:
+    build: .
+    image: alfa-hackaton-research:local
+    init: true
+    network_mode: none
+    profiles: [test]
+    command: [python, -m, unittest, -v, test_research]
+
+  ai-live:
+    build: .
+    image: alfa-hackaton-research:local
+    init: true
+    profiles: [live]
+    environment:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.deepseek.com}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-v4-pro}
+    volumes:
+      - ./research/ai/live_results:/output
+    command: [python, run.py, --mode, live, --output, /output]
+
+  news-snapshot:
+    build: .
+    image: alfa-hackaton-research:local
+    init: true
+    profiles: [news]
+    network_mode: none
+    working_dir: /app/research/news
+    volumes:
+      - ./research/news:/app/research/news
+    command: [python, collect_news.py, --snapshot, --offline, --curated]

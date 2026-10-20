@@ -1,0 +1,45 @@
+[
+  {
+    "case": "retailer_does_not_sell_on_marketplaces",
+    "mode": "synthetic_stress_case",
+    "rank": {
+      "company_id": "demo-retail",
+      "news_id": "90b13aa4900dc3e623c9",
+      "score": 70,
+      "eligible": true,
+      "reasons": [
+        {
+          "feature": "okved_topic",
+          "matched": [
+            "retail_ecommerce"
+          ],
+          "weight": 70
+        }
+      ],
+      "missing_data": [
+        "trade_countries"
+      ]
+    },
+    "expected_relevant": false,
+    "error": "false_positive",
+    "reason": "Retail OKVED does not establish marketplace sales; sales channel is unknown"
+  },
+  {
+    "case": "electronics_depends_on_steel_customer",
+    "mode": "synthetic_stress_case",
+    "rank": {
+      "company_id": "stress-electronics",
+      "news_id": "514cd7721cf86b6c1002",
+      "score": 0,
+      "eligible": true,
+      "reasons": [],
+      "missing_data": [
+        "trade_countries",
+        "confirmed_business_exposure"
+      ]
+    },
+    "expected_relevant": true,
+    "error": "false_negative",
+    "reason": "Synthetic customer dependency is absent from the profile"
+  }
+]

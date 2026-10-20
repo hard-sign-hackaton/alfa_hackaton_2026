@@ -1,0 +1,261 @@
+[
+  {
+    "fingerprint": "369fba4d17d87f3d46a0613bf99bce4a4dab38434d7cb5a17c711a76f1c8d740",
+    "company_id": "demo-metal",
+    "news_id": "514cd7721cf86b6c1002",
+    "mode": "offline_baseline",
+    "trace": [
+      {
+        "step": 1,
+        "tool": "plan",
+        "steps": [
+          "load_profile",
+          "rank",
+          "search_news",
+          "check_payment_exposure",
+          "analyze",
+          "verify"
+        ]
+      },
+      {
+        "step": 2,
+        "tool": "load_profile",
+        "provenance": "synthetic_demo",
+        "unknown_fields": [
+          "trade_countries",
+          "development_stage"
+        ]
+      },
+      {
+        "step": 3,
+        "tool": "rank",
+        "result": {
+          "company_id": "demo-metal",
+          "news_id": "514cd7721cf86b6c1002",
+          "score": 70,
+          "eligible": true,
+          "reasons": [
+            {
+              "feature": "okved_topic",
+              "matched": [
+                "metallurgy"
+              ],
+              "weight": 70
+            }
+          ],
+          "missing_data": [
+            "trade_countries"
+          ]
+        }
+      },
+      {
+        "step": 4,
+        "tool": "search_news",
+        "attempt": 1,
+        "query": [
+          "metallurgy"
+        ],
+        "source_ids": []
+      },
+      {
+        "step": 5,
+        "tool": "search_news",
+        "attempt": 2,
+        "query": "broader local business news",
+        "source_ids": [
+          "90b13aa4900dc3e623c9",
+          "69c2aad5f1dd168aead7",
+          "10d56ab3f602a1602152"
+        ],
+        "limitation": "Broad results are discovery candidates, not evidence of company exposure"
+      },
+      {
+        "step": 6,
+        "tool": "check_payment_exposure",
+        "available": false,
+        "reason": "Payment dataset unavailable"
+      },
+      {
+        "step": 7,
+        "tool": "assemble_context",
+        "source_scope": [
+          "news:514cd7721cf86b6c1002",
+          "company:demo-metal"
+        ],
+        "discovered_not_used": [
+          "90b13aa4900dc3e623c9",
+          "69c2aad5f1dd168aead7",
+          "10d56ab3f602a1602152"
+        ],
+        "bank_analytics_available": false
+      },
+      {
+        "step": 8,
+        "tool": "verify",
+        "schema": true,
+        "references": true,
+        "semantic_entailment": "requires_human_review"
+      }
+    ],
+    "history": [],
+    "result": {
+      "company_id": "demo-metal",
+      "news_id": "514cd7721cf86b6c1002",
+      "status": "supported",
+      "summary": "Есть совпадение отрасли; влияние остаётся гипотезой.",
+      "claims": [
+        {
+          "kind": "fact",
+          "text": "Спрос на сталь в России в 2026 году может снизиться на 0,5% год к году",
+          "evidence": [
+            {
+              "source_id": "news:514cd7721cf86b6c1002",
+              "quote": "Спрос на сталь в России в 2026 году может снизиться на 0,5% год к году"
+            }
+          ]
+        },
+        {
+          "kind": "fact",
+          "text": "Заявленный ОКВЭД: Производство чугуна, стали и ферросплавов",
+          "evidence": [
+            {
+              "source_id": "company:demo-metal:okved_names",
+              "quote": "Производство чугуна, стали и ферросплавов"
+            }
+          ]
+        },
+        {
+          "kind": "hypothesis",
+          "text": "Отраслевое событие может повлиять на спрос в заявленном виде деятельности. Эффект для конкретной компании не измерен.",
+          "evidence": [
+            {
+              "source_id": "news:514cd7721cf86b6c1002",
+              "quote": "Спрос на сталь в России в 2026 году может снизиться на 0,5% год к году"
+            },
+            {
+              "source_id": "company:demo-metal:okved_names",
+              "quote": "Производство чугуна, стали и ферросплавов"
+            }
+          ]
+        }
+      ],
+      "missing_data": [
+        "Фактические продажи, клиенты и структура затрат"
+      ],
+      "follow_up_answer": "Количественный эффект неизвестен: нужны фактические продажи, клиенты и структура затрат."
+    }
+  },
+  {
+    "fingerprint": "49af9b8c7e21d048354f1357766d927ab15a6c115373da6859940428233951ad",
+    "company_id": "demo-retail",
+    "news_id": "514cd7721cf86b6c1002",
+    "mode": "offline_baseline",
+    "trace": [
+      {
+        "step": 1,
+        "tool": "plan",
+        "steps": [
+          "load_profile",
+          "rank",
+          "search_news",
+          "check_payment_exposure",
+          "analyze",
+          "verify"
+        ]
+      },
+      {
+        "step": 2,
+        "tool": "load_profile",
+        "provenance": "synthetic_demo",
+        "unknown_fields": [
+          "trade_countries",
+          "development_stage"
+        ]
+      },
+      {
+        "step": 3,
+        "tool": "rank",
+        "result": {
+          "company_id": "demo-retail",
+          "news_id": "514cd7721cf86b6c1002",
+          "score": 0,
+          "eligible": true,
+          "reasons": [],
+          "missing_data": [
+            "trade_countries",
+            "confirmed_business_exposure"
+          ]
+        }
+      },
+      {
+        "step": 4,
+        "tool": "search_news",
+        "attempt": 1,
+        "query": [
+          "retail_ecommerce"
+        ],
+        "source_ids": [
+          "90b13aa4900dc3e623c9"
+        ]
+      },
+      {
+        "step": 5,
+        "tool": "check_payment_exposure",
+        "available": false,
+        "reason": "Payment dataset unavailable"
+      },
+      {
+        "step": 6,
+        "tool": "assemble_context",
+        "source_scope": [
+          "news:514cd7721cf86b6c1002",
+          "company:demo-retail"
+        ],
+        "discovered_not_used": [
+          "90b13aa4900dc3e623c9"
+        ],
+        "bank_analytics_available": false
+      },
+      {
+        "step": 7,
+        "tool": "verify",
+        "schema": true,
+        "references": true,
+        "semantic_entailment": "requires_human_review"
+      }
+    ],
+    "history": [],
+    "result": {
+      "company_id": "demo-retail",
+      "news_id": "514cd7721cf86b6c1002",
+      "status": "insufficient_data",
+      "summary": "Прямой канал влияния по имеющимся полям не подтверждён.",
+      "claims": [
+        {
+          "kind": "fact",
+          "text": "Спрос на сталь в России в 2026 году может снизиться на 0,5% год к году",
+          "evidence": [
+            {
+              "source_id": "news:514cd7721cf86b6c1002",
+              "quote": "Спрос на сталь в России в 2026 году может снизиться на 0,5% год к году"
+            }
+          ]
+        },
+        {
+          "kind": "fact",
+          "text": "Заявленный ОКВЭД: Розничная торговля по почте или через Интернет",
+          "evidence": [
+            {
+              "source_id": "company:demo-retail:okved_names",
+              "quote": "Розничная торговля по почте или через Интернет"
+            }
+          ]
+        }
+      ],
+      "missing_data": [
+        "Подтверждённая связь деятельности или контрагентов с событием"
+      ],
+      "follow_up_answer": "Количественный эффект неизвестен: нужны фактические продажи, клиенты и структура затрат."
+    }
+  }
+]

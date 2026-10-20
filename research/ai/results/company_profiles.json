@@ -1,0 +1,42 @@
+[
+  {
+    "id": "demo-metal",
+    "provenance": "synthetic_demo",
+    "source_ref": "fixtures.py",
+    "okved_codes": [
+      "24.10"
+    ],
+    "okved_names": [
+      "Производство чугуна, стали и ферросплавов"
+    ],
+    "registration_region": "Челябинская область",
+    "ownership_form": "ООО",
+    "annual_revenue_rub": 800000000.0,
+    "banking_services": [
+      "credit",
+      "leasing"
+    ],
+    "trade_countries": null,
+    "development_stage": null
+  },
+  {
+    "id": "demo-retail",
+    "provenance": "synthetic_demo",
+    "source_ref": "fixtures.py",
+    "okved_codes": [
+      "47.91"
+    ],
+    "okved_names": [
+      "Розничная торговля по почте или через Интернет"
+    ],
+    "registration_region": "Москва",
+    "ownership_form": "ООО",
+    "annual_revenue_rub": 120000000.0,
+    "banking_services": [
+      "cash_register",
+      "payroll"
+    ],
+    "trade_countries": null,
+    "development_stage": null
+  }
+]

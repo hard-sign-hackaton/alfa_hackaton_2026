@@ -1,0 +1,134 @@
+{
+  "mode": "offline_rule_baseline",
+  "as_of": "2026-10-20T17:00:00+00:00",
+  "profiles_are_synthetic": true,
+  "news_ids": [
+    "514cd7721cf86b6c1002",
+    "90b13aa4900dc3e623c9",
+    "69c2aad5f1dd168aead7",
+    "10d56ab3f602a1602152"
+  ],
+  "pairs": [
+    {
+      "company_id": "demo-metal",
+      "news_id": "514cd7721cf86b6c1002",
+      "score": 70,
+      "eligible": true,
+      "reasons": [
+        {
+          "feature": "okved_topic",
+          "matched": [
+            "metallurgy"
+          ],
+          "weight": 70
+        }
+      ],
+      "missing_data": [
+        "trade_countries"
+      ],
+      "expected_relevant": true,
+      "predicted_relevant": true
+    },
+    {
+      "company_id": "demo-metal",
+      "news_id": "90b13aa4900dc3e623c9",
+      "score": 0,
+      "eligible": true,
+      "reasons": [],
+      "missing_data": [
+        "trade_countries",
+        "confirmed_business_exposure"
+      ],
+      "expected_relevant": false,
+      "predicted_relevant": false
+    },
+    {
+      "company_id": "demo-metal",
+      "news_id": "69c2aad5f1dd168aead7",
+      "score": 0,
+      "eligible": true,
+      "reasons": [],
+      "missing_data": [
+        "trade_countries",
+        "confirmed_business_exposure"
+      ],
+      "expected_relevant": false,
+      "predicted_relevant": false
+    },
+    {
+      "company_id": "demo-metal",
+      "news_id": "10d56ab3f602a1602152",
+      "score": 0,
+      "eligible": true,
+      "reasons": [],
+      "missing_data": [
+        "trade_countries",
+        "confirmed_business_exposure"
+      ],
+      "expected_relevant": false,
+      "predicted_relevant": false
+    },
+    {
+      "company_id": "demo-retail",
+      "news_id": "514cd7721cf86b6c1002",
+      "score": 0,
+      "eligible": true,
+      "reasons": [],
+      "missing_data": [
+        "trade_countries",
+        "confirmed_business_exposure"
+      ],
+      "expected_relevant": false,
+      "predicted_relevant": false
+    },
+    {
+      "company_id": "demo-retail",
+      "news_id": "90b13aa4900dc3e623c9",
+      "score": 70,
+      "eligible": true,
+      "reasons": [
+        {
+          "feature": "okved_topic",
+          "matched": [
+            "retail_ecommerce"
+          ],
+          "weight": 70
+        }
+      ],
+      "missing_data": [
+        "trade_countries"
+      ],
+      "expected_relevant": true,
+      "predicted_relevant": true
+    },
+    {
+      "company_id": "demo-retail",
+      "news_id": "69c2aad5f1dd168aead7",
+      "score": 0,
+      "eligible": true,
+      "reasons": [],
+      "missing_data": [
+        "trade_countries",
+        "confirmed_business_exposure"
+      ],
+      "expected_relevant": false,
+      "predicted_relevant": false
+    },
+    {
+      "company_id": "demo-retail",
+      "news_id": "10d56ab3f602a1602152",
+      "score": 0,
+      "eligible": true,
+      "reasons": [],
+      "missing_data": [
+        "trade_countries",
+        "confirmed_business_exposure"
+      ],
+      "expected_relevant": false,
+      "predicted_relevant": false
+    }
+  ],
+  "correct_on_curated_examples": 8,
+  "total": 8,
+  "limitation": "Small manually labeled sample"
+}
