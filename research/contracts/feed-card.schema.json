@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "feed-card",
+  "description": "U01 v0.1: черновой контракт для согласования командой.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "company_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "insight_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "insight_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "content_status": {
+      "enum": [
+        "loading",
+        "ready",
+        "partial",
+        "error"
+      ]
+    },
+    "effect_title": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "event_summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "importance": {
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        null
+      ]
+    },
+    "publisher": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "published_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_url": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "analyzed_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "is_demo": {
+      "type": "boolean"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "company_id",
+    "profile_version",
+    "event_id",
+    "insight_id",
+    "insight_version",
+    "content_status",
+    "effect_title",
+    "event_summary",
+    "importance",
+    "publisher",
+    "published_at",
+    "source_id",
+    "source_url",
+    "analyzed_at",
+    "is_demo",
+    "limitations"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "content_status": {
+            "const": "ready"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "effect_title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "importance": {
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "analyzed_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  ]
+}

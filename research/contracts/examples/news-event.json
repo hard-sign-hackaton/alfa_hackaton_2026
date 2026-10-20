@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.1.0",
+  "event_id": "demo-credit",
+  "original_title": "Вымышленный сценарий пересмотра кредитных ставок",
+  "text": "В учебном сценарии ставки по новым кредитным линиям увеличиваются на 1 п. п.",
+  "summary": "Вымышленный сценарий: ставки по новым кредитным линиям увеличиваются.",
+  "published_at": "2026-10-20T12:00:00+05:00",
+  "collected_at": "2026-10-20T12:00:00+05:00",
+  "is_fictional": true,
+  "sources": [
+    {
+      "id": "demo-news-credit",
+      "kind": "news",
+      "title": "Вымышленный сценарий пересмотра кредитных ставок",
+      "publisher": "Демо · финансовая сводка",
+      "url": null,
+      "locator": "demo:demo-news-credit",
+      "published_at": "2026-10-20T12:00:00+05:00",
+      "retrieved_at": "2026-10-20T12:00:00+05:00",
+      "forecast_period": null,
+      "is_fictional": true,
+      "availability": "available",
+      "fragments": [
+        {
+          "id": "demo-news-credit-f1",
+          "text": "В учебном сценарии ставки по новым кредитным линиям увеличиваются на 1 п. п.",
+          "locator": "paragraph:1"
+        }
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "id": "fact-credit",
+      "text": "В учебном сценарии ставки по новым кредитным линиям увеличиваются на 1 п. п.",
+      "kind": "source_fact",
+      "evidence": [
+        {
+          "source_id": "demo-news-credit",
+          "fragment_id": "demo-news-credit-f1"
+        }
+      ],
+      "feature_ids": [],
+      "assumptions": [],
+      "limitations": []
+    }
+  ],
+  "limitations": [
+    "Нет реальной публикации; сценарий создан для проверки UX."
+  ]
+}

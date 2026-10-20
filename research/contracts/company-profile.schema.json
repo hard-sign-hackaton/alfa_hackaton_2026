@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "company-profile",
+  "description": "U01 v0.1: черновой контракт для согласования командой.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "company_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "company_label": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_as_of": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "is_demo": {
+      "type": "boolean"
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/feature"
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "company_id",
+    "company_label",
+    "profile_version",
+    "profile_as_of",
+    "is_demo",
+    "features",
+    "limitations"
+  ]
+}

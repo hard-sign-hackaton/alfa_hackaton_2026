@@ -1,0 +1,185 @@
+{
+  "schema_version": "0.1.0",
+  "insight_id": "demo-insight-credit-partial",
+  "insight_version": "demo-v1",
+  "company_id": "demo-company-01",
+  "profile_version": "demo-v1",
+  "event_id": "demo-credit",
+  "content_status": "partial",
+  "analyzed_at": "2026-10-20T12:00:00+05:00",
+  "is_demo": true,
+  "effect_title": "Оборотное финансирование может стать дороже",
+  "importance": "high",
+  "importance_reason": "Потенциальный эффект на стоимость оборотных средств; наличие кредита пока не подтверждено.",
+  "conclusion": {
+    "id": "conclusion-partial",
+    "text": "Если планируется кредит, стоимость финансирования может вырасти; условия компании неизвестны.",
+    "kind": "ai_inference",
+    "evidence": [
+      {
+        "source_id": "demo-news-credit",
+        "fragment_id": "demo-news-credit-f1"
+      }
+    ],
+    "feature_ids": [
+      "revenue"
+    ],
+    "assumptions": [],
+    "limitations": []
+  },
+  "event_facts": [
+    {
+      "id": "fact-credit",
+      "text": "В учебном сценарии ставки по новым кредитным линиям увеличиваются на 1 п. п.",
+      "kind": "source_fact",
+      "evidence": [
+        {
+          "source_id": "demo-news-credit",
+          "fragment_id": "demo-news-credit-f1"
+        }
+      ],
+      "feature_ids": [],
+      "assumptions": [],
+      "limitations": []
+    }
+  ],
+  "relevance_reasons": [
+    {
+      "feature_ids": [
+        "industry",
+        "revenue"
+      ],
+      "explanation": "Производственный бизнес может нуждаться в оборотном финансировании. Размер компании не доказывает наличие кредита."
+    }
+  ],
+  "consequences": [
+    {
+      "id": "consequence-credit",
+      "text": "Возможен рост процентных расходов по новому финансированию.",
+      "kind": "ai_inference",
+      "evidence": [
+        {
+          "source_id": "demo-news-credit",
+          "fragment_id": "demo-news-credit-f1"
+        }
+      ],
+      "feature_ids": [],
+      "assumptions": [],
+      "limitations": []
+    }
+  ],
+  "horizon": "При новом заимствовании или пересмотре ставки",
+  "risks": [
+    {
+      "id": "risk-credit",
+      "text": "Возможное увеличение процентных расходов.",
+      "kind": "ai_inference",
+      "evidence": [
+        {
+          "source_id": "demo-news-credit",
+          "fragment_id": "demo-news-credit-f1"
+        }
+      ],
+      "feature_ids": [],
+      "assumptions": [],
+      "limitations": []
+    }
+  ],
+  "risks_note": null,
+  "opportunities": [
+    {
+      "id": "opportunity-credit",
+      "text": "Сравнить предложения до подписания кредитного договора.",
+      "kind": "ai_inference",
+      "evidence": [
+        {
+          "source_id": "demo-news-credit",
+          "fragment_id": "demo-news-credit-f1"
+        }
+      ],
+      "feature_ids": [],
+      "assumptions": [],
+      "limitations": []
+    }
+  ],
+  "opportunities_note": null,
+  "quantitative_estimate": null,
+  "missing_data": [
+    "Фактический остаток долга",
+    "Даты и условия пересмотра ставок"
+  ],
+  "bank": {
+    "status": "not_found",
+    "position": null,
+    "interpretation": null,
+    "source_ids": [],
+    "note": "Релевантный материал не найден в демо-наборе."
+  },
+  "checks": [
+    {
+      "text": "Проверить планы заимствований.",
+      "purpose": "Установить применимость события.",
+      "required_data": [
+        "План финансирования"
+      ]
+    },
+    {
+      "text": "Уточнить даты пересмотра ставок.",
+      "purpose": "Определить горизонт эффекта.",
+      "required_data": [
+        "Кредитные договоры"
+      ]
+    }
+  ],
+  "suggested_questions": [
+    "Что проверить в первую очередь?",
+    "Какие данные нужны для оценки эффекта?"
+  ],
+  "sources": [
+    {
+      "id": "demo-news-credit",
+      "kind": "news",
+      "title": "Вымышленный сценарий пересмотра кредитных ставок",
+      "publisher": "Демо · финансовая сводка",
+      "url": null,
+      "locator": "demo:demo-news-credit",
+      "published_at": "2026-10-20T12:00:00+05:00",
+      "retrieved_at": "2026-10-20T12:00:00+05:00",
+      "forecast_period": null,
+      "is_fictional": true,
+      "availability": "available",
+      "fragments": [
+        {
+          "id": "demo-news-credit-f1",
+          "text": "В учебном сценарии ставки по новым кредитным линиям увеличиваются на 1 п. п.",
+          "locator": "paragraph:1"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Не хватает условий кредитования; материал банка не найден."
+  ],
+  "trace": [
+    {
+      "id": "trace-partial",
+      "timestamp": "2026-10-20T12:00:00+05:00",
+      "action": "Проверить доступный контекст",
+      "tool": "demo-fixture",
+      "input_ids": [
+        "demo-company-01",
+        "demo-news-credit"
+      ],
+      "output_ids": [
+        "demo-insight-credit-partial"
+      ],
+      "result_summary": "Демонстрационный неполный разбор: материала банка и данных о долге нет. Реальных обращений не было.",
+      "status": "partial",
+      "checks": [
+        "Материал банка отсутствует",
+        "Расчёт не выполнялся"
+      ],
+      "correction": "Сохранить условный вывод и запросить недостающие данные."
+    }
+  ]
+}

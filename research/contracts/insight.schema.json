@@ -1,0 +1,314 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "insight",
+  "description": "U01 v0.1: черновой контракт для согласования командой.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "insight_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "insight_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "company_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "content_status": {
+      "enum": [
+        "loading",
+        "ready",
+        "partial",
+        "error"
+      ]
+    },
+    "analyzed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_demo": {
+      "type": "boolean"
+    },
+    "effect_title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "importance": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "importance_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "conclusion": {
+      "$ref": "common.schema.json#/$defs/claim"
+    },
+    "event_facts": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/claim"
+      }
+    },
+    "relevance_reasons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "feature_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "explanation": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "feature_ids",
+          "explanation"
+        ]
+      }
+    },
+    "consequences": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/claim"
+      }
+    },
+    "horizon": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/claim"
+      }
+    },
+    "risks_note": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "opportunities": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/claim"
+      }
+    },
+    "opportunities_note": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "quantitative_estimate": {
+      "anyOf": [
+        {
+          "$ref": "common.schema.json#/$defs/estimate"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "missing_data": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "bank": {
+      "$ref": "common.schema.json#/$defs/bank"
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "required_data": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "text",
+          "purpose",
+          "required_data"
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 3
+    },
+    "suggested_questions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 2,
+      "maxItems": 3
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/source"
+      },
+      "minItems": 1
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "trace": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/trace_step"
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "schema_version",
+    "insight_id",
+    "insight_version",
+    "company_id",
+    "profile_version",
+    "event_id",
+    "content_status",
+    "analyzed_at",
+    "is_demo",
+    "effect_title",
+    "importance",
+    "importance_reason",
+    "conclusion",
+    "event_facts",
+    "relevance_reasons",
+    "consequences",
+    "horizon",
+    "risks",
+    "risks_note",
+    "opportunities",
+    "opportunities_note",
+    "quantitative_estimate",
+    "missing_data",
+    "bank",
+    "checks",
+    "suggested_questions",
+    "sources",
+    "limitations",
+    "trace"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "risks": {
+            "maxItems": 0
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "risks_note": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "opportunities": {
+            "maxItems": 0
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "opportunities_note": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "content_status": {
+            "const": "ready"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "event_facts": {
+            "minItems": 1
+          },
+          "relevance_reasons": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}
