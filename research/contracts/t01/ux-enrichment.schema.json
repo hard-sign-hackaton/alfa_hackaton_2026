@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "const": "t01-draft-1"
+    },
+    "company_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "news_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "is_demo": {
+      "type": "boolean"
+    },
+    "consequences": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/claim"
+      }
+    },
+    "horizon": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/claim"
+      }
+    },
+    "risks_note": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "opportunities": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/claim"
+      }
+    },
+    "opportunities_note": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "quantitative_estimate": {
+      "anyOf": [
+        {
+          "$ref": "../common.schema.json#/$defs/estimate"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "../insight.schema.json#/properties/checks/items"
+      },
+      "minItems": 1,
+      "maxItems": 3
+    },
+    "suggested_questions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 2,
+      "maxItems": 3
+    },
+    "missing_data": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "profile_version": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "contract_version",
+    "company_id",
+    "news_id",
+    "producer",
+    "is_demo",
+    "consequences",
+    "horizon",
+    "risks",
+    "risks_note",
+    "opportunities",
+    "opportunities_note",
+    "quantitative_estimate",
+    "checks",
+    "suggested_questions",
+    "missing_data",
+    "limitations",
+    "profile_version"
+  ]
+}

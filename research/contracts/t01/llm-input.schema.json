@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "news_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_provenance": {
+      "enum": [
+        "synthetic_demo",
+        "dataset"
+      ]
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minProperties": 1
+    },
+    "question": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "$ref": "ai-insight.schema.json"
+      },
+      "maxItems": 4
+    },
+    "schema": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "company_id",
+    "news_id",
+    "profile_provenance",
+    "sources",
+    "question",
+    "history",
+    "schema"
+  ]
+}

@@ -1,0 +1,215 @@
+{
+  "contract_version": "t01-draft-1",
+  "company": {
+    "id": "demo-metal",
+    "provenance": "synthetic_demo",
+    "source_ref": "fixtures.py",
+    "okved_codes": [
+      "24.10"
+    ],
+    "okved_names": [
+      "Производство чугуна, стали и ферросплавов"
+    ],
+    "registration_region": "Челябинская область",
+    "ownership_form": "ООО",
+    "annual_revenue_rub": 800000000.0,
+    "banking_services": [
+      "credit",
+      "leasing"
+    ],
+    "trade_countries": null,
+    "development_stage": null
+  },
+  "event": {
+    "id": "514cd7721cf86b6c1002",
+    "title": "Спрос на сталь в России в 2026 году может снизиться на 0,5% год к году",
+    "text": "Внутренний спрос на сталь в России в 2026 году может снизиться на 0,5% год к году, сообщила «Северсталь» в отчетности за третий квартал. Таким образом, объем потребления металла в этом году может составить около 38,7 млн тонн против 38,9 млн тонн годом ранее. Это соответствует уровню 2016 года, но ниже, чем в 2017–2024 годах. Ранее компания ожидала снижения потребления металла в 2026 году на 7%. Гендиректор «Северстали» Александр Шевелев отметил, что прогноз улучшен с учетом частичной реализации отложенного спроса в третьем квартале. Но, добавил топ-менеджер, рынку пока не удается восстановить утраченные объемы после снижения потребления в 2025 году на 14%. В четвертом квартале, прокомментировал господин Шевелев, ожидается сезонное охлаждение спроса и рынок остается ниже уровней, предшествовавших спаду. За девять месяцев 2026 года спрос на сталь вырос примерно на 1% год к году, оценивает «Северсталь». Подробнее читайте в материале «Потребители потянулись к металлу» .",
+    "url": "https://www.kommersant.ru/doc/9043090",
+    "published_at": "2026-10-20T13:55:38+00:00",
+    "topics": [
+      "metallurgy"
+    ],
+    "regions": [],
+    "countries": []
+  },
+  "ai_insight": {
+    "company_id": "demo-metal",
+    "news_id": "514cd7721cf86b6c1002",
+    "status": "supported",
+    "summary": "Есть совпадение отрасли; влияние остаётся гипотезой.",
+    "claims": [
+      {
+        "kind": "fact",
+        "text": "Спрос на сталь в России в 2026 году может снизиться на 0,5% год к году",
+        "evidence": [
+          {
+            "source_id": "news:514cd7721cf86b6c1002",
+            "quote": "Спрос на сталь в России в 2026 году может снизиться на 0,5% год к году"
+          }
+        ]
+      },
+      {
+        "kind": "fact",
+        "text": "Заявленный ОКВЭД: Производство чугуна, стали и ферросплавов",
+        "evidence": [
+          {
+            "source_id": "company:demo-metal:okved_names",
+            "quote": "Производство чугуна, стали и ферросплавов"
+          }
+        ]
+      },
+      {
+        "kind": "hypothesis",
+        "text": "Отраслевое событие может повлиять на спрос в заявленном виде деятельности. Эффект для конкретной компании не измерен.",
+        "evidence": [
+          {
+            "source_id": "news:514cd7721cf86b6c1002",
+            "quote": "Спрос на сталь в России в 2026 году может снизиться на 0,5% год к году"
+          },
+          {
+            "source_id": "company:demo-metal:okved_names",
+            "quote": "Производство чугуна, стали и ферросплавов"
+          }
+        ]
+      }
+    ],
+    "missing_data": [
+      "Фактические продажи, клиенты и структура затрат"
+    ],
+    "follow_up_answer": "Количественный эффект неизвестен: нужны фактические продажи, клиенты и структура затрат."
+  },
+  "metadata": {
+    "company_label": "Тестовая металлургическая компания",
+    "profile_version": "fixture-v1",
+    "profile_as_of": null,
+    "insight_id": "t01-demo-metal",
+    "insight_version": "projection-v1",
+    "analyzed_at": "2026-10-20T17:00:00+00:00",
+    "collected_at": "2026-10-20T16:02:02.690088+00:00",
+    "publisher": "Коммерсантъ",
+    "is_fictional_event": false,
+    "analysis_mode": "offline_baseline"
+  },
+  "presentation": {
+    "effect_title": "Возможное давление на новые заказы",
+    "event_summary": "Компания-источник пересмотрела прогноз спроса на сталь. Событие требует проверки применимости к вашему бизнесу.",
+    "origin": "demo_fixture"
+  },
+  "impact": {
+    "contract_version": "t01-draft-1",
+    "company_id": "demo-metal",
+    "news_id": "514cd7721cf86b6c1002",
+    "importance": "high",
+    "reason": "Демо-оценка: событие связано с основной отраслью компании; финансовый эффект не измерен.",
+    "method": "editorial",
+    "is_demo": true,
+    "evidence": [
+      {
+        "source_id": "news:514cd7721cf86b6c1002",
+        "quote": "Спрос на сталь в России в 2026 году может снизиться на 0,5% год к году"
+      }
+    ],
+    "profile_version": "fixture-v1"
+  },
+  "bank_context": {
+    "contract_version": "t01-draft-1",
+    "company_id": "demo-metal",
+    "news_id": "514cd7721cf86b6c1002",
+    "profile_version": "fixture-v1",
+    "sources": [
+      {
+        "id": "t01-demo-bank-steel",
+        "kind": "bank",
+        "title": "Промышленный спрос: сценарий IV квартала",
+        "publisher": "Альфа-Банк · вымышленный пример",
+        "url": null,
+        "locator": "demo:t01-bank-steel",
+        "published_at": "2026-10-20T12:00:00+05:00",
+        "retrieved_at": "2026-10-20T12:00:00+05:00",
+        "forecast_period": "IV квартал 2026",
+        "is_fictional": true,
+        "availability": "available",
+        "fragments": [
+          {
+            "id": "bank-steel-f1",
+            "text": "В вымышленном обзоре предполагается неравномерная динамика промышленного спроса. Состав заказчиков важен для оценки отдельной компании.",
+            "locator": "paragraph:1"
+          }
+        ]
+      }
+    ],
+    "bank": {
+      "status": "found",
+      "position": {
+        "id": "t01-bank-position",
+        "text": "В вымышленном обзоре предполагается неравномерная динамика промышленного спроса. Состав заказчиков важен для оценки отдельной компании.",
+        "kind": "bank_position",
+        "evidence": [
+          {
+            "source_id": "t01-demo-bank-steel",
+            "fragment_id": "bank-steel-f1"
+          }
+        ],
+        "feature_ids": [],
+        "assumptions": [],
+        "limitations": [
+          "Вымышленный материал."
+        ]
+      },
+      "interpretation": {
+        "id": "t01-bank-interpretation",
+        "text": "Материал предлагает проверить состав заказчиков, но не подтверждает изменение выручки компании.",
+        "kind": "ai_inference",
+        "evidence": [
+          {
+            "source_id": "t01-demo-bank-steel",
+            "fragment_id": "bank-steel-f1"
+          }
+        ],
+        "feature_ids": [],
+        "assumptions": [],
+        "limitations": [
+          "Вымышленная демонстрационная интерпретация отдельного модуля."
+        ]
+      },
+      "source_ids": [
+        "t01-demo-bank-steel"
+      ],
+      "note": "Вымышленный пример, не реальная позиция Альфа-Банка."
+    }
+  },
+  "enrichment": {
+    "contract_version": "t01-draft-1",
+    "company_id": "demo-metal",
+    "news_id": "514cd7721cf86b6c1002",
+    "producer": "demo-enrichment-fixture",
+    "is_demo": true,
+    "consequences": [],
+    "horizon": null,
+    "risks": [],
+    "risks_note": "Демо-модуль не установил конкретные риски; это не означает их отсутствия.",
+    "opportunities": [],
+    "opportunities_note": "Возможности требуют проверки на данных компании.",
+    "quantitative_estimate": null,
+    "checks": [
+      {
+        "text": "Проверить структуру заказчиков и портфель заказов.",
+        "purpose": "Установить связь рыночного сигнала с компанией.",
+        "required_data": [
+          "Портфель заказов"
+        ]
+      }
+    ],
+    "suggested_questions": [
+      "Как проверить влияние на новые заказы?",
+      "Какие данные о заказчиках нужны?"
+    ],
+    "missing_data": [
+      "Структура заказчиков"
+    ],
+    "limitations": [
+      "Ответ отдельного модуля смоделирован, не результат LLM или классификатора."
+    ],
+    "profile_version": "fixture-v1"
+  }
+}

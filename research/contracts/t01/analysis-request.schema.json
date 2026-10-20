@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "const": "t01-draft-1"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "company": {
+      "$ref": "ai-company-profile.schema.json"
+    },
+    "news_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "ai-news-event.schema.json"
+      },
+      "minItems": 1
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "question": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "contract_version",
+    "request_id",
+    "company",
+    "news_id",
+    "events",
+    "as_of",
+    "question"
+  ]
+}

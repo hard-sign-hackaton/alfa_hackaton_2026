@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "const": "t01-draft-1"
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "conversation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "company_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "insight_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "context": {
+      "$ref": "../chat-context.schema.json"
+    },
+    "message": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "message_id",
+        "text",
+        "created_at"
+      ]
+    }
+  },
+  "required": [
+    "contract_version",
+    "request_id",
+    "conversation_id",
+    "company_id",
+    "event_id",
+    "insight_version",
+    "context",
+    "message"
+  ]
+}

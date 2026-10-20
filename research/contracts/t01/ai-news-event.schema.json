@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    },
+    "url": {
+      "title": "Url",
+      "type": "string"
+    },
+    "published_at": {
+      "title": "Published At",
+      "type": "string"
+    },
+    "topics": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Topics",
+      "type": "array"
+    },
+    "regions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Regions",
+      "type": "array"
+    },
+    "countries": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Countries",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "text",
+    "url",
+    "published_at",
+    "topics"
+  ],
+  "title": "NewsEvent",
+  "type": "object"
+}

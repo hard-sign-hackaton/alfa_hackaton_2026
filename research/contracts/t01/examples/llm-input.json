@@ -1,0 +1,132 @@
+{
+  "company_id": "demo-metal",
+  "news_id": "514cd7721cf86b6c1002",
+  "profile_provenance": "synthetic_demo",
+  "sources": {
+    "news:514cd7721cf86b6c1002": "Спрос на сталь в России в 2026 году может снизиться на 0,5% год к году\nВнутренний спрос на сталь в России в 2026 году может снизиться на 0,5% год к году, сообщила «Северсталь» в отчетности за третий квартал. Таким образом, объем потребления металла в этом году может составить около 38,7 млн тонн против 38,9 млн тонн годом ранее. Это соответствует уровню 2016 года, но ниже, чем в 2017–2024 годах. Ранее компания ожидала снижения потребления металла в 2026 году на 7%. Гендиректор «Северстали» Александр Шевелев отметил, что прогноз улучшен с учетом частичной реализации отложенного спроса в третьем квартале. Но, добавил топ-менеджер, рынку пока не удается восстановить утраченные объемы после снижения потребления в 2025 году на 14%. В четвертом квартале, прокомментировал господин Шевелев, ожидается сезонное охлаждение спроса и рынок остается ниже уровней, предшествовавших спаду. За девять месяцев 2026 года спрос на сталь вырос примерно на 1% год к году, оценивает «Северсталь». Подробнее читайте в материале «Потребители потянулись к металлу» .",
+    "company:demo-metal:okved_codes": "[\"24.10\"]",
+    "company:demo-metal:okved_names": "[\"Производство чугуна, стали и ферросплавов\"]",
+    "company:demo-metal:registration_region": "\"Челябинская область\"",
+    "company:demo-metal:ownership_form": "\"ООО\"",
+    "company:demo-metal:annual_revenue_rub": "800000000.0",
+    "company:demo-metal:banking_services": "[\"credit\", \"leasing\"]"
+  },
+  "question": null,
+  "history": [],
+  "schema": {
+    "$defs": {
+      "Claim": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "fact",
+              "hypothesis"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "text": {
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/$defs/Evidence"
+            },
+            "title": "Evidence",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "text",
+          "evidence"
+        ],
+        "title": "Claim",
+        "type": "object"
+      },
+      "Evidence": {
+        "additionalProperties": false,
+        "properties": {
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "quote": {
+            "minLength": 1,
+            "title": "Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "quote"
+        ],
+        "title": "Evidence",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "company_id": {
+        "title": "Company Id",
+        "type": "string"
+      },
+      "news_id": {
+        "title": "News Id",
+        "type": "string"
+      },
+      "status": {
+        "enum": [
+          "supported",
+          "insufficient_data"
+        ],
+        "title": "Status",
+        "type": "string"
+      },
+      "summary": {
+        "minLength": 1,
+        "title": "Summary",
+        "type": "string"
+      },
+      "claims": {
+        "items": {
+          "$ref": "#/$defs/Claim"
+        },
+        "title": "Claims",
+        "type": "array"
+      },
+      "missing_data": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Missing Data",
+        "type": "array"
+      },
+      "follow_up_answer": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Follow Up Answer"
+      }
+    },
+    "required": [
+      "company_id",
+      "news_id",
+      "status",
+      "summary",
+      "claims",
+      "missing_data",
+      "follow_up_answer"
+    ],
+    "title": "Insight",
+    "type": "object"
+  }
+}

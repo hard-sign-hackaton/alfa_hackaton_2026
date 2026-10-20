@@ -1,0 +1,18 @@
+{
+  "company_id": "demo-metal",
+  "news_id": "514cd7721cf86b6c1002",
+  "score": 70,
+  "eligible": true,
+  "reasons": [
+    {
+      "feature": "okved_topic",
+      "matched": [
+        "metallurgy"
+      ],
+      "weight": 70
+    }
+  ],
+  "missing_data": [
+    "trade_countries"
+  ]
+}

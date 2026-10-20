@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "const": "t01-draft-1"
+    },
+    "company": {
+      "$ref": "ai-company-profile.schema.json"
+    },
+    "event": {
+      "$ref": "ai-news-event.schema.json"
+    },
+    "ai_insight": {
+      "$ref": "ai-insight.schema.json"
+    },
+    "impact": {
+      "$ref": "impact-assessment.schema.json"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "company_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profile_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profile_as_of": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "insight_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "insight_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "analyzed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "collected_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "publisher": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "is_fictional_event": {
+          "type": "boolean"
+        },
+        "analysis_mode": {
+          "enum": [
+            "offline_baseline",
+            "live"
+          ]
+        }
+      },
+      "required": [
+        "company_label",
+        "profile_version",
+        "profile_as_of",
+        "insight_id",
+        "insight_version",
+        "analyzed_at",
+        "collected_at",
+        "publisher",
+        "is_fictional_event",
+        "analysis_mode"
+      ]
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "effect_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "event_summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin": {
+          "enum": [
+            "editorial_draft",
+            "demo_fixture",
+            "presentation_module"
+          ]
+        }
+      },
+      "required": [
+        "effect_title",
+        "event_summary",
+        "origin"
+      ]
+    },
+    "bank_context": {
+      "anyOf": [
+        {
+          "$ref": "bank-context.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "enrichment": {
+      "anyOf": [
+        {
+          "$ref": "ux-enrichment.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "contract_version",
+    "company",
+    "event",
+    "ai_insight",
+    "impact",
+    "metadata",
+    "presentation",
+    "bank_context",
+    "enrichment"
+  ]
+}

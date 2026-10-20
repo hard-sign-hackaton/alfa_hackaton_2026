@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "const": "t01-draft-1"
+    },
+    "company": {
+      "$ref": "../company-profile.schema.json"
+    },
+    "event": {
+      "$ref": "../news-event.schema.json"
+    },
+    "insight": {
+      "$ref": "../insight.schema.json"
+    },
+    "feed_card": {
+      "$ref": "../feed-card.schema.json"
+    },
+    "ai_insight": {
+      "$ref": "ai-insight.schema.json"
+    }
+  },
+  "required": [
+    "contract_version",
+    "company",
+    "event",
+    "insight",
+    "feed_card",
+    "ai_insight"
+  ]
+}

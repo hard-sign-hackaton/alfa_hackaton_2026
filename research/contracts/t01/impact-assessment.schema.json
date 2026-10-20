@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "const": "t01-draft-1"
+    },
+    "company_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "news_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "importance": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "method": {
+      "enum": [
+        "rules",
+        "classifier",
+        "editorial"
+      ]
+    },
+    "is_demo": {
+      "type": "boolean"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "quote": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "source_id",
+          "quote"
+        ]
+      },
+      "minItems": 1
+    },
+    "profile_version": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "contract_version",
+    "company_id",
+    "news_id",
+    "importance",
+    "reason",
+    "method",
+    "is_demo",
+    "evidence",
+    "profile_version"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "const": "t01-draft-1"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "../common.schema.json#/$defs/source"
+      }
+    },
+    "bank": {
+      "$ref": "../common.schema.json#/$defs/bank"
+    },
+    "company_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "news_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile_version": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "contract_version",
+    "sources",
+    "bank",
+    "company_id",
+    "news_id",
+    "profile_version"
+  ]
+}
