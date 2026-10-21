@@ -40,3 +40,42 @@ services:
     volumes:
       - ./research/news:/app/research/news
     command: [python, collect_news.py, --snapshot, --offline, --curated]
+
+  postgres:
+    image: pgvector/pgvector:0.8.1-pg16
+    profiles: [pipeline]
+    environment:
+      POSTGRES_DB: alfa_news
+      POSTGRES_USER: alfa_news
+      POSTGRES_PASSWORD: ${NEWS_DB_PASSWORD:-local-news-development-only}
+    ports:
+      - "127.0.0.1:${NEWS_DB_PORT:-5433}:5432"
+    volumes:
+      - news-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U alfa_news -d alfa_news"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  news:
+    build:
+      context: .
+      dockerfile: Dockerfile.news
+    profiles: [pipeline]
+    init: true
+    environment:
+      DATABASE_URL: postgresql+psycopg://alfa_news:${NEWS_DB_PASSWORD:-local-news-development-only}@postgres:5432/alfa_news
+      NEWS_LOOKBACK_DAYS: ${NEWS_LOOKBACK_DAYS:-15}
+      NEWS_EMBEDDING_DEVICE: cpu
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - news-runtime:/runtime
+      - news-models:/models
+
+volumes:
+  news-postgres:
+  news-runtime:
+  news-models:
