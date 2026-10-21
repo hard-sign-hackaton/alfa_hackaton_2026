@@ -7,7 +7,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY research/ai/requirements.txt /tmp/requirements-ai.txt
 COPY research/news/requirements.txt /tmp/requirements-news.txt
-RUN python -m pip install --disable-pip-version-check -r /tmp/requirements-ai.txt -r /tmp/requirements-news.txt \
+COPY research/contracts/requirements.txt /tmp/requirements-contracts.txt
+RUN python -m pip install --disable-pip-version-check -r /tmp/requirements-ai.txt -r /tmp/requirements-news.txt -r /tmp/requirements-contracts.txt \
     && groupadd --gid 10001 researcher \
     && useradd --uid 10001 --gid researcher --no-create-home researcher \
     && mkdir /output \

@@ -45,6 +45,9 @@
     },
     "schema": {
       "type": "object"
+    },
+    "preparation": {
+      "$ref": "news-preparation.schema.json"
     }
   },
   "required": [

@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Claim": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "fact",
+            "hypothesis"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "text",
+        "evidence"
+      ],
+      "title": "Claim",
+      "type": "object"
+    },
+    "EventExtraction": {
+      "additionalProperties": false,
+      "properties": {
+        "news_id": {
+          "title": "News Id",
+          "type": "string"
+        },
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/Claim"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Facts",
+          "type": "array"
+        },
+        "missing_data": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missing Data",
+          "type": "array"
+        }
+      },
+      "required": [
+        "news_id",
+        "facts",
+        "missing_data"
+      ],
+      "title": "EventExtraction",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "quote": {
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "quote"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "TopicClassification": {
+      "additionalProperties": false,
+      "properties": {
+        "news_id": {
+          "title": "News Id",
+          "type": "string"
+        },
+        "business_relevant": {
+          "title": "Business Relevant",
+          "type": "boolean"
+        },
+        "topics": {
+          "items": {
+            "enum": [
+              "metallurgy",
+              "electronics",
+              "automotive",
+              "construction",
+              "retail_ecommerce",
+              "logistics",
+              "financial_markets",
+              "energy",
+              "regulation",
+              "other_business",
+              "not_business"
+            ],
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 1,
+          "title": "Topics",
+          "type": "array"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "maxItems": 3,
+          "minItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "news_id",
+        "business_relevant",
+        "topics",
+        "evidence"
+      ],
+      "title": "TopicClassification",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "classification": {
+      "$ref": "#/$defs/TopicClassification"
+    },
+    "extraction": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EventExtraction"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "classification",
+    "extraction"
+  ],
+  "title": "NewsPreparation",
+  "type": "object"
+}
