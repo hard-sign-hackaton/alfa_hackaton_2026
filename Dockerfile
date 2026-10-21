@@ -14,6 +14,9 @@ RUN python -m pip install --disable-pip-version-check -r /tmp/requirements-ai.tx
     && mkdir /output \
     && chown researcher:researcher /output
 
+COPY research/ai/database-requirements.txt /tmp/requirements-database.txt
+RUN python -m pip install --disable-pip-version-check -r /tmp/requirements-database.txt
+
 COPY --chown=researcher:researcher research /app/research
 USER researcher
 WORKDIR /app/research/ai

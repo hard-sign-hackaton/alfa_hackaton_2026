@@ -11,6 +11,7 @@ ALLOWED_MODELS = frozenset({
     'deepseek/deepseek-v4.1-flash', 'qwen/qwen3-vl-30b-a3b-instruct', 'moonshotai/kimi-k2.6',
 })
 DEFAULT_ROUTES = {
+    'research': ('LLM_RESEARCH_MODEL', 'deepseek/deepseek-v4.1-flash', 2048),
     'classification': ('LLM_CLASSIFICATION_MODEL', 'google/gemma-4-26b-a4b-it', 1024),
     'extraction': ('LLM_EXTRACTION_MODEL', 'qwen/qwen3.6-35b-a3b', 4096),
     'analysis': ('LLM_ANALYSIS_MODEL', 'deepseek/deepseek-v4.1-flash', 6144),

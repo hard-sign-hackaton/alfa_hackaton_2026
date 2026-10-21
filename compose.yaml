@@ -22,7 +22,7 @@ services:
     image: alfa-hackaton-research:local
     init: true
     profiles: [live]
-    environment:
+    environment: &llm_environment
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_BASE_URL: ${LLM_BASE_URL:-https://changellenge.up.railway.app/v1}
       LLM_CLASSIFICATION_MODEL: ${LLM_CLASSIFICATION_MODEL:-google/gemma-4-26b-a4b-it}
@@ -30,6 +30,9 @@ services:
       LLM_ANALYSIS_MODEL: ${LLM_ANALYSIS_MODEL:-deepseek/deepseek-v4.1-flash}
       LLM_CHAT_MODEL: ${LLM_CHAT_MODEL:-z-ai/glm-5.3-flash}
       LLM_REQUEST_TIMEOUT: ${LLM_REQUEST_TIMEOUT:-120}
+      LLM_RESEARCH_MODEL: ${LLM_RESEARCH_MODEL:-deepseek/deepseek-v4.1-flash}
+      HTTPS_PROXY: ${LLM_HTTPS_PROXY:-}
+      LANGCHAIN_OPENAI_TCP_KEEPALIVE: "0"
     volumes:
       - ./research/ai/live_results:/output
     command: [python, run.py, --mode, live, --output, /output]
@@ -44,3 +47,75 @@ services:
     volumes:
       - ./research/news:/app/research/news
     command: [python, collect_news.py, --snapshot, --offline, --curated]
+
+  db:
+    image: postgres:17-alpine
+    profiles: [database, agent, test]
+    environment:
+      POSTGRES_DB: alfa
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      DB_AGENT_PASSWORD: ${DB_AGENT_PASSWORD:?Set DB_AGENT_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - research-db:/var/lib/postgresql/data
+      - ./research/ai/db/init.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d alfa"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  db-seed:
+    build: .
+    image: alfa-hackaton-research:local
+    init: true
+    profiles: [database]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: alfa
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    command: [python, database.py, --seed-demo]
+
+  ai-agent:
+    build: .
+    image: alfa-hackaton-research:local
+    init: true
+    profiles: [agent]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *llm_environment
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: alfa
+      DB_AGENT_PASSWORD: ${DB_AGENT_PASSWORD:?Set DB_AGENT_PASSWORD in .env}
+    volumes:
+      - ./research/ai/live_results:/output
+    command: [python, analyze_pair.py, --pair-id, demo-metal-primary]
+
+  ai-db-tests:
+    build: .
+    image: alfa-hackaton-research:local
+    init: true
+    profiles: [test]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: alfa
+      DB_AGENT_PASSWORD: ${DB_AGENT_PASSWORD:?Set DB_AGENT_PASSWORD in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    command: [python, database_integration.py, -v]
+
+volumes:
+  research-db:

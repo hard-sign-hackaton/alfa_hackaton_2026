@@ -67,7 +67,7 @@ class Insight(StrictModel):
         return self
 
 
-def evidence_sources(company, news):
+def evidence_sources(company, news, retrieved_sources=None):
     sources = {
         f'news:{news.id}': news.title + '\n' + news.text,
     }
@@ -76,13 +76,16 @@ def evidence_sources(company, news):
         if name not in ('id', 'source_ref', 'provenance') and value is not None and value != []:
             import json
             sources[f'company:{company.id}:{name}'] = json.dumps(value, ensure_ascii=False)
+    if retrieved_sources:
+        from retrieval import source_registry
+        sources.update({key: value.text for key, value in source_registry(retrieved_sources, company, news).items()})
     return sources
 
 
-def validate_evidence(insight, company, news):
+def validate_evidence(insight, company, news, retrieved_sources=None):
     if insight.company_id != company.id or insight.news_id != news.id:
         raise ValueError('Cross-company/news response rejected')
-    sources = evidence_sources(company, news)
+    sources = evidence_sources(company, news, retrieved_sources)
     for claim in insight.claims:
         for evidence in claim.evidence:
             if evidence.source_id not in sources or evidence.quote not in sources[evidence.source_id]:

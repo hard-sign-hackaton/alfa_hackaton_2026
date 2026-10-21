@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "source_id": {
+      "maxLength": 250,
+      "minLength": 1,
+      "title": "Source Id",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "news",
+        "bank",
+        "metric"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 500,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "text": {
+      "maxLength": 6000,
+      "minLength": 1,
+      "title": "Text",
+      "type": "string"
+    },
+    "published_at": {
+      "format": "date-time",
+      "title": "Published At",
+      "type": "string"
+    },
+    "locator": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "title": "Locator",
+      "type": "string"
+    },
+    "url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Url"
+    },
+    "company_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Company Id"
+    },
+    "is_demo": {
+      "default": false,
+      "title": "Is Demo",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "source_id",
+    "kind",
+    "title",
+    "text",
+    "published_at",
+    "locator"
+  ],
+  "title": "RetrievedSource",
+  "type": "object"
+}

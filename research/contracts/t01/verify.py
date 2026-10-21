@@ -12,6 +12,7 @@ spec = importlib.util.spec_from_file_location('ux_validator', CONTRACTS / 'valid
 ux = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ux)
 from adapter import adapt, CompanyProfile, NewsEvent, Insight, validate_evidence
+from retrieval import source_registry
 
 def load(path): return json.loads(path.read_text(encoding='utf-8'))
 
@@ -24,7 +25,9 @@ def validate_request(data):
     company = CompanyProfile.model_validate(data['company'])
     event = NewsEvent.model_validate(data['event'])
     insight = Insight.model_validate(data['ai_insight'])
-    validate_evidence(insight, company, event)
+    retrieved = list(source_registry(data.get('retrieved_sources'), company, event,
+                                    as_of=data['metadata']['analyzed_at']).values())
+    validate_evidence(insight, company, event, retrieved)
 
 def validate_bundle(bundle):
     validator(ROOT / 'ux-bundle.schema.json').validate(bundle)
