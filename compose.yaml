@@ -15,17 +15,24 @@ services:
     init: true
     network_mode: none
     profiles: [test]
-    command: [python, -m, unittest, -v, test_research]
+    command: [python, -m, unittest, discover, -s, ., -p, "test_*.py", -v]
 
   ai-live:
     build: .
     image: alfa-hackaton-research:local
     init: true
     profiles: [live]
-    environment:
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
-      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.deepseek.com}
-      LLM_MODEL: ${LLM_MODEL:-deepseek-v4-pro}
+    environment: &llm_environment
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://changellenge.up.railway.app/v1}
+      LLM_CLASSIFICATION_MODEL: ${LLM_CLASSIFICATION_MODEL:-google/gemma-4-26b-a4b-it}
+      LLM_EXTRACTION_MODEL: ${LLM_EXTRACTION_MODEL:-qwen/qwen3.6-35b-a3b}
+      LLM_ANALYSIS_MODEL: ${LLM_ANALYSIS_MODEL:-deepseek/deepseek-v4.1-flash}
+      LLM_CHAT_MODEL: ${LLM_CHAT_MODEL:-z-ai/glm-5.3-flash}
+      LLM_REQUEST_TIMEOUT: ${LLM_REQUEST_TIMEOUT:-120}
+      LLM_RESEARCH_MODEL: ${LLM_RESEARCH_MODEL:-deepseek/deepseek-v4.1-flash}
+      HTTPS_PROXY: ${LLM_HTTPS_PROXY:-}
+      LANGCHAIN_OPENAI_TCP_KEEPALIVE: "0"
     volumes:
       - ./research/ai/live_results:/output
     command: [python, run.py, --mode, live, --output, /output]
@@ -41,9 +48,86 @@ services:
       - ./research/news:/app/research/news
     command: [python, collect_news.py, --snapshot, --offline, --curated]
 
+  db:
+    image: postgres:17-alpine
+    profiles: [database, agent, semantic, test]
+    environment:
+      POSTGRES_DB: alfa
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      DB_AGENT_PASSWORD: ${DB_AGENT_PASSWORD:?Set DB_AGENT_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - research-db:/var/lib/postgresql/data
+      - ./research/ai/db/init.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d alfa"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  db-seed:
+    build: .
+    image: alfa-hackaton-research:local
+    init: true
+    profiles: [database]
+    depends_on:
+      db:
+        condition: service_healthy
+      news-db-init:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: alfa
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      NEWS_SEED_DATABASE_URL: postgresql+psycopg://alfa_news:${NEWS_DB_PASSWORD:-local-news-development-only}@postgres:5432/${NEWS_DATABASE_NAME:-alfa_news}
+    command: [python, database.py, --seed-demo]
+
+  ai-agent:
+    build: .
+    image: alfa-hackaton-research:local
+    init: true
+    profiles: [agent]
+    depends_on:
+      db:
+        condition: service_healthy
+      news-db-init:
+        condition: service_completed_successfully
+    environment: &agent_environment
+      <<: *llm_environment
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: alfa
+      DB_AGENT_PASSWORD: ${DB_AGENT_PASSWORD:?Set DB_AGENT_PASSWORD in .env}
+      NEWS_DATABASE_URL: &news_read_url postgresql+psycopg://analysis_news_reader:${NEWS_READER_PASSWORD:?Set NEWS_READER_PASSWORD in .env}@postgres:5432/${NEWS_DATABASE_NAME:-alfa_news}
+      NEWS_SEARCH_MODE: ${NEWS_SEARCH_MODE:-lexical}
+      NEWS_EMBEDDING_PROFILE: ${NEWS_EMBEDDING_PROFILE:-}
+    volumes:
+      - ./research/ai/live_results:/output
+    command: [python, analyze_pair.py, --pair-id, demo-metal-primary]
+
+  ai-db-tests:
+    build: .
+    image: alfa-hackaton-research:local
+    init: true
+    profiles: [test]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: alfa
+      DB_AGENT_PASSWORD: ${DB_AGENT_PASSWORD:?Set DB_AGENT_PASSWORD in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    command: [python, database_integration.py, -v]
+
   postgres:
     image: pgvector/pgvector:0.8.1-pg16
-    profiles: [pipeline]
+    profiles: [pipeline, database, agent, semantic, test]
     environment:
       POSTGRES_DB: alfa_news
       POSTGRES_USER: alfa_news
@@ -62,12 +146,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.news
+      target: news
     profiles: [pipeline]
     init: true
     environment:
-      DATABASE_URL: postgresql+psycopg://alfa_news:${NEWS_DB_PASSWORD:-local-news-development-only}@postgres:5432/alfa_news
+      DATABASE_URL: postgresql+psycopg://alfa_news:${NEWS_DB_PASSWORD:-local-news-development-only}@postgres:5432/${NEWS_DATABASE_NAME:-alfa_news}
       NEWS_LOOKBACK_DAYS: ${NEWS_LOOKBACK_DAYS:-15}
       NEWS_EMBEDDING_DEVICE: cpu
+      HTTPS_PROXY: ${LLM_HTTPS_PROXY:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,7 +161,79 @@ services:
       - news-runtime:/runtime
       - news-models:/models
 
+  news-db-init:
+    build: .
+    image: alfa-hackaton-research:local
+    profiles: [database, agent, semantic, test]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://alfa_news:${NEWS_DB_PASSWORD:-local-news-development-only}@postgres:5432/${NEWS_DATABASE_NAME:-alfa_news}
+      NEWS_READER_PASSWORD: ${NEWS_READER_PASSWORD:?Set NEWS_READER_PASSWORD in .env}
+    command: [python, /app/scripts/init_news_reader.py]
+
+  ai-agent-semantic:
+    extends:
+      service: ai-agent
+    profiles: [semantic]
+    build:
+      context: .
+      dockerfile: Dockerfile.news
+      target: agent
+    image: alfa-hackaton-agent-semantic:local
+    environment:
+      <<: *agent_environment
+      NEWS_SEARCH_MODE: semantic
+      NEWS_EMBEDDING_DEVICE: cpu
+      HF_HOME: /models
+    volumes:
+      - ./research/ai/live_results:/output
+      - news-models:/models
+    command: [--pair-id, demo-metal-primary]
+
+  integration-tests:
+    build: .
+    image: alfa-hackaton-research:local
+    profiles: [test]
+    depends_on:
+      db:
+        condition: service_healthy
+      news-db-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql+psycopg://alfa_news:${NEWS_DB_PASSWORD:-local-news-development-only}@postgres:5432/alfa_news
+      NEWS_READER_PASSWORD: ${NEWS_READER_PASSWORD:?Set NEWS_READER_PASSWORD in .env}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: alfa
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      DB_AGENT_PASSWORD: ${DB_AGENT_PASSWORD:?Set DB_AGENT_PASSWORD in .env}
+    command: [python, /app/scripts/run_integration_tests.py]
+
+  semantic-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.news
+      target: agent
+    image: alfa-hackaton-agent-semantic:local
+    profiles: [semantic, test]
+    depends_on:
+      news-db-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql+psycopg://alfa_news:${NEWS_DB_PASSWORD:-local-news-development-only}@postgres:5432/alfa_news_integration_test
+      NEWS_DATABASE_URL: postgresql+psycopg://analysis_news_reader:${NEWS_READER_PASSWORD:?Set NEWS_READER_PASSWORD in .env}@postgres:5432/alfa_news_integration_test
+      HTTPS_PROXY: ${LLM_HTTPS_PROXY:-}
+      HF_HOME: /models
+      NEWS_EMBEDDING_DEVICE: cpu
+    volumes:
+      - news-models:/models
+    entrypoint: [python, e5_integration.py]
+    command: []
+
 volumes:
+  research-db:
   news-postgres:
   news-runtime:
   news-models:

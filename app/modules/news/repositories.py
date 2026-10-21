@@ -1,9 +1,36 @@
 from datetime import datetime, timezone
-from sqlalchemy import select, text as sql
+from sqlalchemy import select, text as sql, func, literal_column
 from sqlalchemy.dialects.postgresql import insert
 from .models import NewsSource, Article, IngestionRun, EmbeddingProfile, Embedding
 from .dto import NewsArticleDTO, EmbeddingInput
 from .identity import input_hash
+
+EXCERPT_OPTIONS = 'MaxWords=180, MinWords=60, MaxFragments=1, StartSel="", StopSel=""'
+RUSSIAN = literal_column("'russian'::regconfig")
+
+
+def search_time(as_of):
+    value = as_of or datetime.now(timezone.utc)
+    if value.tzinfo is None:
+        raise ValueError('Search time requires a timezone')
+    return value
+
+
+def hit_columns(query):
+    excerpt = (func.ts_headline(RUSSIAN, Article.text,
+               func.websearch_to_tsquery(RUSSIAN, query), EXCERPT_OPTIONS)
+               if query else func.substr(Article.text, 1, 5500))
+    return [Article.id, Article.url, Article.title, excerpt.label('text'), Article.published_at,
+            Article.collected_at, Article.details['publisher'].astext.label('publisher')]
+
+
+def hit(row):
+    result = dict(row._mapping)
+    for key in ('published_at', 'collected_at'):
+        result[key] = result[key].isoformat()
+    if 'similarity' in result:
+        result['similarity'] = float(result['similarity'])
+    return result
 
 class NewsRepository:
     def __init__(self, session_factory):
@@ -39,6 +66,28 @@ class NewsRepository:
             return [NewsArticleDTO.model_validate(row.details) for row in s.scalars(
                 select(Article).order_by(Article.published_at, Article.id))]
 
+    def get_article(self, article_id, *, as_of=None):
+        with self.session() as s:
+            row = s.scalar(select(Article).where(Article.id == article_id, Article.published_at <= search_time(as_of)))
+            return NewsArticleDTO.model_validate(row.details) if row else None
+
+    def get_by_url(self, url, *, as_of=None):
+        with self.session() as s:
+            row = s.scalar(select(Article).where(Article.url == url, Article.published_at <= search_time(as_of)))
+            return NewsArticleDTO.model_validate(row.details) if row else None
+
+    def search_text(self, query, top_k=5, *, as_of=None, exclude_id=None):
+        if not query.strip() or not 1 <= top_k <= 100:
+            raise ValueError('Nonempty query and top-k between 1 and 100 required')
+        vector = func.to_tsvector(RUSSIAN, Article.title + ' ' + Article.text)
+        terms = func.websearch_to_tsquery(RUSSIAN, query)
+        statement = select(*hit_columns(query)).where(vector.op('@@')(terms), Article.published_at <= search_time(as_of))
+        if exclude_id is not None:
+            statement = statement.where(Article.id != exclude_id)
+        with self.session() as s:
+            return [hit(row) for row in s.execute(statement.order_by(func.ts_rank(vector, terms).desc(),
+                    Article.published_at.desc(), Article.id).limit(top_k))]
+
 
 class NewsEmbeddingRepository:
     def __init__(self, session_factory):
@@ -65,17 +114,23 @@ class NewsEmbeddingRepository:
                         set_={k: getattr(stmt.excluded, k) for k in ('vector', 'input_hash', 'chunk_count', 'created_at')}))
             return True
 
-    def search_pg(self, vector, profile_id, top_k):
+    def search_pg(self, vector, profile_id, top_k, *, as_of=None, exclude_id=None, query=None):
+        if not 1 <= top_k <= 100:
+            raise ValueError('top-k must be between 1 and 100')
         distance = Embedding.vector.cosine_distance(vector)
         with self.session() as s:
             s.execute(sql("SET LOCAL hnsw.iterative_scan = 'strict_order'"))
             s.execute(sql('SET LOCAL hnsw.ef_search = 64'))
             # Distance and publication metadata come from the same statement snapshot.
-            rows = s.execute(select(Article.id, Article.url, Article.title,
+            statement = select(*hit_columns(query),
                 (1 - distance).label('similarity')).select_from(Embedding)
-                .join(Article, Article.id == Embedding.article_id)
-                .where(Embedding.profile_id == profile_id).order_by(distance).limit(top_k)).all()
-        return [dict(id=row.id, url=row.url, title=row.title, similarity=float(row.similarity)) for row in rows]
+            statement = statement.join(Article, Article.id == Embedding.article_id).where(
+                Embedding.profile_id == profile_id, Embedding.input_hash == Article.content_hash,
+                Article.published_at <= search_time(as_of))
+            if exclude_id is not None:
+                statement = statement.where(Article.id != exclude_id)
+            rows = s.execute(statement.order_by(distance, Article.id).limit(top_k)).all()
+        return [hit(row) for row in rows]
 
     def list_profiles(self):
         with self.session() as s:

@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS news
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
 COPY requirements.txt /tmp/news-requirements.txt
@@ -19,3 +19,17 @@ ENV NEWS_RUNTIME_DIR=/runtime HF_HOME=/models
 USER newspipeline
 ENTRYPOINT ["python", "-m", "app.modules.news"]
 CMD ["--help"]
+
+FROM news AS agent
+USER root
+COPY research/ai/requirements.txt /tmp/ai-requirements.txt
+RUN pip install -r /tmp/ai-requirements.txt
+COPY --chown=newspipeline:newspipeline research/ai /app/research/ai
+COPY --chown=newspipeline:newspipeline research/contracts /app/research/contracts
+ENV PYTHONPATH=/app
+USER newspipeline
+WORKDIR /app/research/ai
+ENTRYPOINT ["python", "analyze_pair.py"]
+CMD []
+
+FROM news AS default-news

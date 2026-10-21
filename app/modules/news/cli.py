@@ -7,7 +7,7 @@ from app.shared.config import runtime_dir
 from app.shared.db.migrations import upgrade_database
 from app.shared.files import write_json
 from .bootstrap import repositories
-from .config import Settings, period
+from .config import Settings, period, parse_date
 from .parsers.registry import SOURCES
 from .services.export import NewsExportService
 from .services.ingestion import NewsIngestionService
@@ -41,6 +41,8 @@ def main(argv=None):
     query.add_argument('query')
     query.add_argument('--top-k', type=int, default=5)
     query.add_argument('--profile')
+    query.add_argument('--as-of', type=parse_date)
+    query.add_argument('--exclude-id')
     query.add_argument('--output', type=Path)
     args = parser.parse_args(argv)
     if args.command == 'db':
@@ -81,7 +83,8 @@ def main(argv=None):
         embeddings = NewsEmbeddingService(vectors, E5Provider(revision=profile['revision']))
         if embeddings.profile != profile:
             raise ValueError('Stored embedding preparation is incompatible; regenerate embeddings')
-        result = NewsSearchService(vectors, embeddings).search(args.query, args.top_k)
+        result = NewsSearchService(vectors, embeddings).search(args.query, args.top_k,
+                    as_of=args.as_of, exclude_id=args.exclude_id)
         if args.output:
             write_json(args.output, result)
     print(json.dumps(result, ensure_ascii=False, indent=2))

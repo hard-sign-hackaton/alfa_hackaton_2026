@@ -7,7 +7,8 @@ from pathlib import Path
 from agent import ResearchAgent
 from contracts import CompanyProfile, Insight
 from fixtures import BASE, news, profiles, relevance_labels
-from provider import DeepSeekClient, ModelError
+from provider import LangChainClient, ModelError
+from model_config import load_environment
 from ranking import rank_pair
 
 AS_OF = datetime.fromisoformat('2026-10-20T17:00:00+00:00')
@@ -20,6 +21,12 @@ def write(path, value):
 
 
 def run(mode, output):
+    client = None
+    if mode == 'live':
+        load_environment()
+        client = LangChainClient()
+        if not client.api_key:
+            raise ModelError('LLM_API_KEY is required for live mode')
     companies, events = profiles(), news()
     labels = relevance_labels(companies, events)
     write(output / 'company_profiles.json', [c.model_dump() for c in companies])
@@ -53,9 +60,6 @@ def run(mode, output):
          'expected_relevant': True, 'error': 'false_negative',
          'reason': 'Synthetic customer dependency is absent from the profile'},
     ])
-    client = DeepSeekClient() if mode == 'live' else None
-    if client and not client.api_key:
-        raise ModelError('DEEPSEEK_API_KEY is required for live mode')
     results = []
     try:
         for company in companies:
@@ -65,7 +69,8 @@ def run(mode, output):
     finally:
         if client:
             write(output / 'live_telemetry.json', {'mode': 'live', 'calls': client.telemetry,
-                                                 'contains_mock_data': False})
+                                                 'models': client.model_signature(), 'contains_mock_data': False})
+            client.close()
     write(output / 'shared_news_interpretations.json', results)
     write(output / 'summary.json', {
         'mode': mode,
@@ -74,6 +79,7 @@ def run(mode, output):
         'ranked_pairs': len(pairs),
         'profile_provenance': 'synthetic_demo',
         'payment_data_available': False,
+        'models': client.model_signature() if client else None,
     })
 
 
@@ -85,6 +91,6 @@ if __name__ == '__main__':
     destination = args.output or BASE / ('live_results' if args.mode == 'live' else 'results')
     try:
         run(args.mode, destination)
-    except ModelError as exc:
+    except (ModelError, ValueError) as exc:
         parser.exit(2, str(exc) + '\n')
     print('Results: ' + str(destination))

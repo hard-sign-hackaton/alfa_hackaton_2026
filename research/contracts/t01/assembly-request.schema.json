@@ -136,6 +136,13 @@
           "type": "null"
         }
       ]
+    },
+    "retrieved_sources": {
+      "type": "array",
+      "items": {
+        "$ref": "retrieved-source.schema.json"
+      },
+      "maxItems": 8
     }
   },
   "required": [

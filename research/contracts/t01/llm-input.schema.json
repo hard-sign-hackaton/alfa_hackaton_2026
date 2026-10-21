@@ -45,6 +45,58 @@
     },
     "schema": {
       "type": "object"
+    },
+    "preparation": {
+      "$ref": "news-preparation.schema.json"
+    },
+    "retrieved_sources": {
+      "type": "array",
+      "items": {
+        "$ref": "retrieved-source.schema.json"
+      },
+      "maxItems": 8
+    },
+    "news_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "published_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publisher": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "collected_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "published_at",
+        "url",
+        "publisher",
+        "collected_at"
+      ]
     }
   },
   "required": [
