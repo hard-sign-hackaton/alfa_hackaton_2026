@@ -1,0 +1,564 @@
+{
+  "checked_at": "2026-10-21T20:05:12.727295+00:00",
+  "local_date": "2026-10-22",
+  "branch": "feature/news-pipeline",
+  "base_commit": "7085f58c175f37ed917ea05e8f927c82aea193d3",
+  "automated_checks": {
+    "news_unit_and_postgres_tests": 24,
+    "ai_tests": 16,
+    "t01_tests": 12,
+    "ux_schemas_and_negative_examples": "passed",
+    "t01_verify": "passed",
+    "export_records_validated_per_format": 151,
+    "pip_check": "passed"
+  },
+  "first_collection": {
+    "settings": {
+      "timeout": 20,
+      "delay": 1,
+      "max_requests": 3000,
+      "max_sitemaps": 100,
+      "max_bytes": 30000000
+    },
+    "workers": 3,
+    "reports": [
+      {
+        "source": "kommersant",
+        "started_at": "2026-10-21T19:55:15.349104+00:00",
+        "from_date": "2026-10-06T19:55:15.304092+00:00",
+        "to_date": "2026-10-21T19:55:15.304092+00:00",
+        "limit": 50,
+        "discovered": 1814,
+        "discovery_outside_period": 1,
+        "attempted": 65,
+        "saved": 50,
+        "inserted": 50,
+        "updated": 0,
+        "unchanged": 0,
+        "outside_period": 0,
+        "truncated": true,
+        "errors": [
+          {
+            "url": "https://www.kommersant.ru/doc/9044240",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044222",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044090",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044180",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044155",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044153",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044134",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044129",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044091",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044069",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044041",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044052",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044049",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044057",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044055",
+            "error": "missing_or_short_article_body"
+          }
+        ],
+        "requests": 104,
+        "elapsed_seconds": 105.609,
+        "finished_at": "2026-10-21T19:57:00.960998+00:00",
+        "status": "partial"
+      },
+      {
+        "source": "vedomosti",
+        "started_at": "2026-10-21T19:55:15.349624+00:00",
+        "from_date": "2026-10-06T19:55:15.304092+00:00",
+        "to_date": "2026-10-21T19:55:15.304092+00:00",
+        "limit": 50,
+        "discovered": 174711,
+        "discovery_outside_period": 0,
+        "attempted": 50,
+        "saved": 50,
+        "inserted": 50,
+        "updated": 0,
+        "unchanged": 0,
+        "outside_period": 0,
+        "truncated": true,
+        "errors": [],
+        "requests": 132,
+        "elapsed_seconds": 152.578,
+        "finished_at": "2026-10-21T19:57:47.928110+00:00",
+        "status": "partial"
+      },
+      {
+        "source": "interfax",
+        "started_at": "2026-10-21T19:55:15.350655+00:00",
+        "from_date": "2026-10-06T19:55:15.304092+00:00",
+        "to_date": "2026-10-21T19:55:15.304092+00:00",
+        "limit": 50,
+        "discovered": 885511,
+        "discovery_outside_period": 0,
+        "attempted": 50,
+        "saved": 50,
+        "inserted": 50,
+        "updated": 0,
+        "unchanged": 0,
+        "outside_period": 0,
+        "truncated": true,
+        "errors": [],
+        "requests": 76,
+        "elapsed_seconds": 106.468,
+        "finished_at": "2026-10-21T19:57:01.820892+00:00",
+        "status": "partial"
+      }
+    ],
+    "coverage": "Available discovery documents only; article/request limits and publisher coverage may truncate the period."
+  },
+  "repeat_collection": {
+    "settings": {
+      "timeout": 20,
+      "delay": 1,
+      "max_requests": 3000,
+      "max_sitemaps": 100,
+      "max_bytes": 30000000
+    },
+    "workers": 3,
+    "reports": [
+      {
+        "source": "kommersant",
+        "started_at": "2026-10-21T19:59:21.245957+00:00",
+        "from_date": "2026-10-06T19:59:21.175466+00:00",
+        "to_date": "2026-10-21T19:59:21.175466+00:00",
+        "limit": 50,
+        "discovered": 66,
+        "discovery_outside_period": 0,
+        "attempted": 66,
+        "saved": 50,
+        "inserted": 1,
+        "updated": 0,
+        "unchanged": 49,
+        "outside_period": 0,
+        "truncated": true,
+        "errors": [
+          {
+            "url": "https://www.kommersant.ru/doc/9044291",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044240",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044222",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044090",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044180",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044155",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044153",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044134",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044129",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044091",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044069",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044041",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044052",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044049",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044057",
+            "error": "missing_or_short_article_body"
+          },
+          {
+            "url": "https://www.kommersant.ru/doc/9044055",
+            "error": "missing_or_short_article_body"
+          }
+        ],
+        "requests": 68,
+        "elapsed_seconds": 68.328,
+        "finished_at": "2026-10-21T20:00:29.565661+00:00",
+        "status": "partial"
+      },
+      {
+        "source": "vedomosti",
+        "started_at": "2026-10-21T19:59:21.246955+00:00",
+        "from_date": "2026-10-06T19:59:21.175466+00:00",
+        "to_date": "2026-10-21T19:59:21.175466+00:00",
+        "limit": 50,
+        "discovered": 50,
+        "discovery_outside_period": 0,
+        "attempted": 50,
+        "saved": 50,
+        "inserted": 0,
+        "updated": 0,
+        "unchanged": 50,
+        "outside_period": 0,
+        "truncated": true,
+        "errors": [],
+        "requests": 51,
+        "elapsed_seconds": 52.485,
+        "finished_at": "2026-10-21T20:00:13.728371+00:00",
+        "status": "partial"
+      },
+      {
+        "source": "interfax",
+        "started_at": "2026-10-21T19:59:21.246955+00:00",
+        "from_date": "2026-10-06T19:59:21.175466+00:00",
+        "to_date": "2026-10-21T19:59:21.175466+00:00",
+        "limit": 50,
+        "discovered": 50,
+        "discovery_outside_period": 0,
+        "attempted": 50,
+        "saved": 50,
+        "inserted": 0,
+        "updated": 0,
+        "unchanged": 50,
+        "outside_period": 0,
+        "truncated": true,
+        "errors": [],
+        "requests": 54,
+        "elapsed_seconds": 53.828,
+        "finished_at": "2026-10-21T20:00:15.077902+00:00",
+        "status": "partial"
+      }
+    ],
+    "coverage": "Available discovery documents only; article/request limits and publisher coverage may truncate the period."
+  },
+  "vectors": {
+    "embedding_repeat": {
+      "profile": {
+        "model": "intfloat/multilingual-e5-small",
+        "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+        "dimensions": 384,
+        "normalized": true,
+        "preparation": "e5-title64-body384-overlap64-mean-l2-v1",
+        "id": "9a3f23610b4fbc3364edb63f1e1e1e195200e4f03b4a007ea1ec5b4d39207469"
+      },
+      "saved": 0,
+      "concurrently_changed": 0
+    },
+    "records": 151,
+    "dimensions": 384,
+    "norm_min": 1.0,
+    "norm_max": 1.0,
+    "faiss_recall_at_5": [
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "search_checks": [
+    {
+      "query": "цены на нефть и топливо",
+      "results": {
+        "faiss": [
+          {
+            "id": "9a1434a91d0fe5c7f4da36bdd81871774a2598d69d95a2ad5629aed827d15587",
+            "url": "https://www.kommersant.ru/doc/9044194",
+            "title": "Доступ к биржевым торгам нефтепродуктами может быть ограничен",
+            "similarity": 0.8899605870246887
+          },
+          {
+            "id": "742c81563bbb9a4a170062f93af9d1a556e159e070b75f6400e7620ede26ca10",
+            "url": "https://www.interfax.ru/business/1124072",
+            "title": "Рубль укрепляется к мировым валютам четвертый день подряд",
+            "similarity": 0.8789944052696228
+          },
+          {
+            "id": "b9f5536af392ae75f14bde1937784dd88458d8b9db14c8cb50281a87069b39dd",
+            "url": "https://www.interfax.ru/business/1124061",
+            "title": "Цены на бензин в РФ снизились на 0,69% после роста на 0,01% неделей ранее",
+            "similarity": 0.8757234811782837
+          },
+          {
+            "id": "45d0a4ee12d82481ab13d28db88edc5e81e086621311255c53a2742117b198f5",
+            "url": "https://www.vedomosti.ru/business/news/2026/10/21/1239020-benzin",
+            "title": "Бензин в России за неделю подешевел на 0,7%",
+            "similarity": 0.8590070009231567
+          },
+          {
+            "id": "1056dce3cfa282c8aee1ecd173c5273091e4715beda0b3930c733a3261c46b2e",
+            "url": "https://www.kommersant.ru/doc/9044169",
+            "title": "Ставки на перевозку российской нефти выросли до рекордного уровня",
+            "similarity": 0.8581482172012329
+          }
+        ],
+        "pgvector": [
+          {
+            "id": "9a1434a91d0fe5c7f4da36bdd81871774a2598d69d95a2ad5629aed827d15587",
+            "url": "https://www.kommersant.ru/doc/9044194",
+            "title": "Доступ к биржевым торгам нефтепродуктами может быть ограничен",
+            "similarity": 0.8899604809331321
+          },
+          {
+            "id": "742c81563bbb9a4a170062f93af9d1a556e159e070b75f6400e7620ede26ca10",
+            "url": "https://www.interfax.ru/business/1124072",
+            "title": "Рубль укрепляется к мировым валютам четвертый день подряд",
+            "similarity": 0.8789943528774782
+          },
+          {
+            "id": "b9f5536af392ae75f14bde1937784dd88458d8b9db14c8cb50281a87069b39dd",
+            "url": "https://www.interfax.ru/business/1124061",
+            "title": "Цены на бензин в РФ снизились на 0,69% после роста на 0,01% неделей ранее",
+            "similarity": 0.8757235481903838
+          },
+          {
+            "id": "45d0a4ee12d82481ab13d28db88edc5e81e086621311255c53a2742117b198f5",
+            "url": "https://www.vedomosti.ru/business/news/2026/10/21/1239020-benzin",
+            "title": "Бензин в России за неделю подешевел на 0,7%",
+            "similarity": 0.8590068473207643
+          },
+          {
+            "id": "1056dce3cfa282c8aee1ecd173c5273091e4715beda0b3930c733a3261c46b2e",
+            "url": "https://www.kommersant.ru/doc/9044169",
+            "title": "Ставки на перевозку российской нефти выросли до рекордного уровня",
+            "similarity": 0.8581480637524029
+          }
+        ]
+      },
+      "top5_overlap": 5,
+      "faiss_recall_at_5_against_exact": 1.0
+    },
+    {
+      "query": "сбои IT-сервисов и кибербезопасность",
+      "results": {
+        "faiss": [
+          {
+            "id": "92f3e9ce9ff033cfd43aeebfb3c72885c1325e3fe7f2ac8b101af96e296c8ea7",
+            "url": "https://www.kommersant.ru/doc/9044238",
+            "title": "Все больше правительственных и других сайтов в мире отключают из-за уязвимости PHP",
+            "similarity": 0.8541659712791443
+          },
+          {
+            "id": "c885a8184153da328aea728d7f48f84b3cbb7876ea5d612aace24354b2ace9c9",
+            "url": "https://www.vedomosti.ru/politics/news/2026/10/21/1239025-v-germanii-otklyuchili",
+            "title": "NTV: в Германии отключили сайты ведомств и больниц из-за угрозы кибератак",
+            "similarity": 0.8444191813468933
+          },
+          {
+            "id": "ed0cd2e58281afb3cb5b43f592145de0a3fd5cd9c77f086d9cd1dc0c25101b7b",
+            "url": "https://www.kommersant.ru/doc/9044142",
+            "title": "Нидерланды и Финляндия отключили госсайты из-за риска хакерских атак",
+            "similarity": 0.8390213847160339
+          },
+          {
+            "id": "afe0529207a629c27d50010c20a3e49752c7978971a1542d4350016a7da8701b",
+            "url": "https://www.interfax.ru/russia/1124056",
+            "title": "Специалисты РКН отразили с начала года более 20,1 тыс. DDoS-атак",
+            "similarity": 0.8358281850814819
+          },
+          {
+            "id": "c4936a85c6042e4cca875fc82678af62b3ca39390cf7bc86d6cb4e0fb679b0a0",
+            "url": "https://www.interfax.ru/world/1124087",
+            "title": "Минфин США ввел антииранские санкции против девяти физических и юридических лиц",
+            "similarity": 0.8282958269119263
+          }
+        ],
+        "pgvector": [
+          {
+            "id": "92f3e9ce9ff033cfd43aeebfb3c72885c1325e3fe7f2ac8b101af96e296c8ea7",
+            "url": "https://www.kommersant.ru/doc/9044238",
+            "title": "Все больше правительственных и других сайтов в мире отключают из-за уязвимости PHP",
+            "similarity": 0.8541659712791504
+          },
+          {
+            "id": "c885a8184153da328aea728d7f48f84b3cbb7876ea5d612aace24354b2ace9c9",
+            "url": "https://www.vedomosti.ru/politics/news/2026/10/21/1239025-v-germanii-otklyuchili",
+            "title": "NTV: в Германии отключили сайты ведомств и больниц из-за угрозы кибератак",
+            "similarity": 0.8444191906202337
+          },
+          {
+            "id": "ed0cd2e58281afb3cb5b43f592145de0a3fd5cd9c77f086d9cd1dc0c25101b7b",
+            "url": "https://www.kommersant.ru/doc/9044142",
+            "title": "Нидерланды и Финляндия отключили госсайты из-за риска хакерских атак",
+            "similarity": 0.8390213347064668
+          },
+          {
+            "id": "afe0529207a629c27d50010c20a3e49752c7978971a1542d4350016a7da8701b",
+            "url": "https://www.interfax.ru/russia/1124056",
+            "title": "Специалисты РКН отразили с начала года более 20,1 тыс. DDoS-атак",
+            "similarity": 0.8358281352622443
+          },
+          {
+            "id": "c4936a85c6042e4cca875fc82678af62b3ca39390cf7bc86d6cb4e0fb679b0a0",
+            "url": "https://www.interfax.ru/world/1124087",
+            "title": "Минфин США ввел антииранские санкции против девяти физических и юридических лиц",
+            "similarity": 0.828295728171381
+          }
+        ]
+      },
+      "top5_overlap": 5,
+      "faiss_recall_at_5_against_exact": 1.0
+    },
+    {
+      "query": "металлургия и спрос на сталь",
+      "results": {
+        "faiss": [
+          {
+            "id": "742c81563bbb9a4a170062f93af9d1a556e159e070b75f6400e7620ede26ca10",
+            "url": "https://www.interfax.ru/business/1124072",
+            "title": "Рубль укрепляется к мировым валютам четвертый день подряд",
+            "similarity": 0.8366537690162659
+          },
+          {
+            "id": "91b52961f2d5c9da0b59bf1ea4d4dcea4fce4cb7821063b449c75c03a58d59d3",
+            "url": "https://www.interfax.ru/business/1124064",
+            "title": "Цены промпроизводителей в РФ в сентябре выросли на 2,5%",
+            "similarity": 0.8267632126808167
+          },
+          {
+            "id": "c534459f12447b229f428065b3ca1e82259c2e2ea5708d5967d9d4073cd4c6cd",
+            "url": "https://www.interfax.ru/business/1124069",
+            "title": "Индекс Мосбиржи опустился ниже 2450 пунктов после встречи Путина и Уиткоффа",
+            "similarity": 0.8245948553085327
+          },
+          {
+            "id": "fcbf579aa717beda6269d3ab789ffd84f092b25a3bdfe3f8c4cd05bd71817f97",
+            "url": "https://www.vedomosti.ru/business/news/2026/10/21/1238969-prioriteti-razvitiya-promishlennosti",
+            "title": "Комиссия Госсовета обсудила приоритеты развития промышленности",
+            "similarity": 0.8245511651039124
+          },
+          {
+            "id": "f5ff1be58a7c14cc5f9495d729642c0fef0513c1200940479e5eb52ce880103a",
+            "url": "https://www.kommersant.ru/doc/9044059",
+            "title": "Производитель пестицидов оспаривает тройной рост таможенной стоимости сырья",
+            "similarity": 0.8242757320404053
+          }
+        ],
+        "pgvector": [
+          {
+            "id": "742c81563bbb9a4a170062f93af9d1a556e159e070b75f6400e7620ede26ca10",
+            "url": "https://www.interfax.ru/business/1124072",
+            "title": "Рубль укрепляется к мировым валютам четвертый день подряд",
+            "similarity": 0.8366537191478196
+          },
+          {
+            "id": "91b52961f2d5c9da0b59bf1ea4d4dcea4fce4cb7821063b449c75c03a58d59d3",
+            "url": "https://www.interfax.ru/business/1124064",
+            "title": "Цены промпроизводителей в РФ в сентябре выросли на 2,5%",
+            "similarity": 0.8267631530761778
+          },
+          {
+            "id": "c534459f12447b229f428065b3ca1e82259c2e2ea5708d5967d9d4073cd4c6cd",
+            "url": "https://www.interfax.ru/business/1124069",
+            "title": "Индекс Мосбиржи опустился ниже 2450 пунктов после встречи Путина и Уиткоффа",
+            "similarity": 0.8245948061588537
+          },
+          {
+            "id": "fcbf579aa717beda6269d3ab789ffd84f092b25a3bdfe3f8c4cd05bd71817f97",
+            "url": "https://www.vedomosti.ru/business/news/2026/10/21/1238969-prioriteti-razvitiya-promishlennosti",
+            "title": "Комиссия Госсовета обсудила приоритеты развития промышленности",
+            "similarity": 0.8245511159568375
+          },
+          {
+            "id": "f5ff1be58a7c14cc5f9495d729642c0fef0513c1200940479e5eb52ce880103a",
+            "url": "https://www.kommersant.ru/doc/9044059",
+            "title": "Производитель пестицидов оспаривает тройной рост таможенной стоимости сырья",
+            "similarity": 0.8242756337790926
+          }
+        ]
+      },
+      "top5_overlap": 5,
+      "faiss_recall_at_5_against_exact": 1.0
+    }
+  ],
+  "manual_search_assessment": {
+    "цены на нефть и топливо": "Partly relevant: fuel trading and gasoline prices, but a currency article is also ranked highly.",
+    "сбои IT-сервисов и кибербезопасность": "Top results concern PHP vulnerability and government website shutdowns.",
+    "металлургия и спрос на сталь": "Top results are general macro/market news; this sample does not establish useful metallurgy coverage."
+  },
+  "limitations": [
+    "Capped live sample, not complete 15-day coverage.",
+    "HTML extraction does not establish text completeness or independently verify publisher claims.",
+    "ANN agreement and recall on three queries are not a retrieval-quality benchmark.",
+    "Local runtime JSON, models, FAISS and database data are stored outside Git."
+  ],
+  "tested_python_packages": {
+    "SQLAlchemy": "2.0.55",
+    "psycopg": "3.3.6",
+    "alembic": "1.20.0",
+    "pgvector": "0.5.1",
+    "numpy": "2.5.4",
+    "torch": "2.14.1",
+    "sentence-transformers": "5.7.0",
+    "transformers": "5.20.2",
+    "faiss-cpu": "1.15.1",
+    "pydantic": "2.14.1",
+    "requests": "2.34.2",
+    "beautifulsoup4": "4.15.0"
+  },
+  "docker_checks": {
+    "image_build": "passed",
+    "db_upgrade": "passed",
+    "news_unit_and_postgres_tests": 24,
+    "ai_export_records": 151,
+    "real_e5_query_to_pgvector": "passed using read-only cached model with HF_HUB_OFFLINE=1"
+  },
+  "database_migration": "0002_news_fk_indexes"
+}

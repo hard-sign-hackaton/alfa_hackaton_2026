@@ -1,0 +1,276 @@
+{
+  "checked_at": "2026-10-21T20:33:52.490398+00:00",
+  "branch": "feature/news-pipeline",
+  "architecture": "app/shared + module-owned models/repositories/services/parsers/DTOs; common root migrations",
+  "checks": {
+    "news_tests_host": 33,
+    "news_tests_docker": 33,
+    "ai_regression_tests": 16,
+    "t01_regression_tests": 12,
+    "ux_contract_validation": "passed",
+    "t01_verify": "passed",
+    "new_and_legacy_cli_help": "passed",
+    "fresh_database_upgrade": "passed",
+    "legacy_history_adoption": "passed",
+    "conflicting_histories_rejected": "passed",
+    "docker_build": "passed",
+    "docker_export": "passed",
+    "docker_real_e5_pgvector_query": "passed"
+  },
+  "migration_history": {
+    "table": "alembic_version",
+    "head": "0002_news_fk_indexes",
+    "pre_refactor_articles_preserved": 151,
+    "pre_refactor_vectors_preserved": 151,
+    "fresh_sources": 3
+  },
+  "live_collection": {
+    "settings": {
+      "timeout": 20,
+      "delay": 1,
+      "max_requests": 3000,
+      "max_sitemaps": 100,
+      "max_bytes": 30000000
+    },
+    "workers": 3,
+    "reports": [
+      {
+        "source": "kommersant",
+        "started_at": "2026-10-21T20:28:39.535345+00:00",
+        "from_date": "2026-10-06T20:28:37.687320+00:00",
+        "to_date": "2026-10-21T20:28:37.687320+00:00",
+        "limit": 2,
+        "discovered": 2,
+        "discovery_outside_period": 0,
+        "attempted": 2,
+        "saved": 2,
+        "inserted": 1,
+        "updated": 0,
+        "unchanged": 1,
+        "outside_period": 0,
+        "truncated": true,
+        "errors": [],
+        "requests": 4,
+        "elapsed_seconds": 3.5,
+        "finished_at": "2026-10-21T20:28:43.045395+00:00",
+        "status": "partial"
+      },
+      {
+        "source": "vedomosti",
+        "started_at": "2026-10-21T20:28:39.535345+00:00",
+        "from_date": "2026-10-06T20:28:37.687320+00:00",
+        "to_date": "2026-10-21T20:28:37.687320+00:00",
+        "limit": 2,
+        "discovered": 2,
+        "discovery_outside_period": 0,
+        "attempted": 2,
+        "saved": 2,
+        "inserted": 1,
+        "updated": 0,
+        "unchanged": 1,
+        "outside_period": 0,
+        "truncated": true,
+        "errors": [],
+        "requests": 3,
+        "elapsed_seconds": 4.594,
+        "finished_at": "2026-10-21T20:28:44.136507+00:00",
+        "status": "partial"
+      },
+      {
+        "source": "interfax",
+        "started_at": "2026-10-21T20:28:39.536289+00:00",
+        "from_date": "2026-10-06T20:28:37.687320+00:00",
+        "to_date": "2026-10-21T20:28:37.687320+00:00",
+        "limit": 2,
+        "discovered": 2,
+        "discovery_outside_period": 0,
+        "attempted": 2,
+        "saved": 2,
+        "inserted": 0,
+        "updated": 0,
+        "unchanged": 2,
+        "outside_period": 0,
+        "truncated": true,
+        "errors": [],
+        "requests": 4,
+        "elapsed_seconds": 3.469,
+        "finished_at": "2026-10-21T20:28:43.008671+00:00",
+        "status": "partial"
+      }
+    ],
+    "coverage": "Available discovery documents only; article/request limits and publisher coverage may truncate the period."
+  },
+  "vector_checks": {
+    "embedding": {
+      "profile": {
+        "model": "intfloat/multilingual-e5-small",
+        "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+        "dimensions": 384,
+        "normalized": true,
+        "preparation": "e5-title64-body384-overlap64-mean-l2-v1",
+        "id": "9a3f23610b4fbc3364edb63f1e1e1e195200e4f03b4a007ea1ec5b4d39207469"
+      },
+      "saved": 2,
+      "concurrently_changed": 0
+    },
+    "embedding_repeat": {
+      "profile": {
+        "model": "intfloat/multilingual-e5-small",
+        "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+        "dimensions": 384,
+        "normalized": true,
+        "preparation": "e5-title64-body384-overlap64-mean-l2-v1",
+        "id": "9a3f23610b4fbc3364edb63f1e1e1e195200e4f03b4a007ea1ec5b4d39207469"
+      },
+      "saved": 0,
+      "concurrently_changed": 0
+    },
+    "index_count": 153,
+    "reencoded_document_cosine": 1.0000000936100126,
+    "queries": [
+      {
+        "query": "цены на нефть и топливо",
+        "results": {
+          "faiss": [
+            {
+              "id": "9a1434a91d0fe5c7f4da36bdd81871774a2598d69d95a2ad5629aed827d15587",
+              "url": "https://www.kommersant.ru/doc/9044194",
+              "title": "Доступ к биржевым торгам нефтепродуктами может быть ограничен",
+              "similarity": 0.8899605870246887
+            },
+            {
+              "id": "742c81563bbb9a4a170062f93af9d1a556e159e070b75f6400e7620ede26ca10",
+              "url": "https://www.interfax.ru/business/1124072",
+              "title": "Рубль укрепляется к мировым валютам четвертый день подряд",
+              "similarity": 0.8789944052696228
+            },
+            {
+              "id": "b9f5536af392ae75f14bde1937784dd88458d8b9db14c8cb50281a87069b39dd",
+              "url": "https://www.interfax.ru/business/1124061",
+              "title": "Цены на бензин в РФ снизились на 0,69% после роста на 0,01% неделей ранее",
+              "similarity": 0.8757234811782837
+            },
+            {
+              "id": "45d0a4ee12d82481ab13d28db88edc5e81e086621311255c53a2742117b198f5",
+              "url": "https://www.vedomosti.ru/business/news/2026/10/21/1239020-benzin",
+              "title": "Бензин в России за неделю подешевел на 0,7%",
+              "similarity": 0.8590070009231567
+            },
+            {
+              "id": "1056dce3cfa282c8aee1ecd173c5273091e4715beda0b3930c733a3261c46b2e",
+              "url": "https://www.kommersant.ru/doc/9044169",
+              "title": "Ставки на перевозку российской нефти выросли до рекордного уровня",
+              "similarity": 0.8581482172012329
+            }
+          ],
+          "pgvector": [
+            {
+              "id": "9a1434a91d0fe5c7f4da36bdd81871774a2598d69d95a2ad5629aed827d15587",
+              "url": "https://www.kommersant.ru/doc/9044194",
+              "title": "Доступ к биржевым торгам нефтепродуктами может быть ограничен",
+              "similarity": 0.8899604809331321
+            },
+            {
+              "id": "742c81563bbb9a4a170062f93af9d1a556e159e070b75f6400e7620ede26ca10",
+              "url": "https://www.interfax.ru/business/1124072",
+              "title": "Рубль укрепляется к мировым валютам четвертый день подряд",
+              "similarity": 0.8789943528774782
+            },
+            {
+              "id": "b9f5536af392ae75f14bde1937784dd88458d8b9db14c8cb50281a87069b39dd",
+              "url": "https://www.interfax.ru/business/1124061",
+              "title": "Цены на бензин в РФ снизились на 0,69% после роста на 0,01% неделей ранее",
+              "similarity": 0.8757235481903838
+            },
+            {
+              "id": "45d0a4ee12d82481ab13d28db88edc5e81e086621311255c53a2742117b198f5",
+              "url": "https://www.vedomosti.ru/business/news/2026/10/21/1239020-benzin",
+              "title": "Бензин в России за неделю подешевел на 0,7%",
+              "similarity": 0.8590068473207643
+            },
+            {
+              "id": "1056dce3cfa282c8aee1ecd173c5273091e4715beda0b3930c733a3261c46b2e",
+              "url": "https://www.kommersant.ru/doc/9044169",
+              "title": "Ставки на перевозку российской нефти выросли до рекордного уровня",
+              "similarity": 0.8581480637524029
+            }
+          ]
+        }
+      },
+      {
+        "query": "сбои IT-сервисов и кибербезопасность",
+        "results": {
+          "faiss": [
+            {
+              "id": "92f3e9ce9ff033cfd43aeebfb3c72885c1325e3fe7f2ac8b101af96e296c8ea7",
+              "url": "https://www.kommersant.ru/doc/9044238",
+              "title": "Все больше правительственных и других сайтов в мире отключают из-за уязвимости PHP",
+              "similarity": 0.8541659712791443
+            },
+            {
+              "id": "c885a8184153da328aea728d7f48f84b3cbb7876ea5d612aace24354b2ace9c9",
+              "url": "https://www.vedomosti.ru/politics/news/2026/10/21/1239025-v-germanii-otklyuchili",
+              "title": "NTV: в Германии отключили сайты ведомств и больниц из-за угрозы кибератак",
+              "similarity": 0.8444191813468933
+            },
+            {
+              "id": "ed0cd2e58281afb3cb5b43f592145de0a3fd5cd9c77f086d9cd1dc0c25101b7b",
+              "url": "https://www.kommersant.ru/doc/9044142",
+              "title": "Нидерланды и Финляндия отключили госсайты из-за риска хакерских атак",
+              "similarity": 0.8390213847160339
+            },
+            {
+              "id": "afe0529207a629c27d50010c20a3e49752c7978971a1542d4350016a7da8701b",
+              "url": "https://www.interfax.ru/russia/1124056",
+              "title": "Специалисты РКН отразили с начала года более 20,1 тыс. DDoS-атак",
+              "similarity": 0.8358281850814819
+            },
+            {
+              "id": "c4936a85c6042e4cca875fc82678af62b3ca39390cf7bc86d6cb4e0fb679b0a0",
+              "url": "https://www.interfax.ru/world/1124087",
+              "title": "Минфин США ввел антииранские санкции против девяти физических и юридических лиц",
+              "similarity": 0.8282958269119263
+            }
+          ],
+          "pgvector": [
+            {
+              "id": "92f3e9ce9ff033cfd43aeebfb3c72885c1325e3fe7f2ac8b101af96e296c8ea7",
+              "url": "https://www.kommersant.ru/doc/9044238",
+              "title": "Все больше правительственных и других сайтов в мире отключают из-за уязвимости PHP",
+              "similarity": 0.8541659712791504
+            },
+            {
+              "id": "c885a8184153da328aea728d7f48f84b3cbb7876ea5d612aace24354b2ace9c9",
+              "url": "https://www.vedomosti.ru/politics/news/2026/10/21/1239025-v-germanii-otklyuchili",
+              "title": "NTV: в Германии отключили сайты ведомств и больниц из-за угрозы кибератак",
+              "similarity": 0.8444191906202337
+            },
+            {
+              "id": "ed0cd2e58281afb3cb5b43f592145de0a3fd5cd9c77f086d9cd1dc0c25101b7b",
+              "url": "https://www.kommersant.ru/doc/9044142",
+              "title": "Нидерланды и Финляндия отключили госсайты из-за риска хакерских атак",
+              "similarity": 0.8390213347064668
+            },
+            {
+              "id": "afe0529207a629c27d50010c20a3e49752c7978971a1542d4350016a7da8701b",
+              "url": "https://www.interfax.ru/russia/1124056",
+              "title": "Специалисты РКН отразили с начала года более 20,1 тыс. DDoS-атак",
+              "similarity": 0.8358281352622443
+            },
+            {
+              "id": "c4936a85c6042e4cca875fc82678af62b3ca39390cf7bc86d6cb4e0fb679b0a0",
+              "url": "https://www.interfax.ru/world/1124087",
+              "title": "Минфин США ввел антииранские санкции против девяти физических и юридических лиц",
+              "similarity": 0.828295728171381
+            }
+          ]
+        }
+      }
+    ],
+    "export_count": 153
+  },
+  "limitations": [
+    "Post-refactor live collection is a capped smoke run of two articles per source, not a full archive benchmark.",
+    "Search quality and historical coverage have the same limitations as the original pipeline."
+  ]
+}

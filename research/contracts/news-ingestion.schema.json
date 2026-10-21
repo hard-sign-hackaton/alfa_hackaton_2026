@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "source_id": {
+      "title": "Source Id",
+      "type": "string"
+    },
+    "publisher": {
+      "title": "Publisher",
+      "type": "string"
+    },
+    "title": {
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "text": {
+      "minLength": 1,
+      "title": "Text",
+      "type": "string"
+    },
+    "url": {
+      "title": "Url",
+      "type": "string"
+    },
+    "published_at": {
+      "format": "date-time",
+      "title": "Published At",
+      "type": "string"
+    },
+    "collected_at": {
+      "format": "date-time",
+      "title": "Collected At",
+      "type": "string"
+    },
+    "publisher_categories": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Publisher Categories",
+      "type": "array"
+    },
+    "date_provenance": {
+      "title": "Date Provenance",
+      "type": "string"
+    },
+    "extraction_method": {
+      "title": "Extraction Method",
+      "type": "string"
+    },
+    "extraction_status": {
+      "const": "body_extracted",
+      "default": "body_extracted",
+      "title": "Extraction Status",
+      "type": "string"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "source_id",
+    "publisher",
+    "title",
+    "text",
+    "url",
+    "published_at",
+    "collected_at",
+    "date_provenance",
+    "extraction_method"
+  ],
+  "title": "IngestedNews",
+  "type": "object"
+}
