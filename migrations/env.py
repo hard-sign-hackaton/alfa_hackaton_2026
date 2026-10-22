@@ -5,6 +5,7 @@ from sqlalchemy import inspect, text
 from app.shared.db.base import Base
 from app.shared.db.session import get_engine
 from app.modules.news import models  # Register module-owned tables in the common metadata.
+from app.modules.analytics import models as analytics_models  # Register analytics tables.
 
 
 def adopt_legacy_history(connection):

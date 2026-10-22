@@ -9,8 +9,10 @@
 | [app/shared/db](app/shared/db/) | Общие SQLAlchemy Base, Engine, фабрика сессий и запуск миграций |
 | [app/shared/embeddings](app/shared/embeddings/) | Интерфейс embedding-провайдера и локальная E5; без зависимостей от новостей и БД |
 | [app/modules/news](app/modules/news/) | Прикладной модуль новостей: DTO, парсеры, ORM-модели, репозитории, сервисы и CLI |
+| [app/modules/analytics](app/modules/analytics/) | Хранение аналитических PDF: документы, чанки, таблицы, эмбеддинги и поиск |
 | [migrations](migrations/) и [alembic.ini](alembic.ini) | Общая история изменений схемы PostgreSQL |
 | [tests/news](tests/news/) | Проверки слоев, парсеров, сервисов, PostgreSQL, индексов и совместимости |
+| [tests/analytics](tests/analytics/) | Проверки импорта, чанков, PostgreSQL и поиска аналитики |
 | [research/news](research/news/) | Исходное исследование N01/N02: проверки источников, сохраненные материалы и первый сборщик |
 | [research/ai](research/ai/) | Исследовательский агент, ранжирование, модели входов/выходов и эксперименты |
 | [research/contracts](research/contracts/) | JSON Schema, примеры и валидаторы контрактов |
@@ -19,6 +21,7 @@
 | [research/ux](research/ux/) | UX-прототип и материалы его проверки |
 | [docs/news-pipeline.md](docs/news-pipeline.md) | Подробный запуск новостного пайплайна, параметры и ограничения |
 | [docs/news-database-handoff.md](docs/news-database-handoff.md) | Передача дампа коллеге, восстановление и подключение AI-части |
+| [docs/analytics-storage.md](docs/analytics-storage.md) | Схема, манифест, импорт PDF, эмбеддинги и поиск аналитики |
 | [scripts/restore_news_dump.py](scripts/restore_news_dump.py) | Загрузка дампа из файла или по HTTPS в отдельную пустую БД |
 | [docs/archive/news-pipeline-checks.json](docs/archive/news-pipeline-checks.json) | Первый живой прогон, модель и контрольная поисковая выдача |
 | [docs/archive/news-layout-checks.json](docs/archive/news-layout-checks.json) | Проверки после разделения на слои |
@@ -29,7 +32,7 @@
 | [requirements.txt](requirements.txt) | Зависимости приложения; для регрессионных тестов также нужны requirements исследовательских модулей |
 | [news_pipeline](news_pipeline/) | Совместимый переходник старой CLI-команды; реализации здесь больше нет |
 
-Модули компаний и банковских материалов будут подключаться коллегами в `app/modules/`. Их реализации в `app/` пока нет; каталоги-заглушки не созданы.
+Модуль аналитических материалов реализован в `app/modules/analytics/`. Модули компаний и других доменов будут подключаться коллегами в `app/modules/`; их реализации в `app/` пока нет.
 
 ## Структура приложения
 
@@ -46,26 +49,39 @@ app/
 │       ├── provider.py
 │       └── e5.py
 └── modules/
-    └── news/
+    ├── news/
+    │   ├── dto.py
+    │   ├── identity.py
+    │   ├── normalization.py
+    │   ├── models.py
+    │   ├── repositories.py
+    │   ├── bootstrap.py
+    │   ├── config.py
+    │   ├── cli.py
+    │   ├── parsers/
+    │   │   ├── base.py
+    │   │   ├── http.py
+    │   │   ├── discovery.py
+    │   │   ├── registry.py
+    │   │   ├── kommersant.py
+    │   │   ├── vedomosti.py
+    │   │   └── interfax.py
+    │   └── services/
+    │       ├── ingestion.py
+    │       ├── export.py
+    │       ├── embedding.py
+    │       └── search.py
+    └── analytics/
         ├── dto.py
         ├── identity.py
-        ├── normalization.py
+        ├── manifest.py
         ├── models.py
         ├── repositories.py
         ├── bootstrap.py
         ├── config.py
         ├── cli.py
-        ├── parsers/
-        │   ├── base.py
-        │   ├── http.py
-        │   ├── discovery.py
-        │   ├── registry.py
-        │   ├── kommersant.py
-        │   ├── vedomosti.py
-        │   └── interfax.py
         └── services/
-            ├── ingestion.py
-            ├── export.py
+            ├── importing.py
             ├── embedding.py
             └── search.py
 ```
@@ -73,6 +89,8 @@ app/
 Сценарий загрузки: **HTTP/RSS/sitemap → парсер → ParsedArticle → нормализация → NewsArticleDTO → сервис → репозиторий → SQLAlchemy ORM → PostgreSQL**. Парсер допускает пропуски в результате извлечения; нормализация проверяет пригодность публикации к сохранению и назначает ID. DTO не является ORM-моделью и не удерживает сессию БД.
 
 `NewsRepository` хранит источники, статьи и историю сборов. `NewsEmbeddingRepository` хранит профили и векторы. `NewsEmbeddingService` отвечает за подготовку именно новости и пересчет устаревших векторов; общий `E5Provider` — за токенизацию и выполнение модели. `NewsSearchService` связывает запрос, embedding-провайдер и поиск через репозиторий PostgreSQL.
+
+`app/modules/analytics` принимает результат `research/bank/extract_pdf.py` и `prepare_chunks.py`: документ, Markdown, чанки и таблицы. Импорт идемпотентен, векторы считаются на уровне чанка. Схема и команды описаны в [docs/analytics-storage.md](docs/analytics-storage.md).
 
 ## Быстрый запуск
 
@@ -106,6 +124,18 @@ python -m app news embed
 python -m app news search "цены на нефть и топливо" --top-k 5
 ```
 
+Аналитика использует ту же `DATABASE_URL`:
+
+```sh
+python -m app analytics import \
+  --extracted ../alfa_hakaton_2026_data/extracted_v2 \
+  --manifest research/bank/manifest.json \
+  --source-root ../alfa_hakaton_2026_data
+python -m app analytics stats
+python -m app analytics embed
+python -m app analytics search "рынок труда" --top-k 5
+```
+
 Также доступен `python -m app.modules.news ...`. Старый `python -m news_pipeline ...` перенаправляет в тот же CLI. У проекта одна реализация пайплайна.
 
 ## Правила совместной разработки
@@ -121,7 +151,7 @@ python -m app news search "цены на нефть и топливо" --top-k 5
 
 ## Существующая БД и миграции
 
-`python -m app db upgrade` применяет общую историю Alembic. Если найдена только прежняя `news_alembic_version`, версия проверяется и таблица истории транзакционно переименовывается в `alembic_version`. Revision ID `0001_news` и `0002_news_fk_indexes` сохранены; статьи и векторы не пересоздаются. Миграция `0003_pgvector_only` удаляет служебную таблицу версии файлового индекса и связанный триггер; HNSW и инвалидирование векторов при изменении текста сохраняются.
+`python -m app db upgrade` применяет общую историю Alembic. Если найдена только прежняя `news_alembic_version`, версия проверяется и таблица истории транзакционно переименовывается в `alembic_version`. Revision ID `0001_news` и `0002_news_fk_indexes` сохранены; статьи и векторы не пересоздаются. Миграция `0003_pgvector_only` удаляет служебную таблицу версии файлового индекса и связанный триггер; HNSW и инвалидирование векторов при изменении текста сохраняются. Миграция `0004_analytics` добавляет таблицы аналитических документов, чанков, таблиц и эмбеддингов.
 
 Если обе таблицы истории уже существуют, upgrade прекращается с ошибкой. Такой случай требует согласования историй с коллегами и не исправляется автоматическим stamp/drop. Новой пустой БД достаточно обычного `upgrade`.
 
@@ -130,6 +160,7 @@ python -m app news search "цены на нефть и топливо" --top-k 5
 ```sh
 python -m pip install -r requirements.txt -r research/ai/requirements.txt -r research/contracts/requirements.txt
 python -m unittest discover -s tests/news -v
+python -m unittest discover -s tests/analytics -v
 python research/contracts/t01/verify.py
 python -m unittest discover -s research/contracts/t01 -p test_bridge.py -v
 python research/contracts/validate.py
