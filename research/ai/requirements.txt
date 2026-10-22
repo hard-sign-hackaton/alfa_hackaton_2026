@@ -1,1 +1,4 @@
 pydantic>=2.14,<3
+langchain-core>=1,<2
+langchain-openai>=1,<2
+python-dotenv>=1,<2

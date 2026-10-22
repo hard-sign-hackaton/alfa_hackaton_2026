@@ -1,0 +1,89 @@
+{
+  "checked_at": "2026-10-22",
+  "backend": "pgvector",
+  "migration": "0003_pgvector_only",
+  "database": {
+    "articles": 153,
+    "embeddings": 153,
+    "dimensions": 384,
+    "norm_min": 0.9999999618063533,
+    "norm_max": 1.0000000812147518,
+    "hnsw_index": "ix_news_vector_hnsw",
+    "text_invalidation_trigger": "news_text_change",
+    "file_index_state_removed": true
+  },
+  "tests": {
+    "host_news": 35,
+    "existing_ai": 16,
+    "existing_t01": 12,
+    "contract_validator": "7 schemas, 6 examples, 8 negative cases",
+    "t01_boundary_verifier": "passed",
+    "fresh_database_upgrade": "passed",
+    "repeated_upgrade": "passed",
+    "docker_news": 35
+  },
+  "exports": {
+    "ai": 153,
+    "ingestion": 153,
+    "both_schemas_valid": true
+  },
+  "real_model": {
+    "profile": {
+      "model": "intfloat/multilingual-e5-small",
+      "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+      "dimensions": 384,
+      "normalized": true,
+      "preparation": "e5-title64-body384-overlap64-mean-l2-v1",
+      "id": "9a3f23610b4fbc3364edb63f1e1e1e195200e4f03b4a007ea1ec5b4d39207469"
+    },
+    "saved": 0,
+    "concurrently_changed": 0
+  },
+  "search": {
+    "query": "цены на нефть и топливо",
+    "top_k": 5,
+    "results": [
+      {
+        "id": "9a1434a91d0fe5c7f4da36bdd81871774a2598d69d95a2ad5629aed827d15587",
+        "url": "https://www.kommersant.ru/doc/9044194",
+        "title": "Доступ к биржевым торгам нефтепродуктами может быть ограничен",
+        "similarity": 0.8899604809331321
+      },
+      {
+        "id": "742c81563bbb9a4a170062f93af9d1a556e159e070b75f6400e7620ede26ca10",
+        "url": "https://www.interfax.ru/business/1124072",
+        "title": "Рубль укрепляется к мировым валютам четвертый день подряд",
+        "similarity": 0.8789943528774782
+      },
+      {
+        "id": "b9f5536af392ae75f14bde1937784dd88458d8b9db14c8cb50281a87069b39dd",
+        "url": "https://www.interfax.ru/business/1124061",
+        "title": "Цены на бензин в РФ снизились на 0,69% после роста на 0,01% неделей ранее",
+        "similarity": 0.8757235481903838
+      },
+      {
+        "id": "45d0a4ee12d82481ab13d28db88edc5e81e086621311255c53a2742117b198f5",
+        "url": "https://www.vedomosti.ru/business/news/2026/10/21/1239020-benzin",
+        "title": "Бензин в России за неделю подешевел на 0,7%",
+        "similarity": 0.8590068473207643
+      },
+      {
+        "id": "1056dce3cfa282c8aee1ecd173c5273091e4715beda0b3930c733a3261c46b2e",
+        "url": "https://www.kommersant.ru/doc/9044169",
+        "title": "Ставки на перевозку российской нефти выросли до рекордного уровня",
+        "similarity": 0.8581480637524029
+      }
+    ]
+  },
+  "limitations": [
+    "Existing saved corpus; no new full live collection for this search cleanup.",
+    "Technical smoke query, not a business-relevance evaluation."
+  ],
+  "docker": {
+    "build": "passed",
+    "migration": "passed",
+    "faiss_package_absent": true,
+    "real_e5_search": "passed",
+    "top_1_matches_host": true
+  }
+}

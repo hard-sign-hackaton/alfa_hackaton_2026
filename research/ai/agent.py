@@ -65,7 +65,7 @@ class ResearchAgent:
             'corpus': [item.model_dump() for item in self.events.values()],
             'news_id': news_id, 'question': question, 'as_of': self.as_of.isoformat(),
             'mode': 'live' if self.client else 'offline_baseline',
-            'model': getattr(self.client, 'model', None),
+            'model': self.client.model_signature() if self.client else None,
         }, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
         if resume and self.checkpoint and self.checkpoint.exists():
             saved = json.loads(self.checkpoint.read_text(encoding='utf-8'))
@@ -87,9 +87,27 @@ class ResearchAgent:
         self._record('load_profile', provenance=company.provenance,
                      unknown_fields=[key for key, value in company.model_dump().items() if value is None])
         rank = rank_pair(company, event, as_of=self.as_of)
-        self._record('rank', result=rank)
         if not rank['eligible']:
             raise ValueError('Future publication cannot enter analysis')
+        preparation = None
+        if self.client:
+            preparation = self.client.prepare(event)
+            self.state['preparation'] = preparation.model_dump()
+            self._record('classify_news', model=self.client.settings.routes['classification'].model,
+                         topics=preparation.classification.topics,
+                         business_relevant=preparation.classification.business_relevant)
+            if not preparation.classification.business_relevant:
+                insight = Insight(company_id=company.id, news_id=event.id, status='insufficient_data',
+                                  summary='Публикация отнесена к неделовым темам.', claims=[],
+                                  missing_data=['Релевантное деловое событие'], follow_up_answer=None)
+                self.state['result'] = insight.model_dump()
+                self._record('skip_analysis', reason='not_business')
+                return self.state
+            self._record('extract_news', model=self.client.settings.routes['extraction'].model,
+                         facts=len(preparation.extraction.facts))
+            event = event.model_copy(update={'topics': list(preparation.classification.topics)})
+            rank = rank_pair(company, event, as_of=self.as_of)
+        self._record('rank', result=rank)
         # Narrow topic search, followed by exactly one broader search if nothing found.
         topics = industry_topics(company)
         found = [item.id for item in self.events.values() if item.id != news_id
@@ -107,10 +125,11 @@ class ResearchAgent:
         self._record('assemble_context', source_scope=[f'news:{event.id}', f'company:{company.id}'],
                      discovered_not_used=found, bank_analytics_available=False)
         if self.client:
-            insight = self.client.analyze(company, event)
+            insight = self.client.analyze(company, event, preparation=preparation)
             if question:
                 self.state['history'] = [insight.model_dump()]
-                insight = self.client.analyze(company, event, question=question, history=self.state['history'])
+                insight = self.client.analyze(company, event, question=question,
+                                              history=self.state['history'], preparation=preparation)
         else:
             insight = offline_insight(company, event, question)
         validate_evidence(insight, company, event)

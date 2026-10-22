@@ -27,6 +27,37 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(self.request, before)
         self.assertEqual(bundle['insight']['content_status'], 'partial')
 
+    def test_retrieved_bank_evidence_survives_projection(self):
+        source = {'source_id': 'bank:test', 'kind': 'bank', 'title': 'Bank outlook',
+                  'text': 'Demand may fall.', 'published_at': '2026-10-01T00:00:00Z',
+                  'locator': 'fixture:bank', 'url': None, 'company_id': None, 'is_demo': True}
+        self.request['retrieved_sources'] = [source]
+        self.request['ai_insight']['claims'].append({'kind': 'fact', 'text': source['text'],
+            'evidence': [{'source_id': source['source_id'], 'quote': source['text']}]})
+        validate_request(self.request)
+        bundle = adapt(self.request)
+        validate_bundle(bundle)
+        self.assertEqual(bundle['insight']['bank']['status'], 'found')
+        self.assertIn('bank:test', {item['id'] for item in bundle['insight']['sources']})
+
+    def test_foreign_retrieved_metric_and_future_article_are_rejected(self):
+        source = {'source_id': 'metric:other:test', 'kind': 'metric', 'title': 'Observed inflow',
+                  'text': '100 RUB', 'published_at': '2026-10-01T00:00:00Z',
+                  'locator': 'fixture:metric', 'url': None, 'company_id': 'other', 'is_demo': True}
+        self.request['retrieved_sources'] = [source]
+        with self.assertRaises(ValueError):
+            validate_request(self.request)
+        source.update(source_id='bank:future', kind='bank', company_id=None, published_at='2099-01-01T00:00:00Z')
+        with self.assertRaises(ValueError):
+            adapt(self.request)
+
+    def test_empty_retrieved_context_does_not_claim_search_is_unimplemented(self):
+        self.request['retrieved_sources'] = []
+        bundle = adapt(self.request)
+        validate_bundle(bundle)
+        self.assertEqual(bundle['insight']['bank']['status'], 'unavailable')
+        self.assertIn('статус поиска', bundle['insight']['bank']['note'])
+
     def test_relevance_is_not_impact(self):
         for importance in ('low', 'medium', 'high'):
             self.request['impact']['importance'] = importance
