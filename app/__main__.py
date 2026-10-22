@@ -11,7 +11,10 @@ def main(argv=None):
     if args and args[0] == 'news':
         from app.modules.news.cli import main as news_main
         return news_main(args[1:])
-    print('Usage: python -m app db upgrade | python -m app news --help')
+    if args and args[0] == 'companies':
+        from app.modules.companies.cli import main as companies_main
+        return companies_main(args[1:])
+    print('Usage: python -m app db upgrade | python -m app news --help | python -m app companies --help')
     return 0 if not args or args == ['--help'] else 2
 
 

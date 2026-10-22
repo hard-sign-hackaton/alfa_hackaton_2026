@@ -4,6 +4,7 @@ from alembic.script import ScriptDirectory
 from sqlalchemy import inspect, text
 from app.shared.db.base import Base
 from app.shared.db.session import get_engine
+from app.modules.companies import models as company_models  # noqa: F401
 from app.modules.news import models  # Register module-owned tables in the common metadata.
 
 
