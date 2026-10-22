@@ -1,4 +1,4 @@
-"""Run integration suites against a separate news test database."""
+"""Run integration suites against a separate test database."""
 import os
 from pathlib import Path
 import subprocess
@@ -25,11 +25,14 @@ def main():
     with psycopg.connect(target.set(drivername='postgresql').render_as_string(hide_password=False)) as connection:
         connection.execute('GRANT USAGE ON SCHEMA public TO analysis_news_reader')
         connection.execute('GRANT SELECT ON news_sources,news_articles,news_embeddings,news_embedding_profiles TO analysis_news_reader')
+        connection.execute('GRANT SELECT ON company_groups,companies,company_import_runs,company_embedding_profiles,company_embeddings TO analysis_news_reader')
     os.environ['NEWS_TEST_DATABASE_URL'] = url
+    os.environ['COMPANY_TEST_DATABASE_URL'] = url
     os.environ['NEWS_INTEGRATION_ADMIN_URL'] = url
     os.environ['NEWS_DATABASE_URL'] = target.set(username='analysis_news_reader', password=os.environ['NEWS_READER_PASSWORD']).render_as_string(hide_password=False)
     commands = [
         [sys.executable, '-m', 'unittest', 'discover', '-s', 'tests/news', '-v'],
+        [sys.executable, '-m', 'unittest', 'discover', '-s', 'tests/companies', '-v'],
         [sys.executable, '-m', 'unittest', 'discover', '-s', 'research/ai', '-p', 'test_*.py'],
         [sys.executable, '-m', 'unittest', 'discover', '-s', 'research/contracts/t01', '-p', 'test_*.py'],
         [sys.executable, 'research/ai/database_integration.py', '-v'],

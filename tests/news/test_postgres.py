@@ -2,11 +2,14 @@
 from datetime import datetime, timezone
 import hashlib
 import os
+from pathlib import Path
 import unittest
 import uuid
 import numpy as np
 from sqlalchemy import delete, select, text
 from sqlalchemy.engine import make_url
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from app.modules.news.dto import NewsArticleDTO as IngestedNews
 from app.modules.news.identity import article_id
 from app.shared.db.session import get_session_factory
@@ -20,6 +23,13 @@ from app.shared.db.migrations import upgrade_database
 from app.modules.news.dto import EmbeddingInput, NewsArticleDTO
 
 URL = os.getenv('NEWS_TEST_DATABASE_URL')
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def migration_head():
+    config = Config()
+    config.set_main_option('script_location', str(ROOT / 'migrations'))
+    return ScriptDirectory.from_config(config).get_current_head()
 
 
 @unittest.skipUnless(URL, 'Set NEWS_TEST_DATABASE_URL to a disposable *_test database')
@@ -140,7 +150,7 @@ class PostgresTests(unittest.TestCase):
             upgrade_database(URL)
             self.assertEqual(self.repo.save(article), 'unchanged')
             with self.sessions() as s:
-                self.assertEqual(s.execute(text('SELECT version_num FROM alembic_version')).scalar_one(), '0003_pgvector_only')
+                self.assertEqual(s.execute(text('SELECT version_num FROM alembic_version')).scalar_one(), migration_head())
                 self.assertIsNone(s.execute(text("SELECT to_regclass('news_alembic_version')")).scalar_one())
         finally:
             with self.sessions.begin() as s:

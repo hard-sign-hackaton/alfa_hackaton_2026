@@ -8,15 +8,13 @@ def main(argv=None):
     if args == ['db', 'upgrade']:
         upgrade_database()
         return 0
-    if args and args[0] == 'news':
-        from app.modules.news.cli import main as news_main
-        return news_main(args[1:])
-    if args and args[0] == 'analytics':
-        from app.modules.analytics.cli import main as analytics_main
-        return analytics_main(args[1:])
-    print('Usage: python -m app db upgrade | python -m app news --help | python -m app analytics --help')
+    modules = {'news': 'app.modules.news.cli', 'companies': 'app.modules.companies.cli',
+               'analytics': 'app.modules.analytics.cli'}
+    if args and args[0] in modules:
+        from importlib import import_module
+        return import_module(modules[args[0]]).main(args[1:])
+    print('Usage: python -m app db upgrade | python -m app news --help | python -m app companies --help | python -m app analytics --help')
     return 0 if not args or args == ['--help'] else 2
 
 
-if __name__ == '__main__':
-    sys.exit(main())
+if __name__ == '__main__': sys.exit(main())

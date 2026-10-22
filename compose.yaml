@@ -147,6 +147,7 @@ services:
       context: .
       dockerfile: Dockerfile.news
       target: news
+    image: alfa-hackaton-news:local
     profiles: [pipeline]
     init: true
     environment:
@@ -160,6 +161,11 @@ services:
     volumes:
       - news-runtime:/runtime
       - news-models:/models
+
+  companies:
+    extends:
+      service: news
+    entrypoint: [python, -m, app.modules.companies]
 
   news-db-init:
     build: .

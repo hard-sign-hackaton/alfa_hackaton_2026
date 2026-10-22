@@ -1,9 +1,20 @@
 # Новости в анализе компании
 
 `db` хранит профили компаний, подготовленные показатели, банковские материалы и пары для анализа.
-`postgres` хранит новости и векторы новостного модуля. Агент читает `news_articles` через
-`NewsReader`; старые пары разрешаются в канонический ID по URL. Таблица `news` остаётся
-для совместимости с локальными экспериментами и старой загрузкой.
+`postgres` хранит новости, векторы новостного модуля и снимок компаний из `app/modules/companies`.
+Агент читает `news_articles` через `NewsReader`; старые пары разрешаются в канонический ID по URL.
+Таблица `news` остаётся для совместимости с локальными экспериментами и старой загрузкой.
+
+## Компании
+
+Снимок `docs/companies/companies_analytics.json` загружается в `postgres` модулем
+`app/modules/companies` в таблицы `company_groups`, `companies`, `company_import_runs`,
+`company_embedding_profiles` и `company_embeddings`. Это отдельный источник данных,
+который не заменяет демонстрационные профили в `db`. `company_embeddings.vector` — E5-профиль
+компании для поиска по тексту новости; подготовка `e5-company-profile-v1` фиксируется в
+`company_embedding_profiles`. Запуск и ограничения описаны в
+[docs/companies-pipeline.md](companies-pipeline.md). Роль `analysis_news_reader` получает
+`SELECT` на таблицы компаний вместе с новостными таблицами.
 
 ## Запуск
 

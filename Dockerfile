@@ -23,6 +23,8 @@ COPY --chown=researcher:researcher app /app/app
 COPY --chown=researcher:researcher migrations /app/migrations
 COPY --chown=researcher:researcher scripts /app/scripts
 COPY --chown=researcher:researcher tests/news /app/tests/news
+COPY --chown=researcher:researcher tests/companies /app/tests/companies
+COPY --chown=researcher:researcher docs/companies /app/docs/companies
 COPY --chown=researcher:researcher alembic.ini /app/alembic.ini
 USER researcher
 WORKDIR /app/research/ai
