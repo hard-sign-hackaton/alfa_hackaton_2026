@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0.0",
+  "documents": [
+    {
+      "id": "alfa-7m26",
+      "source_name": "ALFA-7M26.pdf",
+      "title": "Макростатистика 7М26",
+      "subtitle": "Данные по рынку труда не подтверждают охлаждения экономики",
+      "doc_type": "macro",
+      "published_at": "2026-09-07",
+      "language": "ru",
+      "tags": ["макроэкономика", "рынок труда", "потребление", "розничная торговля"],
+      "ignore_headings": ["Центр макроэкономического анализа"],
+      "metadata": {"period": "7M2026"}
+    },
+    {
+      "id": "alfa-consumption",
+      "source_name": "ALFA-consumption.pdf",
+      "title": "Потребление на пике",
+      "doc_type": "consumption",
+      "published_at": "2026-08-05",
+      "language": "ru",
+      "tags": ["потребление", "розничная торговля", "автомобили", "макроэкономика"],
+      "ignore_headings": ["Центр макроэкономического анализа"],
+      "metadata": {"period": "2026"}
+    },
+    {
+      "id": "alfa-policy-rate-2026-09-11",
+      "source_name": "ALFA-Macro_Insights-Policy_Rate_11Sep.pdf",
+      "title": "Ключевая ставка ЦБ РФ",
+      "subtitle": "Ставка без изменения на 14,0%, риторика стала жестче",
+      "doc_type": "rates",
+      "published_at": "2026-09-11",
+      "language": "ru",
+      "tags": ["ключевая ставка", "ЦБ РФ", "инфляция", "денежно-кредитная политика"],
+      "metadata": {"period": "2026"}
+    },
+    {
+      "id": "alfa-macro-1h26",
+      "source_name": "ALFA-macro_stat1H26.pdf",
+      "title": "Макростатистика 1П26",
+      "subtitle": "Слабый рост 1П26 смещает наш прогноз роста ВВП на 0,1% за год",
+      "doc_type": "macro",
+      "published_at": "2026-07-31",
+      "language": "ru",
+      "tags": ["макроэкономика", "ВВП", "инфляция", "рынок труда", "прогноз"],
+      "ignore_headings": ["Центр макроэкономического анализа"],
+      "metadata": {"period": "1H2026"}
+    },
+    {
+      "id": "alfa-russian-steels-1q21",
+      "source_name": "ALFA_Russian_Steels_1К21PreviewUpdate_15Apr2021.pdf",
+      "title": "Российская сталь",
+      "subtitle": "Ралли цен продолжается; прогноз результатов за 1К21",
+      "doc_type": "equity",
+      "published_at": "2021-04-15",
+      "language": "ru",
+      "tags": ["сталь", "металлургия", "НЛМК", "ММК", "Северсталь", "акции"],
+      "metadata": {"period": "1Q2021"}
+    },
+    {
+      "id": "alfa-fi-strategy-3q26",
+      "source_name": "FI_Strategy_3Q26_22072026.pdf",
+      "title": "Долговой рынок",
+      "subtitle": "Тактический взгляд на 3-й квартал 2026: время собирать камни",
+      "doc_type": "fixed_income",
+      "published_at": "2026-07-22",
+      "language": "ru",
+      "tags": ["облигации", "ОФЗ", "долговой рынок", "ключевая ставка", "стратегия"],
+      "metadata": {"period": "3Q2026"}
+    },
+    {
+      "id": "alfa-gold-aug-2026",
+      "source_name": "Gold_digest_August26.pdf",
+      "title": "Обзор рынка золота: август 2026",
+      "subtitle": "Золото заметно выросло за август, но жесткий сигнал ФРС охладил ралли",
+      "doc_type": "commodities",
+      "published_at": "2026-09-01",
+      "language": "ru",
+      "tags": ["золото", "сырьевые товары", "ФРС", "доллар", "Китай"],
+      "metadata": {"period": "2026-08", "published_precision": "month"}
+    },
+    {
+      "id": "alfa-inflation-2026-09-02",
+      "source_name": "Inflation_tracker_02.pdf",
+      "title": "Инфляция 25-31 августа: основные выводы",
+      "doc_type": "inflation",
+      "published_at": "2026-09-02",
+      "language": "ru",
+      "tags": ["инфляция", "Росстат", "недельная инфляция", "цены", "прогноз"],
+      "metadata": {"period": "2026-08-25/2026-08-31"}
+    },
+    {
+      "id": "alfa-bond-brief-2026-09-14",
+      "source_name": "Бонд_Бриф_14092026.pdf",
+      "title": "Бонд Бриф: Итоги недели",
+      "subtitle": "Заседание ЦБ по ставке добавило долговому рынку негатива",
+      "doc_type": "fixed_income",
+      "published_at": "2026-09-14",
+      "language": "ru",
+      "tags": ["облигации", "ОФЗ", "ЦБ РФ", "аукционы", "долговой рынок"],
+      "metadata": {"period": "2026-09-08/2026-09-14"}
+    }
+  ]
+}
