@@ -11,6 +11,7 @@ research/ai/live_results
 research/ai/results/*
 !research/ai/results/company_profile.schema.json
 *.dump
+/chunks.jsonl
 дамп/
 dump/
 local_runtime/

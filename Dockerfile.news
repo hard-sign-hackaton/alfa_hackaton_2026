@@ -17,12 +17,14 @@ COPY news_pipeline /app/news_pipeline
 COPY alembic.ini /app/alembic.ini
 COPY tests/news /app/tests/news
 COPY tests/companies /app/tests/companies
+COPY tests/analytics /app/tests/analytics
+COPY research/bank/manifest.json /app/research/bank/manifest.json
 COPY docs/companies /app/docs/companies
 COPY research/news/kom_article.html research/news/ved_article.html research/news/inter_article.html /app/research/news/
 COPY research/contracts/t01/ai-news-event.schema.json /app/research/contracts/t01/
 COPY research/contracts/news-ingestion.schema.json /app/research/contracts/
 COPY research/ai/results/company_profile.schema.json /app/research/ai/results/
-ENV NEWS_RUNTIME_DIR=/runtime COMPANIES_RUNTIME_DIR=/runtime HF_HOME=/models
+ENV NEWS_RUNTIME_DIR=/runtime COMPANIES_RUNTIME_DIR=/runtime ANALYTICS_RUNTIME_DIR=/runtime HF_HOME=/models
 USER newspipeline
 ENTRYPOINT ["python", "-m", "app.modules.news"]
 CMD ["--help"]

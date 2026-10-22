@@ -392,13 +392,13 @@ class AnalyticsRepository:
                 AnalyticsDocument.id.label('document_id'),
                 AnalyticsDocument.title.label('document_title'),
                 AnalyticsDocument.doc_type,
+                AnalyticsDocument.source_name,
+                AnalyticsDocument.extraction,
                 AnalyticsDocument.published_at,
                 AnalyticsChunk.ordinal,
                 AnalyticsChunk.kind,
                 AnalyticsChunk.section_path,
-                func.ts_headline(
-                    RUSSIAN, AnalyticsChunk.text, terms, EXCERPT_OPTIONS
-                ).label('text'),
+                AnalyticsChunk.text,
                 AnalyticsChunk.pages,
                 func.ts_rank(vector, terms).label('rank'),
             )
@@ -537,6 +537,8 @@ class AnalyticsEmbeddingRepository:
                     AnalyticsDocument.id.label('document_id'),
                     AnalyticsDocument.title.label('document_title'),
                     AnalyticsDocument.doc_type,
+                    AnalyticsDocument.source_name,
+                    AnalyticsDocument.extraction,
                     AnalyticsDocument.published_at,
                     AnalyticsChunk.ordinal,
                     AnalyticsChunk.kind,

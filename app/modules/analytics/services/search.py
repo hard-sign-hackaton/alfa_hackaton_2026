@@ -36,7 +36,7 @@ class AnalyticsSearchService:
     ):
         if not query.strip() or not 1 <= top_k <= 100:
             raise ValueError('Nonempty query and top-k between 1 and 100 required')
-        if mode == 'vector':
+        if mode in ('vector', 'hybrid'):
             if self.embeddings is None:
                 raise ValueError('Vector search requires an embedding service')
             profile = self.embeddings.profile
@@ -46,6 +46,20 @@ class AnalyticsSearchService:
                 top_k,
                 as_of=as_of,
             )
+            if mode == 'hybrid':
+                lexical = self.repository.search_text(query, top_k, as_of=as_of)
+                merged, scores = {}, {}
+                for hits, weight in ((rows, 2), (lexical, 1)):
+                    seen = set()
+                    for rank, row in enumerate(hits, 1):
+                        key = row['chunk_id']
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        merged.setdefault(key, row)
+                        scores[key] = scores.get(key, 0) + weight / (30 + rank)
+                rows = [{**merged[key], 'retrieval_score': scores[key]} for key in
+                        sorted(merged, key=lambda key: (-scores[key], key))]
         elif mode == 'text':
             rows = self.repository.search_text(query, top_k, as_of=as_of)
         else:

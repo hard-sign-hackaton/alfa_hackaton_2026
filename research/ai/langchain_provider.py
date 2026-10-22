@@ -29,6 +29,18 @@ SYSTEM += '''
 или численных сценариев без явно переданной методики и исходных показателей.'''
 
 TASK_INSTRUCTIONS = {
+    'brief': '''Подготовь короткое представление готового разбора. Не проводи новое исследование.
+news_summary: 1–2 коротких предложения о событии, только факты исходной новости.
+short_answer: 1–2 коротких предложения о возможном влиянии на компанию, с оговоркой
+при нехватке оснований. Не добавляй новых чисел, рекомендаций или причин.
+Каждый текст не длиннее 360 символов. В claim_ids выбирай номера из accepted_claims;
+цитаты подставит код. Для short_answer и importance.reason нужны основания и о
+новости, и о компании, можно выбрать до трёх утверждений. IDs начинаются с нуля.
+Оцени importance для выбранной компании: high — подтверждённая существенная связь,
+требующая внимания; medium — обоснованная косвенная связь или условный канал;
+low — связь слабая или не установлена. Масштаб заголовка не определяет важность
+для компании. При insight_status=insufficient_data нельзя выбирать high.
+Оценка важности — качественная метка, а не вероятность, размер ущерба или прогноз.''',
     'classification': '''Определи деловую релевантность и 1–3 темы публикации.
 Если публикация не относится к бизнесу, business_relevant=false и topics=["not_business"].
 Военные сводки, дипломатия, спорт и происшествия сами по себе не являются деловыми
@@ -50,6 +62,10 @@ summary только резюмирует claims. Не выводи долю р�
 Годовая выручка не является доходом от банковской услуги или депозитов.
 Топ-3 отрасли контрагентов не являются полным перечнем: отсутствие отрасли в топ-3
 не доказывает отсутствие экспозиции. План и прогноз не являются уже случившимся событием.
+Сохраняй дату и атрибуцию банковской аналитики. Исторический обзор не подтверждает
+текущее состояние рынка, а отраслевой прогноз не доказывает эффект для компании.
+OCR таблиц может содержать ошибки; не восстанавливай значения графиков и таблиц,
+которых нет в переданном фрагменте.
 При нехватке оснований укажи status="insufficient_data" и missing_data.
 Без уточняющего вопроса follow_up_answer=null.''',
     'chat': '''Ответь на question в контексте выбранной компании и новости.
@@ -85,7 +101,7 @@ class LangChainClient:
         self._http_client = None
 
     def model_signature(self):
-        return {**self.settings.signature(), 'pipeline_version': 3}
+        return {**self.settings.signature(), 'pipeline_version': 5}
 
     def _model(self, task, max_tokens=None, *, json_response=True):
         if task not in self.settings.routes:
@@ -120,6 +136,7 @@ class LangChainClient:
             model = ChatOpenAI(
                 model=route.model, api_key=self.api_key, base_url=self.base_url,
                 temperature=0, max_tokens=route.max_tokens, timeout=self.settings.timeout,
+                extra_body={'max_tokens': route.max_tokens},
                 max_retries=0, stream_usage=False, use_responses_api=False,
                 http_client=self._http_client,
                 reasoning_effort='low' if route.model.startswith(('qwen/qwen3.6', 'deepseek/', 'z-ai/', 'moonshotai/')) else None,
@@ -189,6 +206,12 @@ class LangChainClient:
                 metric['validation_error'] = hint
             except Exception as exc:
                 metric['error_type'] = type(exc).__name__
+                cause, causes = exc.__cause__, []
+                while cause is not None and len(causes) < 3:
+                    causes.append(type(cause).__name__)
+                    cause = cause.__cause__
+                if causes:
+                    metric['cause_types'] = causes
                 if type(exc).__name__ == 'LengthFinishReasonError':
                     metric['status'] = 'truncated'
                     usage = getattr(getattr(exc, 'completion', None), 'usage', None)
@@ -317,6 +340,16 @@ class LangChainClient:
 
         result = self._invoke('chat' if question else 'analysis', data, Insight, validate)
         return finalize_insight(result, company, news)
+
+    def brief(self, company, news, insight, preparation, retrieved_sources=()):
+        from brief import BriefSelection, resolve_brief
+        validate_evidence(insight, company, news, retrieved_sources)
+        data = dict(insight_status=insight.status,
+            accepted_claims=[dict(claim_id=i, **claim.model_dump()) for i, claim in enumerate(insight.claims)])
+        def validate(selection):
+            resolve_brief(selection, insight, company, news, preparation, retrieved_sources)
+        selection = self._invoke('brief', data, BriefSelection, validate)
+        return resolve_brief(selection, insight, company, news, preparation, retrieved_sources)
 
     def close(self):
         if self._http_client:

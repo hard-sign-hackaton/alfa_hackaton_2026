@@ -83,10 +83,11 @@ class BankArticle(StrictModel):
 
 
 class PostgresRepository:
-    def __init__(self, settings, *, news_reader=None, company_reader=None, as_of=None):
+    def __init__(self, settings, *, news_reader=None, company_reader=None, bank_reader=None, as_of=None):
         self.settings = settings
         self.news_reader = news_reader
         self.company_reader, self.as_of = company_reader, as_of
+        self.bank_reader = bank_reader
 
     def resolve_news_id(self, news_id, *, as_of=None):
         if self.news_reader is None:
@@ -163,6 +164,8 @@ class PostgresRepository:
                                 locator=row['url'] or 'database:news/' + row['id']) for row in rows]
 
     def search_bank_analytics(self, query, *, as_of, limit=3):
+        if self.bank_reader is not None:
+            return self.bank_reader.search(query, as_of=as_of, limit=limit)
         rows = self._read("SELECT id, title, ts_headline('russian', text, websearch_to_tsquery('russian', %s), %s) AS text, "
                           "published_at, url, source_ref, is_demo FROM bank_analytics "
                           "WHERE search_vector @@ websearch_to_tsquery('russian', %s) AND published_at <= %s "

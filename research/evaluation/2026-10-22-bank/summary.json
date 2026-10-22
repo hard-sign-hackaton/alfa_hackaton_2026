@@ -1,0 +1,331 @@
+{
+  "as_of": "2026-10-22T15:59:15.422226+00:00",
+  "cases": [
+    {
+      "company_id": "U_128194",
+      "news_id": "6fd817b6b18a3c411d8fd211415892665b9b818b72cc3d64c13f61fe937b10b7",
+      "title": "Алиханов: Минпромторг хочет расширить программу льготного автокредитования",
+      "status": "supported",
+      "bank_sources": 3,
+      "cited_bank_sources": 3,
+      "brief": {
+        "company_id": "U_128194",
+        "news_id": "6fd817b6b18a3c411d8fd211415892665b9b818b72cc3d64c13f61fe937b10b7",
+        "status": "ready",
+        "news_summary": "Минпромторг РФ планирует рассмотреть варианты увеличения финансирования программ льготного автокредитования и автолизинга в рамках бюджета на 2027–2029 гг.",
+        "short_answer": "Увеличение господдержки автокредитования может косвенно поддержать спрос на автомобили, что потенциально влияет на рынок автозапчастей, где работает компания, однако прямая связь не установлена.",
+        "classification": {
+          "business_relevant": true,
+          "topics": [
+            "automotive",
+            "regulation",
+            "other_business"
+          ],
+          "importance": "low",
+          "importance_method": "classifier",
+          "importance_reason": "Компания занимается оптовой торговлей автодеталями, и рост спроса на транспорт из-за льготного кредитования может косвенно отразиться на рынке запчастей."
+        },
+        "evidence": {
+          "news_summary": [
+            {
+              "source_id": "news:6fd817b6b18a3c411d8fd211415892665b9b818b72cc3d64c13f61fe937b10b7",
+              "quote": "предложит варианты увеличения финансирования программ льготного автокредитования и автолизинга."
+            }
+          ],
+          "short_answer": [
+            {
+              "source_id": "news:6fd817b6b18a3c411d8fd211415892665b9b818b72cc3d64c13f61fe937b10b7",
+              "quote": "предложит варианты увеличения финансирования программ льготного автокредитования и автолизинга."
+            },
+            {
+              "source_id": "company:U_128194:okved_names",
+              "quote": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов"
+            },
+            {
+              "source_id": "metric:U_128194:top_okved",
+              "quote": "Торговля оптовая и розничная автотранспортными средствами и мотоциклами"
+            },
+            {
+              "source_id": "metric:U_128194:counterparties",
+              "quote": "Роли покупателя/поставщика и причинная связь с новостью не установлены."
+            }
+          ],
+          "importance": [
+            {
+              "source_id": "news:6fd817b6b18a3c411d8fd211415892665b9b818b72cc3d64c13f61fe937b10b7",
+              "quote": "предложит варианты увеличения финансирования программ льготного автокредитования и автолизинга."
+            },
+            {
+              "source_id": "company:U_128194:okved_names",
+              "quote": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов"
+            },
+            {
+              "source_id": "metric:U_128194:top_okved",
+              "quote": "Торговля оптовая и розничная автотранспортными средствами и мотоциклами"
+            },
+            {
+              "source_id": "metric:U_128194:counterparties",
+              "quote": "Роли покупателя/поставщика и причинная связь с новостью не установлены."
+            }
+          ]
+        }
+      },
+      "bank_tool_calls": [
+        {
+          "tool": "search_bank_analytics",
+          "arguments": {
+            "query": "льготное автокредитование спрос авторынок"
+          },
+          "status": "found",
+          "cached": false,
+          "source_ids": [
+            "bank:alfa-consumption#f2759ca34798df58",
+            "bank:alfa-macro-1h26#5efc7ecb471cef22",
+            "bank:alfa-7m26#dffb63a516c6fa4e"
+          ]
+        },
+        {
+          "tool": "search_bank_analytics",
+          "arguments": {
+            "query": "ключевая ставка инфляция автокредиты лимиты"
+          },
+          "status": "limited",
+          "cached": false,
+          "source_ids": []
+        }
+      ]
+    },
+    {
+      "company_id": "U_37452",
+      "news_id": "9bfb602e317f62a40ab4bd588e14178869a9ee317e02572c6083315e6f4fd66c",
+      "title": "Аналитики ожидают, что ЦБ РФ в пятницу сохранит ключевую ставку на уровне 14%",
+      "status": "insufficient_data",
+      "bank_sources": 5,
+      "cited_bank_sources": 2,
+      "brief": {
+        "company_id": "U_37452",
+        "news_id": "9bfb602e317f62a40ab4bd588e14178869a9ee317e02572c6083315e6f4fd66c",
+        "status": "ready",
+        "news_summary": "Аналитики единогласно прогнозируют сохранение ключевой ставки ЦБ РФ на уровне 14% на ближайшем заседании.",
+        "short_answer": "Сохранение высокой ставки может означать, что стоимость кредитования и лизинга для компании U_37452 останется высокой, что потенциально влияет на её финансирование.",
+        "classification": {
+          "business_relevant": true,
+          "topics": [
+            "financial_markets",
+            "regulation"
+          ],
+          "importance": "low",
+          "importance_method": "classifier",
+          "importance_reason": "Компания использует кредит и лизинг, а сохранение ставки 14% может поддерживать высокую стоимость этих инструментов."
+        },
+        "evidence": {
+          "news_summary": [
+            {
+              "source_id": "news:9bfb602e317f62a40ab4bd588e14178869a9ee317e02572c6083315e6f4fd66c",
+              "quote": "Аналитики единогласно прогнозируют сохранение ключевой ставки ЦБ РФ в ближайшую пятницу на уровне 14%."
+            },
+            {
+              "source_id": "news:9bfb602e317f62a40ab4bd588e14178869a9ee317e02572c6083315e6f4fd66c",
+              "quote": "Эксперты расходятся только в оценке тона сигнала: останется он нейтральным или будет ужесточен."
+            }
+          ],
+          "short_answer": [
+            {
+              "source_id": "news:9bfb602e317f62a40ab4bd588e14178869a9ee317e02572c6083315e6f4fd66c",
+              "quote": "Аналитики единогласно прогнозируют сохранение ключевой ставки ЦБ РФ в ближайшую пятницу на уровне 14%."
+            },
+            {
+              "source_id": "news:9bfb602e317f62a40ab4bd588e14178869a9ee317e02572c6083315e6f4fd66c",
+              "quote": "Эксперты расходятся только в оценке тона сигнала: останется он нейтральным или будет ужесточен."
+            },
+            {
+              "source_id": "company:U_37452:banking_services",
+              "quote": "credit"
+            },
+            {
+              "source_id": "company:U_37452:banking_services",
+              "quote": "leasing"
+            }
+          ],
+          "importance": [
+            {
+              "source_id": "news:9bfb602e317f62a40ab4bd588e14178869a9ee317e02572c6083315e6f4fd66c",
+              "quote": "Аналитики единогласно прогнозируют сохранение ключевой ставки ЦБ РФ в ближайшую пятницу на уровне 14%."
+            },
+            {
+              "source_id": "news:9bfb602e317f62a40ab4bd588e14178869a9ee317e02572c6083315e6f4fd66c",
+              "quote": "Эксперты расходятся только в оценке тона сигнала: останется он нейтральным или будет ужесточен."
+            },
+            {
+              "source_id": "company:U_37452:banking_services",
+              "quote": "credit"
+            },
+            {
+              "source_id": "company:U_37452:banking_services",
+              "quote": "leasing"
+            }
+          ]
+        }
+      },
+      "bank_tool_calls": [
+        {
+          "tool": "search_bank_analytics",
+          "arguments": {
+            "query": "ключевая ставка кредитование оптовая торговля"
+          },
+          "status": "found",
+          "cached": false,
+          "source_ids": [
+            "bank:alfa-policy-rate-2026-09-11#5ac6d64f27daeed8",
+            "bank:alfa-bond-brief-2026-09-14#6f88affbea3da470",
+            "bank:alfa-policy-rate-2026-09-11#db27a144c8ac99a9"
+          ]
+        },
+        {
+          "tool": "search_bank_analytics",
+          "arguments": {
+            "query": "ключевая ставка 14% инфляция прогноз"
+          },
+          "status": "limited",
+          "cached": false,
+          "source_ids": [
+            "bank:alfa-consumption#0f4d01e1260d03d1",
+            "bank:alfa-policy-rate-2026-09-11#3103a54ea8b36332"
+          ]
+        }
+      ]
+    },
+    {
+      "company_id": "U_46911",
+      "news_id": "1056dce3cfa282c8aee1ecd173c5273091e4715beda0b3930c733a3261c46b2e",
+      "title": "Ставки на перевозку российской нефти выросли до рекордного уровня",
+      "status": "insufficient_data",
+      "bank_sources": 5,
+      "cited_bank_sources": 0,
+      "brief": {
+        "company_id": "U_46911",
+        "news_id": "1056dce3cfa282c8aee1ecd173c5273091e4715beda0b3930c733a3261c46b2e",
+        "status": "ready",
+        "news_summary": "Стоимость аренды судов для перевозки сырья из Новороссийска и Приморска достигла исторического максимума в $27–48 за баррель из-за роста мировых ставок фрахта.",
+        "short_answer": "Влияние на компанию не установлено. Несмотря на тематическую близость ОКВЭД 52.29 к транспортной деятельности, данных о связи компании с морскими перевозками нефти нет.",
+        "classification": {
+          "business_relevant": true,
+          "topics": [
+            "energy",
+            "logistics"
+          ],
+          "importance": "low",
+          "importance_method": "classifier",
+          "importance_reason": "Связь слабая: ОКВЭД компании (52.29) относится к вспомогательной деятельности в перевозках, но нет подтверждения участия в морском фрахте нефти."
+        },
+        "evidence": {
+          "news_summary": [
+            {
+              "source_id": "news:1056dce3cfa282c8aee1ecd173c5273091e4715beda0b3930c733a3261c46b2e",
+              "quote": "По данным Argus, аренда судов для перевозки сырья из Новороссийска и Приморска подорожала до максимума за историю наблюдений — $27–48 за баррель."
+            },
+            {
+              "source_id": "news:1056dce3cfa282c8aee1ecd173c5273091e4715beda0b3930c733a3261c46b2e",
+              "quote": "Рост мировых ставок фрахта и сохраняющиеся риски для судоходства разогнали стоимость транспортировки российской нефти."
+            }
+          ],
+          "short_answer": [
+            {
+              "source_id": "company:U_46911:okved_names",
+              "quote": "[\"Деятельность вспомогательная прочая, связанная с перевозками\"]"
+            },
+            {
+              "source_id": "news:1056dce3cfa282c8aee1ecd173c5273091e4715beda0b3930c733a3261c46b2e",
+              "quote": "Рост мировых ставок фрахта и сохраняющиеся риски для судоходства разогнали стоимость транспортировки российской нефти."
+            },
+            {
+              "source_id": "metric:U_46911:top_okved",
+              "quote": "{\"okved_class\": \"52\", \"okved_name\": \"Складское хозяйство и вспомогательная транспортная деятельность\", \"counterparties_count\": 53, \"amount_rub\": 415342000, \"share_pct\": 13.59, \"top_codes\": [{\"okved_code\": \"52.29\", \"okved_name\": \"Деятельность вспомогательная прочая, связанная с перевозками\", \"counterparties_count\": 43, \"amount_rub\": 409056000, \"share_pct\": 13.39}"
+            }
+          ],
+          "importance": [
+            {
+              "source_id": "company:U_46911:okved_names",
+              "quote": "[\"Деятельность вспомогательная прочая, связанная с перевозками\"]"
+            },
+            {
+              "source_id": "news:1056dce3cfa282c8aee1ecd173c5273091e4715beda0b3930c733a3261c46b2e",
+              "quote": "Рост мировых ставок фрахта и сохраняющиеся риски для судоходства разогнали стоимость транспортировки российской нефти."
+            },
+            {
+              "source_id": "metric:U_46911:top_okved",
+              "quote": "{\"okved_class\": \"52\", \"okved_name\": \"Складское хозяйство и вспомогательная транспортная деятельность\", \"counterparties_count\": 53, \"amount_rub\": 415342000, \"share_pct\": 13.59, \"top_codes\": [{\"okved_code\": \"52.29\", \"okved_name\": \"Деятельность вспомогательная прочая, связанная с перевозками\", \"counterparties_count\": 43, \"amount_rub\": 409056000, \"share_pct\": 13.39}"
+            }
+          ]
+        }
+      },
+      "bank_tool_calls": [
+        {
+          "tool": "search_bank_analytics",
+          "arguments": {
+            "query": "ставки фрахт перевозки нефти"
+          },
+          "status": "found",
+          "cached": false,
+          "source_ids": [
+            "bank:alfa-macro-1h26#5be166b212bfe1aa",
+            "bank:alfa-bond-brief-2026-09-14#7512d2f7d36f2840",
+            "bank:alfa-policy-rate-2026-09-11#debf21113eb96a49"
+          ]
+        },
+        {
+          "tool": "search_bank_analytics",
+          "arguments": {
+            "query": "ключевая ставка логистика"
+          },
+          "status": "found",
+          "cached": false,
+          "source_ids": [
+            "bank:alfa-fi-strategy-3q26#a8fafdfa1a8f960c",
+            "bank:alfa-policy-rate-2026-09-11#debf21113eb96a49",
+            "bank:alfa-policy-rate-2026-09-11#db27a144c8ac99a9"
+          ]
+        },
+        {
+          "tool": "search_bank_analytics",
+          "arguments": {
+            "query": "экспорт нефти дисконты Urals"
+          },
+          "status": "limited",
+          "cached": false,
+          "source_ids": [
+            "bank:alfa-macro-1h26#5be166b212bfe1aa"
+          ]
+        }
+      ]
+    }
+  ],
+  "planned": 3,
+  "completed": 3,
+  "brief_completed": 3,
+  "model_attempts": 32,
+  "statuses": {
+    "tool_calls": 12,
+    "LLM transport failure": 7,
+    "invalid_output": 1,
+    "failed": 3,
+    "finished": 3,
+    "validated_references": 6
+  },
+  "reported_cost_usd": 2.712539118430986,
+  "limitations": [
+    "Three selected cases are a functionality check, not an independent quality benchmark.",
+    "OCR may contain errors. Full table grids and chart data are absent.",
+    "Bank forecasts and historical reports are attributed context, not proof of company impact.",
+    "Previous reports describe runs without bank context and remain unchanged."
+  ],
+  "default_cli": {
+    "company_id": "U_37452",
+    "news_id": "9bfb602e317f62a40ab4bd588e14178869a9ee317e02572c6083315e6f4fd66c",
+    "status": "supported",
+    "brief_status": "ready",
+    "bank_sources": 5,
+    "model_attempts": 9,
+    "reported_cost_usd": 1.9293530788667719
+  }
+}

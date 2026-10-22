@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Classification": {
+      "additionalProperties": false,
+      "properties": {
+        "business_relevant": {
+          "title": "Business Relevant",
+          "type": "boolean"
+        },
+        "topics": {
+          "items": {
+            "enum": [
+              "metallurgy",
+              "electronics",
+              "automotive",
+              "construction",
+              "retail_ecommerce",
+              "logistics",
+              "financial_markets",
+              "energy",
+              "regulation",
+              "wholesale_trade",
+              "real_estate",
+              "other_business",
+              "not_business"
+            ],
+            "type": "string"
+          },
+          "title": "Topics",
+          "type": "array"
+        },
+        "importance": {
+          "anyOf": [
+            {
+              "enum": [
+                "high",
+                "medium",
+                "low"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Importance"
+        },
+        "importance_method": {
+          "anyOf": [
+            {
+              "enum": [
+                "classifier",
+                "rules"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Importance Method"
+        },
+        "importance_reason": {
+          "maxLength": 360,
+          "minLength": 1,
+          "title": "Importance Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "business_relevant",
+        "topics",
+        "importance",
+        "importance_method",
+        "importance_reason"
+      ],
+      "title": "Classification",
+      "type": "object"
+    },
+    "CompactEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "news_summary": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "title": "News Summary",
+          "type": "array"
+        },
+        "short_answer": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "title": "Short Answer",
+          "type": "array"
+        },
+        "importance": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "title": "Importance",
+          "type": "array"
+        }
+      },
+      "required": [
+        "news_summary",
+        "short_answer",
+        "importance"
+      ],
+      "title": "CompactEvidence",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "quote": {
+          "minLength": 1,
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "quote"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "company_id": {
+      "title": "Company Id",
+      "type": "string"
+    },
+    "news_id": {
+      "title": "News Id",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "partial"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "news_summary": {
+      "maxLength": 360,
+      "minLength": 1,
+      "title": "News Summary",
+      "type": "string"
+    },
+    "short_answer": {
+      "maxLength": 360,
+      "minLength": 1,
+      "title": "Short Answer",
+      "type": "string"
+    },
+    "classification": {
+      "$ref": "#/$defs/Classification"
+    },
+    "evidence": {
+      "$ref": "#/$defs/CompactEvidence"
+    }
+  },
+  "required": [
+    "company_id",
+    "news_id",
+    "status",
+    "news_summary",
+    "short_answer",
+    "classification",
+    "evidence"
+  ],
+  "title": "CompactResult",
+  "type": "object"
+}

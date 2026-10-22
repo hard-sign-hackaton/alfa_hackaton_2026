@@ -8,6 +8,7 @@ research/ai/private_data/
 research/ai/live_results/
 
 *.dump
+/chunks.jsonl
 
 дамп/
 

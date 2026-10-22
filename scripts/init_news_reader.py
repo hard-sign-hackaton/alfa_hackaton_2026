@@ -28,6 +28,7 @@ def main():
         raw.execute('GRANT USAGE ON SCHEMA public TO analysis_news_reader')
         raw.execute('GRANT SELECT ON news_articles,news_sources,news_embeddings,news_embedding_profiles TO analysis_news_reader')
         raw.execute('GRANT SELECT ON company_groups,companies,company_import_runs,company_embedding_profiles,company_embeddings TO analysis_news_reader')
+        raw.execute('GRANT SELECT ON analytics_documents,analytics_chunks,analytics_tables,analytics_embedding_profiles,analytics_chunk_embeddings TO analysis_news_reader')
     print('News storage ready; read-only role configured')
 
 

@@ -8,6 +8,7 @@ sys.path.insert(0, str(ROOT.parents[1] / 'ai'))
 from contracts import CompanyProfile, NewsEvent, Insight  # noqa: E402
 from tasks import NewsPreparation  # noqa: E402
 from retrieval import RetrievedSource  # noqa: E402
+from brief import CompactResult  # noqa: E402
 
 DRAFT = 'https://json-schema.org/draft/2020-12/schema'
 S = {'type': 'string', 'minLength': 1}
@@ -25,6 +26,7 @@ def main():
     write('analysis-request', obj({'contract_version': {'const': 't01-draft-1'}, 'request_id': S, 'company': ref('ai-company-profile'), 'news_id': S, 'events': array(ref('ai-news-event'), minItems=1), 'as_of': TIME, 'question': nullable(S)}))
     write('llm-input', obj({'company_id': S, 'news_id': S, 'profile_provenance': {'enum': ['synthetic_demo', 'dataset']}, 'sources': {'type': 'object', 'additionalProperties': S, 'minProperties': 1}, 'question': nullable(S), 'history': array(ref('ai-insight'), maxItems=4), 'schema': {'type': 'object'}}))
     write('news-preparation', NewsPreparation.model_json_schema())
+    write('compact-result', CompactResult.model_json_schema())
     write('retrieved-source', RetrievedSource.model_json_schema())
     llm_input = json.loads((ROOT / 'llm-input.schema.json').read_text(encoding='utf-8'))
     llm_input['properties']['preparation'] = ref('news-preparation')

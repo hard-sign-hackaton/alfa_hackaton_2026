@@ -25,7 +25,7 @@ def main(argv=None):
     db.add_argument('action', choices=['upgrade'])
 
     importer = commands.add_parser('import')
-    importer.add_argument('--extracted', type=Path, required=True,
+    importer.add_argument('--extracted', type=Path,
                           help='Directory with extracted JSON files')
     importer.add_argument('--manifest', type=Path,
                           help='Manifest with canonical document metadata')
@@ -59,13 +59,15 @@ def main(argv=None):
     search = commands.add_parser('search')
     search.add_argument('query')
     search.add_argument('--top-k', type=int, default=5)
-    search.add_argument('--mode', choices=['text', 'vector'], default='text')
+    search.add_argument('--mode', choices=['text', 'vector', 'hybrid'], default='text')
     search.add_argument('--profile')
     search.add_argument('--as-of', type=parse_time)
     search.add_argument('--per-document', type=int, default=2)
     search.add_argument('--output', type=Path)
 
     args = parser.parse_args(argv)
+    if args.command == 'import' and not args.extracted and not (args.chunks and args.manifest):
+        parser.error('Use --extracted or both --chunks and --manifest')
     if args.command == 'db':
         upgrade_database()
         return 0
@@ -73,12 +75,13 @@ def main(argv=None):
     documents, vectors = repositories()
 
     if args.command == 'import':
-        result = AnalyticsImportService(documents).run(
-            args.extracted,
-            manifest_path=args.manifest,
-            chunks_path=args.chunks,
-            source_root=args.source_root,
-        )
+        if args.extracted:
+            result = AnalyticsImportService(documents).run(
+                args.extracted, manifest_path=args.manifest,
+                chunks_path=args.chunks, source_root=args.source_root)
+        else:
+            from .services.chunk_import import ChunkFileImportService
+            result = ChunkFileImportService(documents).run(args.chunks, manifest_path=args.manifest)
         write_json(args.report, result)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
@@ -111,7 +114,7 @@ def main(argv=None):
         write_json(args.report, result)
     else:
         embeddings = None
-        if args.mode == 'vector':
+        if args.mode in ('vector', 'hybrid'):
             from app.shared.embeddings.e5 import E5Provider
 
             from .services.embedding import AnalyticsEmbeddingService
