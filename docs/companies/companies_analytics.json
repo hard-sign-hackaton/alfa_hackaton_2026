@@ -1,0 +1,3272 @@
+{
+  "meta": {
+    "generated_at_utc": "2026-10-22T09:22:47+00:00",
+    "source_files": {
+      "companies": "df_Uid_data_hack.csv",
+      "payments": "df_Uid_payment_hack.csv"
+    },
+    "company_dataset": {
+      "raw_rows": 85525,
+      "unique_companies": 85514,
+      "duplicate_id_rows": 12,
+      "duplicate_ids": [
+        "U_428697"
+      ],
+      "dedupe_rule": "Для повторяющегося SYNTHETIC_U оставлена запись с максимальной REVENUE_COMPANY."
+    },
+    "payments_cleaning": {
+      "raw_rows": 1380585,
+      "unknown_beneficiary_rows": 409024,
+      "unknown_payer_rows": 582165,
+      "removed_unknown_party_rows": 991189,
+      "removed_self_loop_rows": 27406,
+      "duplicate_edge_rows": 10,
+      "merged_duplicate_edge_rows": 5,
+      "clean_rows": 361985,
+      "removed_rows_total": 1018600,
+      "self_loop_rule": "Платежи компании самой себе удалены как технический артефакт.",
+      "duplicate_rule": "Повторяющиеся пары PAYER/BENEFICIARY агрегированы суммированием PAY_AMT и PAY_CNT."
+    },
+    "selection": {
+      "client_type": [
+        "CLIENT"
+      ],
+      "max_group_size": 10,
+      "min_total_revenue_rub": 15000000000,
+      "min_edges_per_company": 5,
+      "min_group_edges": 50,
+      "candidate_groups_count": 24,
+      "diversity_rule": "Сначала максимизируется число различных разделов ОКВЭД, затем регионов, затем классов ОКВЭД; при равенстве — минимум транзакций у компании, затем суммарное число транзакций и выручка.",
+      "selected_groups_diversity": {
+        "okved_sections": [
+          "G",
+          "H",
+          "L"
+        ],
+        "okved_classes": [
+          "45",
+          "52",
+          "68"
+        ],
+        "regions": [
+          "Воронежская область",
+          "Москва",
+          "Московская область"
+        ]
+      }
+    },
+    "metrics": {
+      "amount_unit": "rub",
+      "top_n": 3,
+      "intragroup_included": true,
+      "okved_aggregation": "Топ-3 по классу ОКВЭД (первые 2 цифры); внутри каждого класса приведены топ-3 точных кода контрагентов.",
+      "geography_aggregation": "По региону и городу регистрации контрагента.",
+      "concentration": "top_1_share_pct, top_3_share_pct и HHI рассчитаны по обороту с контрагентом; HHI — сумма квадратов долей, шкала 0–10000.",
+      "two_way_links": "Контрагенты, с которыми есть и входящие, и исходящие платежи.",
+      "no_time_metrics": "В таблице платежей нет даты, поэтому динамика и сезонность не рассчитываются."
+    }
+  },
+  "groups": [
+    {
+      "group_id": "group_132767_sb",
+      "selection": {
+        "rank": 1,
+        "okved_section": {
+          "code": "G",
+          "name": "Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов"
+        },
+        "okved_class": "45",
+        "main_okved": {
+          "code": "45.31.1",
+          "name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов"
+        },
+        "headquarters_region": "Воронежская область",
+        "headquarters_city": "г. Воронеж",
+        "group_edges_count": 1612,
+        "min_company_edges_count": 166,
+        "reason": "Группа 1 из 3: раздел ОКВЭД G (Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов), регион Воронежская область; 8 компаний, 1612 связей. Тройка покрывает 3 раздела ОКВЭД и 3 региона."
+      },
+      "summary": {
+        "composition": {
+          "companies_count": 8,
+          "total_revenue_rub": 29477393350,
+          "total_revenue_bn_rub": 29.48,
+          "regions": [
+            "Воронежская область",
+            "Москва"
+          ],
+          "cities": [
+            "г. Воронеж",
+            "г. Москва"
+          ],
+          "okved_sections": [
+            {
+              "code": "G",
+              "name": "Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов",
+              "companies_count": 8
+            }
+          ],
+          "okved_classes": [
+            {
+              "code": "45.31",
+              "name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+              "companies_count": 4
+            },
+            {
+              "code": "45.31.1",
+              "name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+              "companies_count": 4
+            }
+          ]
+        },
+        "transactions": {
+          "edges_count": 1612,
+          "turnover_rub": 16523587000,
+          "payments_count": 75213,
+          "unique_counterparties_count": 416,
+          "external_counterparties_count": 408,
+          "intragroup_counterparties_count": 8,
+          "intragroup_amount_rub": 2167377000,
+          "intragroup_share_pct": 13.12
+        }
+      },
+      "companies": [
+        {
+          "company_id": "U_128194",
+          "main": {
+            "okved": {
+              "code": "45.31.1",
+              "name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+              "section": {
+                "code": "G",
+                "name": "Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов"
+              }
+            },
+            "bank_services": {
+              "cash_settlement_rko": true,
+              "bank_guarantees": false,
+              "loans": true,
+              "leasing": false,
+              "deposits": false,
+              "salary_project": true,
+              "factoring": false
+            },
+            "location": {
+              "city": "г. Воронеж",
+              "region": "Воронежская область"
+            },
+            "ownership_form": "ЧАСТНАЯ СОБСТВЕННОСТЬ",
+            "annual_revenue_rub": 7282655891,
+            "annual_revenue_bn_rub": 7.28,
+            "foreign_trade_countries": [],
+            "business_stage": "Оптимизация",
+            "client_type": "CLIENT",
+            "group_id": "group_132767_sb"
+          },
+          "payments": {
+            "totals": {
+              "incoming_amount_rub": 3468710000,
+              "outgoing_amount_rub": 2009570000,
+              "turnover_rub": 5478280000,
+              "incoming_payments_count": 2060,
+              "outgoing_payments_count": 11502,
+              "edges_count": 213,
+              "unique_counterparties_count": 203,
+              "external_counterparties_count": 198,
+              "intragroup_counterparties_count": 5,
+              "intragroup_amount_rub": 491492000,
+              "intragroup_share_pct": 8.97,
+              "average_edge_amount_rub": 25719624
+            },
+            "counterparties": {
+              "unique_count": 203,
+              "top_1_share_pct": 35.66,
+              "top_3_share_pct": 54.27,
+              "hhi": 1554.05,
+              "top_3": [
+                {
+                  "company_id": "U_118748",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 1950525000,
+                  "outgoing_amount_rub": 3172000,
+                  "turnover_rub": 1953697000,
+                  "payments_count": 342,
+                  "share_pct": 35.66
+                },
+                {
+                  "company_id": "U_255165",
+                  "okved_code": "46.90",
+                  "okved_name": "Торговля оптовая неспециализированная",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 668199000,
+                  "outgoing_amount_rub": 0,
+                  "turnover_rub": 668199000,
+                  "payments_count": 88,
+                  "share_pct": 12.2
+                },
+                {
+                  "company_id": "U_181440",
+                  "okved_code": "46.90",
+                  "okved_name": "Торговля оптовая неспециализированная",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 350964000,
+                  "outgoing_amount_rub": 0,
+                  "turnover_rub": 350964000,
+                  "payments_count": 65,
+                  "share_pct": 6.41
+                }
+              ]
+            },
+            "top_okved": [
+              {
+                "okved_class": "45",
+                "okved_name": "Торговля оптовая и розничная автотранспортными средствами и мотоциклами",
+                "counterparties_count": 165,
+                "amount_rub": 4288915000,
+                "share_pct": 78.29,
+                "top_codes": [
+                  {
+                    "okved_code": "45.31.1",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                    "counterparties_count": 79,
+                    "amount_rub": 3719620000,
+                    "share_pct": 67.9
+                  },
+                  {
+                    "okved_code": "45.31",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                    "counterparties_count": 41,
+                    "amount_rub": 379336000,
+                    "share_pct": 6.92
+                  },
+                  {
+                    "okved_code": "45.20.1",
+                    "okved_name": "Техническое обслуживание и ремонт легковых автомобилей и легких грузовых автотранспортных средств",
+                    "counterparties_count": 14,
+                    "amount_rub": 78323000,
+                    "share_pct": 1.43
+                  }
+                ]
+              },
+              {
+                "okved_class": "46",
+                "okved_name": "Торговля оптовая, кроме оптовой торговли автотранспортными средствами и мотоциклами",
+                "counterparties_count": 26,
+                "amount_rub": 1141152000,
+                "share_pct": 20.83,
+                "top_codes": [
+                  {
+                    "okved_code": "46.90",
+                    "okved_name": "Торговля оптовая неспециализированная",
+                    "counterparties_count": 11,
+                    "amount_rub": 1041153000,
+                    "share_pct": 19.01
+                  },
+                  {
+                    "okved_code": "46.71",
+                    "okved_name": "Торговля оптовая твердым, жидким и газообразным топливом и подобными продуктами",
+                    "counterparties_count": 6,
+                    "amount_rub": 62493000,
+                    "share_pct": 1.14
+                  },
+                  {
+                    "okved_code": "46.71.1",
+                    "okved_name": "Торговля оптовая твердым топливом",
+                    "counterparties_count": 1,
+                    "amount_rub": 13641000,
+                    "share_pct": 0.25
+                  }
+                ]
+              },
+              {
+                "okved_class": "68",
+                "okved_name": "Операции с недвижимым имуществом",
+                "counterparties_count": 3,
+                "amount_rub": 21837000,
+                "share_pct": 0.4,
+                "top_codes": [
+                  {
+                    "okved_code": "68.20",
+                    "okved_name": "Аренда и управление собственным или арендованным недвижимым имуществом",
+                    "counterparties_count": 1,
+                    "amount_rub": 17941000,
+                    "share_pct": 0.33
+                  },
+                  {
+                    "okved_code": "68.20.2",
+                    "okved_name": "Аренда и управление собственным или арендованным нежилым недвижимым имуществом",
+                    "counterparties_count": 1,
+                    "amount_rub": 3292000,
+                    "share_pct": 0.06
+                  },
+                  {
+                    "okved_code": "68.10",
+                    "okved_name": "Покупка и продажа собственного недвижимого имущества",
+                    "counterparties_count": 1,
+                    "amount_rub": 604000,
+                    "share_pct": 0.01
+                  }
+                ]
+              }
+            ],
+            "geography": {
+              "top_regions": [
+                {
+                  "region": "Москва",
+                  "counterparties_count": 109,
+                  "amount_rub": 4281969000,
+                  "share_pct": 78.16
+                },
+                {
+                  "region": "Смоленская область",
+                  "counterparties_count": 9,
+                  "amount_rub": 487669000,
+                  "share_pct": 8.9
+                },
+                {
+                  "region": "Воронежская область",
+                  "counterparties_count": 15,
+                  "amount_rub": 332212000,
+                  "share_pct": 6.06
+                }
+              ],
+              "top_cities": [
+                {
+                  "city": "г. Москва",
+                  "counterparties_count": 109,
+                  "amount_rub": 4281969000,
+                  "share_pct": 78.16
+                },
+                {
+                  "city": "г. Смоленск",
+                  "counterparties_count": 9,
+                  "amount_rub": 487669000,
+                  "share_pct": 8.9
+                },
+                {
+                  "city": "г. Воронеж",
+                  "counterparties_count": 15,
+                  "amount_rub": 332212000,
+                  "share_pct": 6.06
+                }
+              ]
+            },
+            "two_way_links": {
+              "count": 10,
+              "share_pct": 4.93,
+              "top_3": [
+                {
+                  "company_id": "U_118748",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Москва",
+                  "incoming_amount_rub": 1950525000,
+                  "outgoing_amount_rub": 3172000,
+                  "turnover_rub": 1953697000
+                },
+                {
+                  "company_id": "U_122506",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Москва",
+                  "incoming_amount_rub": 62562000,
+                  "outgoing_amount_rub": 123050000,
+                  "turnover_rub": 185612000
+                },
+                {
+                  "company_id": "U_123091",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "incoming_amount_rub": 77525000,
+                  "outgoing_amount_rub": 33442000,
+                  "turnover_rub": 110967000
+                }
+              ]
+            }
+          }
+        },
+        {
+          "company_id": "U_125887",
+          "main": {
+            "okved": {
+              "code": "45.31",
+              "name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+              "section": {
+                "code": "G",
+                "name": "Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов"
+              }
+            },
+            "bank_services": {
+              "cash_settlement_rko": true,
+              "bank_guarantees": false,
+              "loans": false,
+              "leasing": false,
+              "deposits": false,
+              "salary_project": true,
+              "factoring": false
+            },
+            "location": {
+              "city": "г. Воронеж",
+              "region": "Воронежская область"
+            },
+            "ownership_form": "ЧАСТНАЯ СОБСТВЕННОСТЬ",
+            "annual_revenue_rub": 6277396732,
+            "annual_revenue_bn_rub": 6.28,
+            "foreign_trade_countries": [],
+            "business_stage": "Бизнес в новой реальности",
+            "client_type": "CLIENT",
+            "group_id": "group_132767_sb"
+          },
+          "payments": {
+            "totals": {
+              "incoming_amount_rub": 272105000,
+              "outgoing_amount_rub": 1904556000,
+              "turnover_rub": 2176661000,
+              "incoming_payments_count": 1998,
+              "outgoing_payments_count": 7809,
+              "edges_count": 225,
+              "unique_counterparties_count": 209,
+              "external_counterparties_count": 202,
+              "intragroup_counterparties_count": 7,
+              "intragroup_amount_rub": 566949000,
+              "intragroup_share_pct": 26.05,
+              "average_edge_amount_rub": 9674049
+            },
+            "counterparties": {
+              "unique_count": 209,
+              "top_1_share_pct": 12.46,
+              "top_3_share_pct": 30.72,
+              "hhi": 447.02,
+              "top_3": [
+                {
+                  "company_id": "U_122506",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 56192000,
+                  "outgoing_amount_rub": 214988000,
+                  "turnover_rub": 271180000,
+                  "payments_count": 9,
+                  "share_pct": 12.46
+                },
+                {
+                  "company_id": "U_138548",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Смоленская область",
+                  "city": "г. Смоленск",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 0,
+                  "outgoing_amount_rub": 226042000,
+                  "turnover_rub": 226042000,
+                  "payments_count": 190,
+                  "share_pct": 10.38
+                },
+                {
+                  "company_id": "U_3492",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 4000,
+                  "outgoing_amount_rub": 171369000,
+                  "turnover_rub": 171373000,
+                  "payments_count": 148,
+                  "share_pct": 7.87
+                }
+              ]
+            },
+            "top_okved": [
+              {
+                "okved_class": "45",
+                "okved_name": "Торговля оптовая и розничная автотранспортными средствами и мотоциклами",
+                "counterparties_count": 167,
+                "amount_rub": 1956794000,
+                "share_pct": 89.9,
+                "top_codes": [
+                  {
+                    "okved_code": "45.31.1",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                    "counterparties_count": 80,
+                    "amount_rub": 1158623000,
+                    "share_pct": 53.23
+                  },
+                  {
+                    "okved_code": "45.31",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                    "counterparties_count": 46,
+                    "amount_rub": 570624000,
+                    "share_pct": 26.22
+                  },
+                  {
+                    "okved_code": "45.20.1",
+                    "okved_name": "Техническое обслуживание и ремонт легковых автомобилей и легких грузовых автотранспортных средств",
+                    "counterparties_count": 11,
+                    "amount_rub": 127415000,
+                    "share_pct": 5.85
+                  }
+                ]
+              },
+              {
+                "okved_class": "46",
+                "okved_name": "Торговля оптовая, кроме оптовой торговли автотранспортными средствами и мотоциклами",
+                "counterparties_count": 24,
+                "amount_rub": 109098000,
+                "share_pct": 5.01,
+                "top_codes": [
+                  {
+                    "okved_code": "46.71",
+                    "okved_name": "Торговля оптовая твердым, жидким и газообразным топливом и подобными продуктами",
+                    "counterparties_count": 7,
+                    "amount_rub": 57631000,
+                    "share_pct": 2.65
+                  },
+                  {
+                    "okved_code": "46.90",
+                    "okved_name": "Торговля оптовая неспециализированная",
+                    "counterparties_count": 7,
+                    "amount_rub": 25344000,
+                    "share_pct": 1.16
+                  },
+                  {
+                    "okved_code": "46.75.2",
+                    "okved_name": "Торговля оптовая промышленными химикатами",
+                    "counterparties_count": 1,
+                    "amount_rub": 7392000,
+                    "share_pct": 0.34
+                  }
+                ]
+              },
+              {
+                "okved_class": "68",
+                "okved_name": "Операции с недвижимым имуществом",
+                "counterparties_count": 3,
+                "amount_rub": 48452000,
+                "share_pct": 2.23,
+                "top_codes": [
+                  {
+                    "okved_code": "68.10",
+                    "okved_name": "Покупка и продажа собственного недвижимого имущества",
+                    "counterparties_count": 2,
+                    "amount_rub": 45477000,
+                    "share_pct": 2.09
+                  },
+                  {
+                    "okved_code": "68.20.2",
+                    "okved_name": "Аренда и управление собственным или арендованным нежилым недвижимым имуществом",
+                    "counterparties_count": 1,
+                    "amount_rub": 2975000,
+                    "share_pct": 0.14
+                  }
+                ]
+              }
+            ],
+            "geography": {
+              "top_regions": [
+                {
+                  "region": "Москва",
+                  "counterparties_count": 110,
+                  "amount_rub": 951562000,
+                  "share_pct": 43.72
+                },
+                {
+                  "region": "Воронежская область",
+                  "counterparties_count": 24,
+                  "amount_rub": 444645000,
+                  "share_pct": 20.43
+                },
+                {
+                  "region": "Смоленская область",
+                  "counterparties_count": 6,
+                  "amount_rub": 331816000,
+                  "share_pct": 15.24
+                }
+              ],
+              "top_cities": [
+                {
+                  "city": "г. Москва",
+                  "counterparties_count": 110,
+                  "amount_rub": 951562000,
+                  "share_pct": 43.72
+                },
+                {
+                  "city": "г. Воронеж",
+                  "counterparties_count": 24,
+                  "amount_rub": 444645000,
+                  "share_pct": 20.43
+                },
+                {
+                  "city": "г. Смоленск",
+                  "counterparties_count": 6,
+                  "amount_rub": 331816000,
+                  "share_pct": 15.24
+                }
+              ]
+            },
+            "two_way_links": {
+              "count": 16,
+              "share_pct": 7.66,
+              "top_3": [
+                {
+                  "company_id": "U_122506",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Москва",
+                  "incoming_amount_rub": 56192000,
+                  "outgoing_amount_rub": 214988000,
+                  "turnover_rub": 271180000
+                },
+                {
+                  "company_id": "U_3492",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Москва",
+                  "incoming_amount_rub": 4000,
+                  "outgoing_amount_rub": 171369000,
+                  "turnover_rub": 171373000
+                },
+                {
+                  "company_id": "U_122970",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "incoming_amount_rub": 36012000,
+                  "outgoing_amount_rub": 43327000,
+                  "turnover_rub": 79339000
+                }
+              ]
+            }
+          }
+        },
+        {
+          "company_id": "U_123091",
+          "main": {
+            "okved": {
+              "code": "45.31.1",
+              "name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+              "section": {
+                "code": "G",
+                "name": "Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов"
+              }
+            },
+            "bank_services": {
+              "cash_settlement_rko": true,
+              "bank_guarantees": false,
+              "loans": true,
+              "leasing": false,
+              "deposits": false,
+              "salary_project": true,
+              "factoring": false
+            },
+            "location": {
+              "city": "г. Воронеж",
+              "region": "Воронежская область"
+            },
+            "ownership_form": "ЧАСТНАЯ СОБСТВЕННОСТЬ",
+            "annual_revenue_rub": 5219129127,
+            "annual_revenue_bn_rub": 5.22,
+            "foreign_trade_countries": [],
+            "business_stage": "Оптимизация",
+            "client_type": "CLIENT",
+            "group_id": "group_132767_sb"
+          },
+          "payments": {
+            "totals": {
+              "incoming_amount_rub": 658021000,
+              "outgoing_amount_rub": 1755904000,
+              "turnover_rub": 2413925000,
+              "incoming_payments_count": 2649,
+              "outgoing_payments_count": 10817,
+              "edges_count": 228,
+              "unique_counterparties_count": 211,
+              "external_counterparties_count": 205,
+              "intragroup_counterparties_count": 6,
+              "intragroup_amount_rub": 406592000,
+              "intragroup_share_pct": 16.84,
+              "average_edge_amount_rub": 10587390
+            },
+            "counterparties": {
+              "unique_count": 211,
+              "top_1_share_pct": 7.83,
+              "top_3_share_pct": 19.78,
+              "hhi": 307.42,
+              "top_3": [
+                {
+                  "company_id": "U_28578",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Смоленская область",
+                  "city": "г. Смоленск",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 0,
+                  "outgoing_amount_rub": 189026000,
+                  "turnover_rub": 189026000,
+                  "payments_count": 357,
+                  "share_pct": 7.83
+                },
+                {
+                  "company_id": "U_122506",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 56602000,
+                  "outgoing_amount_rub": 89268000,
+                  "turnover_rub": 145870000,
+                  "payments_count": 9,
+                  "share_pct": 6.04
+                },
+                {
+                  "company_id": "U_222900",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Воронежская область",
+                  "city": "г. Воронеж",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 132174000,
+                  "outgoing_amount_rub": 10328000,
+                  "turnover_rub": 142502000,
+                  "payments_count": 5,
+                  "share_pct": 5.9
+                }
+              ]
+            },
+            "top_okved": [
+              {
+                "okved_class": "45",
+                "okved_name": "Торговля оптовая и розничная автотранспортными средствами и мотоциклами",
+                "counterparties_count": 174,
+                "amount_rub": 2271878000,
+                "share_pct": 94.12,
+                "top_codes": [
+                  {
+                    "okved_code": "45.31.1",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                    "counterparties_count": 86,
+                    "amount_rub": 1245638000,
+                    "share_pct": 51.6
+                  },
+                  {
+                    "okved_code": "45.31",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                    "counterparties_count": 49,
+                    "amount_rub": 828799000,
+                    "share_pct": 34.33
+                  },
+                  {
+                    "okved_code": "45.3",
+                    "okved_name": "Торговля автомобильными деталями, узлами и принадлежностями",
+                    "counterparties_count": 14,
+                    "amount_rub": 147114000,
+                    "share_pct": 6.09
+                  }
+                ]
+              },
+              {
+                "okved_class": "46",
+                "okved_name": "Торговля оптовая, кроме оптовой торговли автотранспортными средствами и мотоциклами",
+                "counterparties_count": 24,
+                "amount_rub": 85102000,
+                "share_pct": 3.53,
+                "top_codes": [
+                  {
+                    "okved_code": "46.90",
+                    "okved_name": "Торговля оптовая неспециализированная",
+                    "counterparties_count": 8,
+                    "amount_rub": 30437000,
+                    "share_pct": 1.26
+                  },
+                  {
+                    "okved_code": "46.71",
+                    "okved_name": "Торговля оптовая твердым, жидким и газообразным топливом и подобными продуктами",
+                    "counterparties_count": 7,
+                    "amount_rub": 28562000,
+                    "share_pct": 1.18
+                  },
+                  {
+                    "okved_code": "46.71.1",
+                    "okved_name": "Торговля оптовая твердым топливом",
+                    "counterparties_count": 1,
+                    "amount_rub": 10741000,
+                    "share_pct": 0.44
+                  }
+                ]
+              },
+              {
+                "okved_class": "68",
+                "okved_name": "Операции с недвижимым имуществом",
+                "counterparties_count": 2,
+                "amount_rub": 35680000,
+                "share_pct": 1.48,
+                "top_codes": [
+                  {
+                    "okved_code": "68.20.2",
+                    "okved_name": "Аренда и управление собственным или арендованным нежилым недвижимым имуществом",
+                    "counterparties_count": 1,
+                    "amount_rub": 35657000,
+                    "share_pct": 1.48
+                  },
+                  {
+                    "okved_code": "68.10",
+                    "okved_name": "Покупка и продажа собственного недвижимого имущества",
+                    "counterparties_count": 1,
+                    "amount_rub": 23000,
+                    "share_pct": 0.0
+                  }
+                ]
+              }
+            ],
+            "geography": {
+              "top_regions": [
+                {
+                  "region": "Москва",
+                  "counterparties_count": 118,
+                  "amount_rub": 1222725000,
+                  "share_pct": 50.65
+                },
+                {
+                  "region": "Смоленская область",
+                  "counterparties_count": 6,
+                  "amount_rub": 494617000,
+                  "share_pct": 20.49
+                },
+                {
+                  "region": "Воронежская область",
+                  "counterparties_count": 15,
+                  "amount_rub": 285879000,
+                  "share_pct": 11.84
+                }
+              ],
+              "top_cities": [
+                {
+                  "city": "г. Москва",
+                  "counterparties_count": 118,
+                  "amount_rub": 1222725000,
+                  "share_pct": 50.65
+                },
+                {
+                  "city": "г. Смоленск",
+                  "counterparties_count": 6,
+                  "amount_rub": 494617000,
+                  "share_pct": 20.49
+                },
+                {
+                  "city": "г. Воронеж",
+                  "counterparties_count": 15,
+                  "amount_rub": 285879000,
+                  "share_pct": 11.84
+                }
+              ]
+            },
+            "two_way_links": {
+              "count": 17,
+              "share_pct": 8.06,
+              "top_3": [
+                {
+                  "company_id": "U_122506",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Москва",
+                  "incoming_amount_rub": 56602000,
+                  "outgoing_amount_rub": 89268000,
+                  "turnover_rub": 145870000
+                },
+                {
+                  "company_id": "U_222900",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Воронежская область",
+                  "incoming_amount_rub": 132174000,
+                  "outgoing_amount_rub": 10328000,
+                  "turnover_rub": 142502000
+                },
+                {
+                  "company_id": "U_128194",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "incoming_amount_rub": 33442000,
+                  "outgoing_amount_rub": 77525000,
+                  "turnover_rub": 110967000
+                }
+              ]
+            }
+          }
+        },
+        {
+          "company_id": "U_122970",
+          "main": {
+            "okved": {
+              "code": "45.31.1",
+              "name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+              "section": {
+                "code": "G",
+                "name": "Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов"
+              }
+            },
+            "bank_services": {
+              "cash_settlement_rko": true,
+              "bank_guarantees": false,
+              "loans": true,
+              "leasing": false,
+              "deposits": false,
+              "salary_project": true,
+              "factoring": false
+            },
+            "location": {
+              "city": "г. Воронеж",
+              "region": "Воронежская область"
+            },
+            "ownership_form": "ЧАСТНАЯ СОБСТВЕННОСТЬ",
+            "annual_revenue_rub": 5073789373,
+            "annual_revenue_bn_rub": 5.07,
+            "foreign_trade_countries": [
+              "КИТАЙ",
+              "ТУРЦИЯ"
+            ],
+            "business_stage": "Оптимизация",
+            "client_type": "CLIENT",
+            "group_id": "group_132767_sb"
+          },
+          "payments": {
+            "totals": {
+              "incoming_amount_rub": 677052000,
+              "outgoing_amount_rub": 1518520000,
+              "turnover_rub": 2195572000,
+              "incoming_payments_count": 4157,
+              "outgoing_payments_count": 7937,
+              "edges_count": 224,
+              "unique_counterparties_count": 217,
+              "external_counterparties_count": 210,
+              "intragroup_counterparties_count": 7,
+              "intragroup_amount_rub": 782680000,
+              "intragroup_share_pct": 35.65,
+              "average_edge_amount_rub": 9801661
+            },
+            "counterparties": {
+              "unique_count": 217,
+              "top_1_share_pct": 14.73,
+              "top_3_share_pct": 27.98,
+              "hhi": 479.84,
+              "top_3": [
+                {
+                  "company_id": "U_122506",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 180865000,
+                  "outgoing_amount_rub": 142590000,
+                  "turnover_rub": 323455000,
+                  "payments_count": 9,
+                  "share_pct": 14.73
+                },
+                {
+                  "company_id": "U_199606",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "city": "г. Воронеж",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 105911000,
+                  "outgoing_amount_rub": 49123000,
+                  "turnover_rub": 155034000,
+                  "payments_count": 7,
+                  "share_pct": 7.06
+                },
+                {
+                  "company_id": "U_138548",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Смоленская область",
+                  "city": "г. Смоленск",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 0,
+                  "outgoing_amount_rub": 135724000,
+                  "turnover_rub": 135724000,
+                  "payments_count": 66,
+                  "share_pct": 6.18
+                }
+              ]
+            },
+            "top_okved": [
+              {
+                "okved_class": "45",
+                "okved_name": "Торговля оптовая и розничная автотранспортными средствами и мотоциклами",
+                "counterparties_count": 169,
+                "amount_rub": 2027145000,
+                "share_pct": 92.33,
+                "top_codes": [
+                  {
+                    "okved_code": "45.31.1",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                    "counterparties_count": 77,
+                    "amount_rub": 1061109000,
+                    "share_pct": 48.33
+                  },
+                  {
+                    "okved_code": "45.31",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                    "counterparties_count": 47,
+                    "amount_rub": 715423000,
+                    "share_pct": 32.58
+                  },
+                  {
+                    "okved_code": "45.20.1",
+                    "okved_name": "Техническое обслуживание и ремонт легковых автомобилей и легких грузовых автотранспортных средств",
+                    "counterparties_count": 14,
+                    "amount_rub": 120051000,
+                    "share_pct": 5.47
+                  }
+                ]
+              },
+              {
+                "okved_class": "46",
+                "okved_name": "Торговля оптовая, кроме оптовой торговли автотранспортными средствами и мотоциклами",
+                "counterparties_count": 28,
+                "amount_rub": 85393000,
+                "share_pct": 3.89,
+                "top_codes": [
+                  {
+                    "okved_code": "46.71",
+                    "okved_name": "Торговля оптовая твердым, жидким и газообразным топливом и подобными продуктами",
+                    "counterparties_count": 9,
+                    "amount_rub": 40789000,
+                    "share_pct": 1.86
+                  },
+                  {
+                    "okved_code": "46.90",
+                    "okved_name": "Торговля оптовая неспециализированная",
+                    "counterparties_count": 7,
+                    "amount_rub": 21220000,
+                    "share_pct": 0.97
+                  },
+                  {
+                    "okved_code": "46.71.1",
+                    "okved_name": "Торговля оптовая твердым топливом",
+                    "counterparties_count": 1,
+                    "amount_rub": 8782000,
+                    "share_pct": 0.4
+                  }
+                ]
+              },
+              {
+                "okved_class": "33",
+                "okved_name": "Ремонт и монтаж машин и оборудования",
+                "counterparties_count": 1,
+                "amount_rub": 42487000,
+                "share_pct": 1.94,
+                "top_codes": [
+                  {
+                    "okved_code": "33.12",
+                    "okved_name": "Ремонт машин и оборудования",
+                    "counterparties_count": 1,
+                    "amount_rub": 42487000,
+                    "share_pct": 1.94
+                  }
+                ]
+              }
+            ],
+            "geography": {
+              "top_regions": [
+                {
+                  "region": "Москва",
+                  "counterparties_count": 109,
+                  "amount_rub": 899327000,
+                  "share_pct": 40.96
+                },
+                {
+                  "region": "Воронежская область",
+                  "counterparties_count": 14,
+                  "amount_rub": 476768000,
+                  "share_pct": 21.71
+                },
+                {
+                  "region": "Смоленская область",
+                  "counterparties_count": 6,
+                  "amount_rub": 324310000,
+                  "share_pct": 14.77
+                }
+              ],
+              "top_cities": [
+                {
+                  "city": "г. Москва",
+                  "counterparties_count": 109,
+                  "amount_rub": 899327000,
+                  "share_pct": 40.96
+                },
+                {
+                  "city": "г. Воронеж",
+                  "counterparties_count": 14,
+                  "amount_rub": 476768000,
+                  "share_pct": 21.71
+                },
+                {
+                  "city": "г. Смоленск",
+                  "counterparties_count": 6,
+                  "amount_rub": 324310000,
+                  "share_pct": 14.77
+                }
+              ]
+            },
+            "two_way_links": {
+              "count": 7,
+              "share_pct": 3.23,
+              "top_3": [
+                {
+                  "company_id": "U_122506",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Москва",
+                  "incoming_amount_rub": 180865000,
+                  "outgoing_amount_rub": 142590000,
+                  "turnover_rub": 323455000
+                },
+                {
+                  "company_id": "U_199606",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "incoming_amount_rub": 105911000,
+                  "outgoing_amount_rub": 49123000,
+                  "turnover_rub": 155034000
+                },
+                {
+                  "company_id": "U_25835",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Москва",
+                  "incoming_amount_rub": 679000,
+                  "outgoing_amount_rub": 133659000,
+                  "turnover_rub": 134338000
+                }
+              ]
+            }
+          }
+        },
+        {
+          "company_id": "U_122506",
+          "main": {
+            "okved": {
+              "code": "45.31",
+              "name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+              "section": {
+                "code": "G",
+                "name": "Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов"
+              }
+            },
+            "bank_services": {
+              "cash_settlement_rko": true,
+              "bank_guarantees": false,
+              "loans": false,
+              "leasing": false,
+              "deposits": false,
+              "salary_project": true,
+              "factoring": false
+            },
+            "location": {
+              "city": "г. Москва",
+              "region": "Москва"
+            },
+            "ownership_form": "ЧАСТНАЯ СОБСТВЕННОСТЬ",
+            "annual_revenue_rub": 4155712988,
+            "annual_revenue_bn_rub": 4.16,
+            "foreign_trade_countries": [],
+            "business_stage": "Бизнес в новой реальности",
+            "client_type": "CLIENT",
+            "group_id": "group_132767_sb"
+          },
+          "payments": {
+            "totals": {
+              "incoming_amount_rub": 3081365000,
+              "outgoing_amount_rub": 1381786000,
+              "turnover_rub": 4463151000,
+              "incoming_payments_count": 1650,
+              "outgoing_payments_count": 10793,
+              "edges_count": 215,
+              "unique_counterparties_count": 204,
+              "external_counterparties_count": 198,
+              "intragroup_counterparties_count": 6,
+              "intragroup_amount_rub": 1075956000,
+              "intragroup_share_pct": 24.11,
+              "average_edge_amount_rub": 20758842
+            },
+            "counterparties": {
+              "unique_count": 204,
+              "top_1_share_pct": 46.57,
+              "top_3_share_pct": 59.89,
+              "hhi": 2327.92,
+              "top_3": [
+                {
+                  "company_id": "U_118849",
+                  "okved_code": "46.63",
+                  "okved_name": "Торговля оптовая машинами и оборудованием для добычи полезных ископаемых и строительства",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 2078318000,
+                  "outgoing_amount_rub": 0,
+                  "turnover_rub": 2078318000,
+                  "payments_count": 255,
+                  "share_pct": 46.57
+                },
+                {
+                  "company_id": "U_122970",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "city": "г. Воронеж",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 142590000,
+                  "outgoing_amount_rub": 180865000,
+                  "turnover_rub": 323455000,
+                  "payments_count": 9,
+                  "share_pct": 7.25
+                },
+                {
+                  "company_id": "U_125887",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Воронежская область",
+                  "city": "г. Воронеж",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 214988000,
+                  "outgoing_amount_rub": 56192000,
+                  "turnover_rub": 271180000,
+                  "payments_count": 9,
+                  "share_pct": 6.08
+                }
+              ]
+            },
+            "top_okved": [
+              {
+                "okved_class": "45",
+                "okved_name": "Торговля оптовая и розничная автотранспортными средствами и мотоциклами",
+                "counterparties_count": 164,
+                "amount_rub": 2276722000,
+                "share_pct": 51.01,
+                "top_codes": [
+                  {
+                    "okved_code": "45.31.1",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                    "counterparties_count": 82,
+                    "amount_rub": 1460778000,
+                    "share_pct": 32.73
+                  },
+                  {
+                    "okved_code": "45.31",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                    "counterparties_count": 46,
+                    "amount_rub": 687378000,
+                    "share_pct": 15.4
+                  },
+                  {
+                    "okved_code": "45.3",
+                    "okved_name": "Торговля автомобильными деталями, узлами и принадлежностями",
+                    "counterparties_count": 16,
+                    "amount_rub": 57375000,
+                    "share_pct": 1.29
+                  }
+                ]
+              },
+              {
+                "okved_class": "46",
+                "okved_name": "Торговля оптовая, кроме оптовой торговли автотранспортными средствами и мотоциклами",
+                "counterparties_count": 29,
+                "amount_rub": 2168028000,
+                "share_pct": 48.58,
+                "top_codes": [
+                  {
+                    "okved_code": "46.63",
+                    "okved_name": "Торговля оптовая машинами и оборудованием для добычи полезных ископаемых и строительства",
+                    "counterparties_count": 1,
+                    "amount_rub": 2078318000,
+                    "share_pct": 46.57
+                  },
+                  {
+                    "okved_code": "46.90",
+                    "okved_name": "Торговля оптовая неспециализированная",
+                    "counterparties_count": 10,
+                    "amount_rub": 46275000,
+                    "share_pct": 1.04
+                  },
+                  {
+                    "okved_code": "46.71",
+                    "okved_name": "Торговля оптовая твердым, жидким и газообразным топливом и подобными продуктами",
+                    "counterparties_count": 9,
+                    "amount_rub": 19010000,
+                    "share_pct": 0.43
+                  }
+                ]
+              },
+              {
+                "okved_class": "68",
+                "okved_name": "Операции с недвижимым имуществом",
+                "counterparties_count": 2,
+                "amount_rub": 11725000,
+                "share_pct": 0.26,
+                "top_codes": [
+                  {
+                    "okved_code": "68.10",
+                    "okved_name": "Покупка и продажа собственного недвижимого имущества",
+                    "counterparties_count": 1,
+                    "amount_rub": 9303000,
+                    "share_pct": 0.21
+                  },
+                  {
+                    "okved_code": "68.20.2",
+                    "okved_name": "Аренда и управление собственным или арендованным нежилым недвижимым имуществом",
+                    "counterparties_count": 1,
+                    "amount_rub": 2422000,
+                    "share_pct": 0.05
+                  }
+                ]
+              }
+            ],
+            "geography": {
+              "top_regions": [
+                {
+                  "region": "Москва",
+                  "counterparties_count": 105,
+                  "amount_rub": 2763378000,
+                  "share_pct": 61.92
+                },
+                {
+                  "region": "Воронежская область",
+                  "counterparties_count": 16,
+                  "amount_rub": 1102081000,
+                  "share_pct": 24.69
+                },
+                {
+                  "region": "Московская область",
+                  "counterparties_count": 5,
+                  "amount_rub": 126525000,
+                  "share_pct": 2.83
+                }
+              ],
+              "top_cities": [
+                {
+                  "city": "г. Москва",
+                  "counterparties_count": 105,
+                  "amount_rub": 2763378000,
+                  "share_pct": 61.92
+                },
+                {
+                  "city": "г. Воронеж",
+                  "counterparties_count": 16,
+                  "amount_rub": 1102081000,
+                  "share_pct": 24.69
+                },
+                {
+                  "city": "г. Смоленск",
+                  "counterparties_count": 6,
+                  "amount_rub": 126420000,
+                  "share_pct": 2.83
+                }
+              ]
+            },
+            "two_way_links": {
+              "count": 11,
+              "share_pct": 5.39,
+              "top_3": [
+                {
+                  "company_id": "U_122970",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "incoming_amount_rub": 142590000,
+                  "outgoing_amount_rub": 180865000,
+                  "turnover_rub": 323455000
+                },
+                {
+                  "company_id": "U_125887",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Воронежская область",
+                  "incoming_amount_rub": 214988000,
+                  "outgoing_amount_rub": 56192000,
+                  "turnover_rub": 271180000
+                },
+                {
+                  "company_id": "U_128194",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "incoming_amount_rub": 123050000,
+                  "outgoing_amount_rub": 62562000,
+                  "turnover_rub": 185612000
+                }
+              ]
+            }
+          }
+        },
+        {
+          "company_id": "U_199606",
+          "main": {
+            "okved": {
+              "code": "45.31.1",
+              "name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+              "section": {
+                "code": "G",
+                "name": "Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов"
+              }
+            },
+            "bank_services": {
+              "cash_settlement_rko": true,
+              "bank_guarantees": false,
+              "loans": false,
+              "leasing": false,
+              "deposits": false,
+              "salary_project": false,
+              "factoring": false
+            },
+            "location": {
+              "city": "г. Воронеж",
+              "region": "Воронежская область"
+            },
+            "ownership_form": "ЧАСТНАЯ СОБСТВЕННОСТЬ",
+            "annual_revenue_rub": 1197719362,
+            "annual_revenue_bn_rub": 1.2,
+            "foreign_trade_countries": [],
+            "business_stage": "Оптимизация",
+            "client_type": "CLIENT",
+            "group_id": "group_132767_sb"
+          },
+          "payments": {
+            "totals": {
+              "incoming_amount_rub": 273734000,
+              "outgoing_amount_rub": 375133000,
+              "turnover_rub": 648867000,
+              "incoming_payments_count": 489,
+              "outgoing_payments_count": 4594,
+              "edges_count": 179,
+              "unique_counterparties_count": 176,
+              "external_counterparties_count": 170,
+              "intragroup_counterparties_count": 6,
+              "intragroup_amount_rub": 388620000,
+              "intragroup_share_pct": 59.89,
+              "average_edge_amount_rub": 3624955
+            },
+            "counterparties": {
+              "unique_count": 176,
+              "top_1_share_pct": 23.89,
+              "top_3_share_pct": 50.46,
+              "hhi": 1116.58,
+              "top_3": [
+                {
+                  "company_id": "U_122970",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "city": "г. Воронеж",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 49123000,
+                  "outgoing_amount_rub": 105911000,
+                  "turnover_rub": 155034000,
+                  "payments_count": 7,
+                  "share_pct": 23.89
+                },
+                {
+                  "company_id": "U_125887",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Воронежская область",
+                  "city": "г. Воронеж",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 109289000,
+                  "outgoing_amount_rub": 0,
+                  "turnover_rub": 109289000,
+                  "payments_count": 4,
+                  "share_pct": 16.84
+                },
+                {
+                  "company_id": "U_25835",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 0,
+                  "outgoing_amount_rub": 63064000,
+                  "turnover_rub": 63064000,
+                  "payments_count": 263,
+                  "share_pct": 9.72
+                }
+              ]
+            },
+            "top_okved": [
+              {
+                "okved_class": "45",
+                "okved_name": "Торговля оптовая и розничная автотранспортными средствами и мотоциклами",
+                "counterparties_count": 145,
+                "amount_rub": 621759000,
+                "share_pct": 95.82,
+                "top_codes": [
+                  {
+                    "okved_code": "45.31.1",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                    "counterparties_count": 67,
+                    "amount_rub": 395565000,
+                    "share_pct": 60.96
+                  },
+                  {
+                    "okved_code": "45.31",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                    "counterparties_count": 47,
+                    "amount_rub": 205464000,
+                    "share_pct": 31.67
+                  },
+                  {
+                    "okved_code": "45.3",
+                    "okved_name": "Торговля автомобильными деталями, узлами и принадлежностями",
+                    "counterparties_count": 13,
+                    "amount_rub": 14049000,
+                    "share_pct": 2.17
+                  }
+                ]
+              },
+              {
+                "okved_class": "68",
+                "okved_name": "Операции с недвижимым имуществом",
+                "counterparties_count": 3,
+                "amount_rub": 12441000,
+                "share_pct": 1.92,
+                "top_codes": [
+                  {
+                    "okved_code": "68.20",
+                    "okved_name": "Аренда и управление собственным или арендованным недвижимым имуществом",
+                    "counterparties_count": 1,
+                    "amount_rub": 10664000,
+                    "share_pct": 1.64
+                  },
+                  {
+                    "okved_code": "68.20.2",
+                    "okved_name": "Аренда и управление собственным или арендованным нежилым недвижимым имуществом",
+                    "counterparties_count": 1,
+                    "amount_rub": 1740000,
+                    "share_pct": 0.27
+                  },
+                  {
+                    "okved_code": "68.10",
+                    "okved_name": "Покупка и продажа собственного недвижимого имущества",
+                    "counterparties_count": 1,
+                    "amount_rub": 37000,
+                    "share_pct": 0.01
+                  }
+                ]
+              },
+              {
+                "okved_class": "49",
+                "okved_name": "Деятельность сухопутного и трубопроводного транспорта",
+                "counterparties_count": 2,
+                "amount_rub": 7136000,
+                "share_pct": 1.1,
+                "top_codes": [
+                  {
+                    "okved_code": "49.41",
+                    "okved_name": "Деятельность автомобильного грузового транспорта",
+                    "counterparties_count": 2,
+                    "amount_rub": 7136000,
+                    "share_pct": 1.1
+                  }
+                ]
+              }
+            ],
+            "geography": {
+              "top_regions": [
+                {
+                  "region": "Воронежская область",
+                  "counterparties_count": 12,
+                  "amount_rub": 363347000,
+                  "share_pct": 56.0
+                },
+                {
+                  "region": "Москва",
+                  "counterparties_count": 94,
+                  "amount_rub": 177370000,
+                  "share_pct": 27.34
+                },
+                {
+                  "region": "Смоленская область",
+                  "counterparties_count": 6,
+                  "amount_rub": 50991000,
+                  "share_pct": 7.86
+                }
+              ],
+              "top_cities": [
+                {
+                  "city": "г. Воронеж",
+                  "counterparties_count": 12,
+                  "amount_rub": 363347000,
+                  "share_pct": 56.0
+                },
+                {
+                  "city": "г. Москва",
+                  "counterparties_count": 94,
+                  "amount_rub": 177370000,
+                  "share_pct": 27.34
+                },
+                {
+                  "city": "г. Смоленск",
+                  "counterparties_count": 6,
+                  "amount_rub": 50991000,
+                  "share_pct": 7.86
+                }
+              ]
+            },
+            "two_way_links": {
+              "count": 3,
+              "share_pct": 1.7,
+              "top_3": [
+                {
+                  "company_id": "U_122970",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "incoming_amount_rub": 49123000,
+                  "outgoing_amount_rub": 105911000,
+                  "turnover_rub": 155034000
+                },
+                {
+                  "company_id": "U_128194",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "incoming_amount_rub": 27014000,
+                  "outgoing_amount_rub": 34666000,
+                  "turnover_rub": 61680000
+                },
+                {
+                  "company_id": "U_161042",
+                  "okved_code": "23.61",
+                  "okved_name": "Производство изделий из бетона для использования в строительстве",
+                  "region": "Республика Татарстан",
+                  "incoming_amount_rub": 392000,
+                  "outgoing_amount_rub": 333000,
+                  "turnover_rub": 725000
+                }
+              ]
+            }
+          }
+        },
+        {
+          "company_id": "U_210204",
+          "main": {
+            "okved": {
+              "code": "45.31",
+              "name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+              "section": {
+                "code": "G",
+                "name": "Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов"
+              }
+            },
+            "bank_services": {
+              "cash_settlement_rko": true,
+              "bank_guarantees": false,
+              "loans": false,
+              "leasing": false,
+              "deposits": false,
+              "salary_project": false,
+              "factoring": false
+            },
+            "location": {
+              "city": "г. Воронеж",
+              "region": "Воронежская область"
+            },
+            "ownership_form": "ЧАСТНАЯ СОБСТВЕННОСТЬ",
+            "annual_revenue_rub": 173670205,
+            "annual_revenue_bn_rub": 0.17,
+            "foreign_trade_countries": [],
+            "business_stage": null,
+            "client_type": "CLIENT",
+            "group_id": "group_132767_sb"
+          },
+          "payments": {
+            "totals": {
+              "incoming_amount_rub": 126583000,
+              "outgoing_amount_rub": 210905000,
+              "turnover_rub": 337488000,
+              "incoming_payments_count": 288,
+              "outgoing_payments_count": 3071,
+              "edges_count": 166,
+              "unique_counterparties_count": 165,
+              "external_counterparties_count": 162,
+              "intragroup_counterparties_count": 3,
+              "intragroup_amount_rub": 109913000,
+              "intragroup_share_pct": 32.57,
+              "average_edge_amount_rub": 2033060
+            },
+            "counterparties": {
+              "unique_count": 165,
+              "top_1_share_pct": 19.63,
+              "top_3_share_pct": 35.57,
+              "hhi": 692.38,
+              "top_3": [
+                {
+                  "company_id": "U_222900",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Воронежская область",
+                  "city": "г. Воронеж",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 66247000,
+                  "outgoing_amount_rub": 0,
+                  "turnover_rub": 66247000,
+                  "payments_count": 8,
+                  "share_pct": 19.63
+                },
+                {
+                  "company_id": "U_125887",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Воронежская область",
+                  "city": "г. Воронеж",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 29049000,
+                  "outgoing_amount_rub": 0,
+                  "turnover_rub": 29049000,
+                  "payments_count": 5,
+                  "share_pct": 8.61
+                },
+                {
+                  "company_id": "U_119841",
+                  "okved_code": "68.20",
+                  "okved_name": "Аренда и управление собственным или арендованным недвижимым имуществом",
+                  "region": "Санкт-Петербург",
+                  "city": "г. Санкт-Петербург",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 0,
+                  "outgoing_amount_rub": 24742000,
+                  "turnover_rub": 24742000,
+                  "payments_count": 23,
+                  "share_pct": 7.33
+                }
+              ]
+            },
+            "top_okved": [
+              {
+                "okved_class": "45",
+                "okved_name": "Торговля оптовая и розничная автотранспортными средствами и мотоциклами",
+                "counterparties_count": 137,
+                "amount_rub": 280281000,
+                "share_pct": 83.05,
+                "top_codes": [
+                  {
+                    "okved_code": "45.31.1",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                    "counterparties_count": 68,
+                    "amount_rub": 145171000,
+                    "share_pct": 43.02
+                  },
+                  {
+                    "okved_code": "45.31",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                    "counterparties_count": 36,
+                    "amount_rub": 115968000,
+                    "share_pct": 34.36
+                  },
+                  {
+                    "okved_code": "45.3",
+                    "okved_name": "Торговля автомобильными деталями, узлами и принадлежностями",
+                    "counterparties_count": 14,
+                    "amount_rub": 10766000,
+                    "share_pct": 3.19
+                  }
+                ]
+              },
+              {
+                "okved_class": "68",
+                "okved_name": "Операции с недвижимым имуществом",
+                "counterparties_count": 4,
+                "amount_rub": 37494000,
+                "share_pct": 11.11,
+                "top_codes": [
+                  {
+                    "okved_code": "68.20",
+                    "okved_name": "Аренда и управление собственным или арендованным недвижимым имуществом",
+                    "counterparties_count": 2,
+                    "amount_rub": 37025000,
+                    "share_pct": 10.97
+                  },
+                  {
+                    "okved_code": "68.20.2",
+                    "okved_name": "Аренда и управление собственным или арендованным нежилым недвижимым имуществом",
+                    "counterparties_count": 1,
+                    "amount_rub": 443000,
+                    "share_pct": 0.13
+                  },
+                  {
+                    "okved_code": "68.10",
+                    "okved_name": "Покупка и продажа собственного недвижимого имущества",
+                    "counterparties_count": 1,
+                    "amount_rub": 26000,
+                    "share_pct": 0.01
+                  }
+                ]
+              },
+              {
+                "okved_class": "49",
+                "okved_name": "Деятельность сухопутного и трубопроводного транспорта",
+                "counterparties_count": 1,
+                "amount_rub": 9996000,
+                "share_pct": 2.96,
+                "top_codes": [
+                  {
+                    "okved_code": "49.41.1",
+                    "okved_name": "Перевозка грузов специализированными автотранспортными средствами",
+                    "counterparties_count": 1,
+                    "amount_rub": 9996000,
+                    "share_pct": 2.96
+                  }
+                ]
+              }
+            ],
+            "geography": {
+              "top_regions": [
+                {
+                  "region": "Воронежская область",
+                  "counterparties_count": 10,
+                  "amount_rub": 112688000,
+                  "share_pct": 33.39
+                },
+                {
+                  "region": "Москва",
+                  "counterparties_count": 87,
+                  "amount_rub": 91114000,
+                  "share_pct": 27.0
+                },
+                {
+                  "region": "Санкт-Петербург",
+                  "counterparties_count": 32,
+                  "amount_rub": 55290000,
+                  "share_pct": 16.38
+                }
+              ],
+              "top_cities": [
+                {
+                  "city": "г. Воронеж",
+                  "counterparties_count": 10,
+                  "amount_rub": 112688000,
+                  "share_pct": 33.39
+                },
+                {
+                  "city": "г. Москва",
+                  "counterparties_count": 87,
+                  "amount_rub": 91114000,
+                  "share_pct": 27.0
+                },
+                {
+                  "city": "г. Санкт-Петербург",
+                  "counterparties_count": 32,
+                  "amount_rub": 55290000,
+                  "share_pct": 16.38
+                }
+              ]
+            },
+            "two_way_links": {
+              "count": 1,
+              "share_pct": 0.61,
+              "top_3": [
+                {
+                  "company_id": "U_56160",
+                  "okved_code": "52.24",
+                  "okved_name": "Транспортная обработка грузов",
+                  "region": "Санкт-Петербург",
+                  "incoming_amount_rub": 2000,
+                  "outgoing_amount_rub": 2000,
+                  "turnover_rub": 4000
+                }
+              ]
+            }
+          }
+        },
+        {
+          "company_id": "U_222900",
+          "main": {
+            "okved": {
+              "code": "45.31",
+              "name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+              "section": {
+                "code": "G",
+                "name": "Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов"
+              }
+            },
+            "bank_services": {
+              "cash_settlement_rko": true,
+              "bank_guarantees": false,
+              "loans": false,
+              "leasing": false,
+              "deposits": false,
+              "salary_project": false,
+              "factoring": false
+            },
+            "location": {
+              "city": "г. Воронеж",
+              "region": "Воронежская область"
+            },
+            "ownership_form": "ЧАСТНАЯ СОБСТВЕННОСТЬ",
+            "annual_revenue_rub": 97319672,
+            "annual_revenue_bn_rub": 0.1,
+            "foreign_trade_countries": [],
+            "business_stage": null,
+            "client_type": "CLIENT",
+            "group_id": "group_132767_sb"
+          },
+          "payments": {
+            "totals": {
+              "incoming_amount_rub": 162136000,
+              "outgoing_amount_rub": 814884000,
+              "turnover_rub": 977020000,
+              "incoming_payments_count": 1421,
+              "outgoing_payments_count": 4086,
+              "edges_count": 196,
+              "unique_counterparties_count": 184,
+              "external_counterparties_count": 178,
+              "intragroup_counterparties_count": 6,
+              "intragroup_amount_rub": 512552000,
+              "intragroup_share_pct": 52.46,
+              "average_edge_amount_rub": 4984796
+            },
+            "counterparties": {
+              "unique_count": 184,
+              "top_1_share_pct": 14.59,
+              "top_3_share_pct": 39.11,
+              "hhi": 673.46,
+              "top_3": [
+                {
+                  "company_id": "U_123091",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "city": "г. Воронеж",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 10328000,
+                  "outgoing_amount_rub": 132174000,
+                  "turnover_rub": 142502000,
+                  "payments_count": 5,
+                  "share_pct": 14.59
+                },
+                {
+                  "company_id": "U_122506",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 13496000,
+                  "outgoing_amount_rub": 108096000,
+                  "turnover_rub": 121592000,
+                  "payments_count": 2,
+                  "share_pct": 12.45
+                },
+                {
+                  "company_id": "U_122970",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "city": "г. Воронеж",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 0,
+                  "outgoing_amount_rub": 118005000,
+                  "turnover_rub": 118005000,
+                  "payments_count": 3,
+                  "share_pct": 12.08
+                }
+              ]
+            },
+            "top_okved": [
+              {
+                "okved_class": "45",
+                "okved_name": "Торговля оптовая и розничная автотранспортными средствами и мотоциклами",
+                "counterparties_count": 150,
+                "amount_rub": 915622000,
+                "share_pct": 93.72,
+                "top_codes": [
+                  {
+                    "okved_code": "45.31.1",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                    "counterparties_count": 70,
+                    "amount_rub": 519610000,
+                    "share_pct": 53.18
+                  },
+                  {
+                    "okved_code": "45.31",
+                    "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                    "counterparties_count": 41,
+                    "amount_rub": 266372000,
+                    "share_pct": 27.26
+                  },
+                  {
+                    "okved_code": "45.20.1",
+                    "okved_name": "Техническое обслуживание и ремонт легковых автомобилей и легких грузовых автотранспортных средств",
+                    "counterparties_count": 10,
+                    "amount_rub": 81467000,
+                    "share_pct": 8.34
+                  }
+                ]
+              },
+              {
+                "okved_class": "46",
+                "okved_name": "Торговля оптовая, кроме оптовой торговли автотранспортными средствами и мотоциклами",
+                "counterparties_count": 22,
+                "amount_rub": 37164000,
+                "share_pct": 3.8,
+                "top_codes": [
+                  {
+                    "okved_code": "46.90",
+                    "okved_name": "Торговля оптовая неспециализированная",
+                    "counterparties_count": 5,
+                    "amount_rub": 23795000,
+                    "share_pct": 2.44
+                  },
+                  {
+                    "okved_code": "46.71",
+                    "okved_name": "Торговля оптовая твердым, жидким и газообразным топливом и подобными продуктами",
+                    "counterparties_count": 7,
+                    "amount_rub": 4360000,
+                    "share_pct": 0.45
+                  },
+                  {
+                    "okved_code": "46.51",
+                    "okved_name": "Торговля оптовая компьютерами, периферийными устройствами к компьютерам и программным обеспечением",
+                    "counterparties_count": 1,
+                    "amount_rub": 2865000,
+                    "share_pct": 0.29
+                  }
+                ]
+              },
+              {
+                "okved_class": "68",
+                "okved_name": "Операции с недвижимым имуществом",
+                "counterparties_count": 5,
+                "amount_rub": 21595000,
+                "share_pct": 2.21,
+                "top_codes": [
+                  {
+                    "okved_code": "68.20",
+                    "okved_name": "Аренда и управление собственным или арендованным недвижимым имуществом",
+                    "counterparties_count": 1,
+                    "amount_rub": 11015000,
+                    "share_pct": 1.13
+                  },
+                  {
+                    "okved_code": "68.20.2",
+                    "okved_name": "Аренда и управление собственным или арендованным нежилым недвижимым имуществом",
+                    "counterparties_count": 2,
+                    "amount_rub": 10433000,
+                    "share_pct": 1.07
+                  },
+                  {
+                    "okved_code": "68.10",
+                    "okved_name": "Покупка и продажа собственного недвижимого имущества",
+                    "counterparties_count": 1,
+                    "amount_rub": 144000,
+                    "share_pct": 0.01
+                  }
+                ]
+              }
+            ],
+            "geography": {
+              "top_regions": [
+                {
+                  "region": "Воронежская область",
+                  "counterparties_count": 14,
+                  "amount_rub": 400001000,
+                  "share_pct": 40.94
+                },
+                {
+                  "region": "Москва",
+                  "counterparties_count": 94,
+                  "amount_rub": 283673000,
+                  "share_pct": 29.03
+                },
+                {
+                  "region": "Смоленская область",
+                  "counterparties_count": 6,
+                  "amount_rub": 116814000,
+                  "share_pct": 11.96
+                }
+              ],
+              "top_cities": [
+                {
+                  "city": "г. Воронеж",
+                  "counterparties_count": 14,
+                  "amount_rub": 400001000,
+                  "share_pct": 40.94
+                },
+                {
+                  "city": "г. Москва",
+                  "counterparties_count": 94,
+                  "amount_rub": 283673000,
+                  "share_pct": 29.03
+                },
+                {
+                  "city": "г. Смоленск",
+                  "counterparties_count": 6,
+                  "amount_rub": 116814000,
+                  "share_pct": 11.96
+                }
+              ]
+            },
+            "two_way_links": {
+              "count": 12,
+              "share_pct": 6.52,
+              "top_3": [
+                {
+                  "company_id": "U_123091",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Воронежская область",
+                  "incoming_amount_rub": 10328000,
+                  "outgoing_amount_rub": 132174000,
+                  "turnover_rub": 142502000
+                },
+                {
+                  "company_id": "U_122506",
+                  "okved_code": "45.31",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями",
+                  "region": "Москва",
+                  "incoming_amount_rub": 13496000,
+                  "outgoing_amount_rub": 108096000,
+                  "turnover_rub": 121592000
+                },
+                {
+                  "company_id": "U_102594",
+                  "okved_code": "45.20.1",
+                  "okved_name": "Техническое обслуживание и ремонт легковых автомобилей и легких грузовых автотранспортных средств",
+                  "region": "Ярославская область",
+                  "incoming_amount_rub": 46788000,
+                  "outgoing_amount_rub": 152000,
+                  "turnover_rub": 46940000
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "group_id": "group_133846_sb",
+      "selection": {
+        "rank": 2,
+        "okved_section": {
+          "code": "H",
+          "name": "Транспортировка и хранение"
+        },
+        "okved_class": "52",
+        "main_okved": {
+          "code": "52.29",
+          "name": "Деятельность вспомогательная прочая, связанная с перевозками"
+        },
+        "headquarters_region": "Москва",
+        "headquarters_city": "г. Москва",
+        "group_edges_count": 787,
+        "min_company_edges_count": 167,
+        "reason": "Группа 2 из 3: раздел ОКВЭД H (Транспортировка и хранение), регион Москва; 3 компаний, 787 связей. Тройка покрывает 3 раздела ОКВЭД и 3 региона."
+      },
+      "summary": {
+        "composition": {
+          "companies_count": 3,
+          "total_revenue_rub": 17836348952,
+          "total_revenue_bn_rub": 17.84,
+          "regions": [
+            "Москва",
+            "Московская область"
+          ],
+          "cities": [
+            "г. Красногорск",
+            "г. Москва"
+          ],
+          "okved_sections": [
+            {
+              "code": "H",
+              "name": "Транспортировка и хранение",
+              "companies_count": 2
+            },
+            {
+              "code": "G",
+              "name": "Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов",
+              "companies_count": 1
+            }
+          ],
+          "okved_classes": [
+            {
+              "code": "52.29",
+              "name": "Деятельность вспомогательная прочая, связанная с перевозками",
+              "companies_count": 2
+            },
+            {
+              "code": "46.43",
+              "name": "Торговля оптовая бытовыми электротоварами",
+              "companies_count": 1
+            }
+          ]
+        },
+        "transactions": {
+          "edges_count": 787,
+          "turnover_rub": 4785172000,
+          "payments_count": 20887,
+          "unique_counterparties_count": 656,
+          "external_counterparties_count": 653,
+          "intragroup_counterparties_count": 3,
+          "intragroup_amount_rub": 172841000,
+          "intragroup_share_pct": 3.61
+        }
+      },
+      "companies": [
+        {
+          "company_id": "U_37452",
+          "main": {
+            "okved": {
+              "code": "46.43",
+              "name": "Торговля оптовая бытовыми электротоварами",
+              "section": {
+                "code": "G",
+                "name": "Торговля оптовая и розничная; ремонт автотранспортных средств и мотоциклов"
+              }
+            },
+            "bank_services": {
+              "cash_settlement_rko": true,
+              "bank_guarantees": false,
+              "loans": true,
+              "leasing": true,
+              "deposits": true,
+              "salary_project": true,
+              "factoring": false
+            },
+            "location": {
+              "city": "г. Москва",
+              "region": "Москва"
+            },
+            "ownership_form": "ЧАСТНАЯ СОБСТВЕННОСТЬ",
+            "annual_revenue_rub": 7953857303,
+            "annual_revenue_bn_rub": 7.95,
+            "foreign_trade_countries": [
+              "КИТАЙ",
+              "ПОЛЬША",
+              "АЗЕРБАЙДЖАН"
+            ],
+            "business_stage": "Бизнес в новой реальности",
+            "client_type": "CLIENT",
+            "group_id": "group_133846_sb"
+          },
+          "payments": {
+            "totals": {
+              "incoming_amount_rub": 637121000,
+              "outgoing_amount_rub": 249448000,
+              "turnover_rub": 886569000,
+              "incoming_payments_count": 5597,
+              "outgoing_payments_count": 717,
+              "edges_count": 258,
+              "unique_counterparties_count": 237,
+              "external_counterparties_count": 236,
+              "intragroup_counterparties_count": 1,
+              "intragroup_amount_rub": 18250000,
+              "intragroup_share_pct": 2.06,
+              "average_edge_amount_rub": 3436314
+            },
+            "counterparties": {
+              "unique_count": 237,
+              "top_1_share_pct": 9.82,
+              "top_3_share_pct": 26.38,
+              "hhi": 420.92,
+              "top_3": [
+                {
+                  "company_id": "U_91291",
+                  "okved_code": "46.19",
+                  "okved_name": "Деятельность агентов по оптовой торговле универсальным ассортиментом товаров",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 84989000,
+                  "outgoing_amount_rub": 2038000,
+                  "turnover_rub": 87027000,
+                  "payments_count": 239,
+                  "share_pct": 9.82
+                },
+                {
+                  "company_id": "U_260772",
+                  "okved_code": "46.19",
+                  "okved_name": "Деятельность агентов по оптовой торговле универсальным ассортиментом товаров",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 81618000,
+                  "outgoing_amount_rub": 2888000,
+                  "turnover_rub": 84506000,
+                  "payments_count": 273,
+                  "share_pct": 9.53
+                },
+                {
+                  "company_id": "U_175625",
+                  "okved_code": "47.91.2",
+                  "okved_name": "Торговля розничная, осуществляемая непосредственно при помощи информационно-коммуникационной сети Интернет",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 61697000,
+                  "outgoing_amount_rub": 672000,
+                  "turnover_rub": 62369000,
+                  "payments_count": 275,
+                  "share_pct": 7.03
+                }
+              ]
+            },
+            "top_okved": [
+              {
+                "okved_class": "46",
+                "okved_name": "Торговля оптовая, кроме оптовой торговли автотранспортными средствами и мотоциклами",
+                "counterparties_count": 79,
+                "amount_rub": 487164000,
+                "share_pct": 54.95,
+                "top_codes": [
+                  {
+                    "okved_code": "46.19",
+                    "okved_name": "Деятельность агентов по оптовой торговле универсальным ассортиментом товаров",
+                    "counterparties_count": 2,
+                    "amount_rub": 171533000,
+                    "share_pct": 19.35
+                  },
+                  {
+                    "okved_code": "46.90",
+                    "okved_name": "Торговля оптовая неспециализированная",
+                    "counterparties_count": 13,
+                    "amount_rub": 80406000,
+                    "share_pct": 9.07
+                  },
+                  {
+                    "okved_code": "46.43",
+                    "okved_name": "Торговля оптовая бытовыми электротоварами",
+                    "counterparties_count": 7,
+                    "amount_rub": 60209000,
+                    "share_pct": 6.79
+                  }
+                ]
+              },
+              {
+                "okved_class": "47",
+                "okved_name": "Торговля розничная, кроме торговли автотранспортными средствами и мотоциклами",
+                "counterparties_count": 18,
+                "amount_rub": 128502000,
+                "share_pct": 14.49,
+                "top_codes": [
+                  {
+                    "okved_code": "47.91.2",
+                    "okved_name": "Торговля розничная, осуществляемая непосредственно при помощи информационно-коммуникационной сети Интернет",
+                    "counterparties_count": 3,
+                    "amount_rub": 99005000,
+                    "share_pct": 11.17
+                  },
+                  {
+                    "okved_code": "47.54",
+                    "okved_name": "Торговля розничная бытовыми электротоварами в специализированных магазинах",
+                    "counterparties_count": 1,
+                    "amount_rub": 24603000,
+                    "share_pct": 2.78
+                  },
+                  {
+                    "okved_code": "47.52.7",
+                    "okved_name": "Торговля розничная строительными материалами, не включенными в другие группировки, в специализированных магазинах",
+                    "counterparties_count": 2,
+                    "amount_rub": 2884000,
+                    "share_pct": 0.33
+                  }
+                ]
+              },
+              {
+                "okved_class": "52",
+                "okved_name": "Складское хозяйство и вспомогательная транспортная деятельность",
+                "counterparties_count": 4,
+                "amount_rub": 47172000,
+                "share_pct": 5.32,
+                "top_codes": [
+                  {
+                    "okved_code": "52.29",
+                    "okved_name": "Деятельность вспомогательная прочая, связанная с перевозками",
+                    "counterparties_count": 4,
+                    "amount_rub": 47172000,
+                    "share_pct": 5.32
+                  }
+                ]
+              }
+            ],
+            "geography": {
+              "top_regions": [
+                {
+                  "region": "Москва",
+                  "counterparties_count": 146,
+                  "amount_rub": 667450000,
+                  "share_pct": 75.28
+                },
+                {
+                  "region": "Московская область",
+                  "counterparties_count": 7,
+                  "amount_rub": 66772000,
+                  "share_pct": 7.53
+                },
+                {
+                  "region": "Санкт-Петербург",
+                  "counterparties_count": 40,
+                  "amount_rub": 56418000,
+                  "share_pct": 6.36
+                }
+              ],
+              "top_cities": [
+                {
+                  "city": "г. Москва",
+                  "counterparties_count": 146,
+                  "amount_rub": 667450000,
+                  "share_pct": 75.28
+                },
+                {
+                  "city": "г. Санкт-Петербург",
+                  "counterparties_count": 40,
+                  "amount_rub": 56418000,
+                  "share_pct": 6.36
+                },
+                {
+                  "city": "г. Реутов",
+                  "counterparties_count": 1,
+                  "amount_rub": 47974000,
+                  "share_pct": 5.41
+                }
+              ]
+            },
+            "two_way_links": {
+              "count": 21,
+              "share_pct": 8.86,
+              "top_3": [
+                {
+                  "company_id": "U_91291",
+                  "okved_code": "46.19",
+                  "okved_name": "Деятельность агентов по оптовой торговле универсальным ассортиментом товаров",
+                  "region": "Москва",
+                  "incoming_amount_rub": 84989000,
+                  "outgoing_amount_rub": 2038000,
+                  "turnover_rub": 87027000
+                },
+                {
+                  "company_id": "U_260772",
+                  "okved_code": "46.19",
+                  "okved_name": "Деятельность агентов по оптовой торговле универсальным ассортиментом товаров",
+                  "region": "Москва",
+                  "incoming_amount_rub": 81618000,
+                  "outgoing_amount_rub": 2888000,
+                  "turnover_rub": 84506000
+                },
+                {
+                  "company_id": "U_175625",
+                  "okved_code": "47.91.2",
+                  "okved_name": "Торговля розничная, осуществляемая непосредственно при помощи информационно-коммуникационной сети Интернет",
+                  "region": "Москва",
+                  "incoming_amount_rub": 61697000,
+                  "outgoing_amount_rub": 672000,
+                  "turnover_rub": 62369000
+                }
+              ]
+            }
+          }
+        },
+        {
+          "company_id": "U_46911",
+          "main": {
+            "okved": {
+              "code": "52.29",
+              "name": "Деятельность вспомогательная прочая, связанная с перевозками",
+              "section": {
+                "code": "H",
+                "name": "Транспортировка и хранение"
+              }
+            },
+            "bank_services": {
+              "cash_settlement_rko": true,
+              "bank_guarantees": false,
+              "loans": true,
+              "leasing": true,
+              "deposits": false,
+              "salary_project": true,
+              "factoring": false
+            },
+            "location": {
+              "city": "г. Красногорск",
+              "region": "Московская область"
+            },
+            "ownership_form": "СОВМЕСТНАЯ ЧАСТНАЯ И ИНОСТРАННАЯ СОБСТВЕННОСТЬ",
+            "annual_revenue_rub": 7333598349,
+            "annual_revenue_bn_rub": 7.33,
+            "foreign_trade_countries": [],
+            "business_stage": "Оптимизация",
+            "client_type": "CLIENT",
+            "group_id": "group_133846_sb"
+          },
+          "payments": {
+            "totals": {
+              "incoming_amount_rub": 2628761000,
+              "outgoing_amount_rub": 426520000,
+              "turnover_rub": 3055281000,
+              "incoming_payments_count": 9905,
+              "outgoing_payments_count": 1014,
+              "edges_count": 365,
+              "unique_counterparties_count": 328,
+              "external_counterparties_count": 326,
+              "intragroup_counterparties_count": 2,
+              "intragroup_amount_rub": 172841000,
+              "intragroup_share_pct": 5.66,
+              "average_edge_amount_rub": 8370633
+            },
+            "counterparties": {
+              "unique_count": 328,
+              "top_1_share_pct": 5.06,
+              "top_3_share_pct": 13.07,
+              "hhi": 149.81,
+              "top_3": [
+                {
+                  "company_id": "U_46827",
+                  "okved_code": "52.29",
+                  "okved_name": "Деятельность вспомогательная прочая, связанная с перевозками",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 66557000,
+                  "outgoing_amount_rub": 88034000,
+                  "turnover_rub": 154591000,
+                  "payments_count": 22,
+                  "share_pct": 5.06
+                },
+                {
+                  "company_id": "U_197505",
+                  "okved_code": "46.90",
+                  "okved_name": "Торговля оптовая неспециализированная",
+                  "region": "Ростовская область",
+                  "city": "г. Ростов-На-Дону",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 124885000,
+                  "outgoing_amount_rub": 0,
+                  "turnover_rub": 124885000,
+                  "payments_count": 61,
+                  "share_pct": 4.09
+                },
+                {
+                  "company_id": "U_122486",
+                  "okved_code": "46.38",
+                  "okved_name": "Торговля оптовая прочими пищевыми продуктами, включая рыбу, ракообразных и моллюсков",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 119648000,
+                  "outgoing_amount_rub": 221000,
+                  "turnover_rub": 119869000,
+                  "payments_count": 286,
+                  "share_pct": 3.92
+                }
+              ]
+            },
+            "top_okved": [
+              {
+                "okved_class": "46",
+                "okved_name": "Торговля оптовая, кроме оптовой торговли автотранспортными средствами и мотоциклами",
+                "counterparties_count": 197,
+                "amount_rub": 2173541000,
+                "share_pct": 71.14,
+                "top_codes": [
+                  {
+                    "okved_code": "46.90",
+                    "okved_name": "Торговля оптовая неспециализированная",
+                    "counterparties_count": 53,
+                    "amount_rub": 653127000,
+                    "share_pct": 21.38
+                  },
+                  {
+                    "okved_code": "46.43",
+                    "okved_name": "Торговля оптовая бытовыми электротоварами",
+                    "counterparties_count": 13,
+                    "amount_rub": 177395000,
+                    "share_pct": 5.81
+                  },
+                  {
+                    "okved_code": "46.38",
+                    "okved_name": "Торговля оптовая прочими пищевыми продуктами, включая рыбу, ракообразных и моллюсков",
+                    "counterparties_count": 4,
+                    "amount_rub": 158342000,
+                    "share_pct": 5.18
+                  }
+                ]
+              },
+              {
+                "okved_class": "52",
+                "okved_name": "Складское хозяйство и вспомогательная транспортная деятельность",
+                "counterparties_count": 53,
+                "amount_rub": 415342000,
+                "share_pct": 13.59,
+                "top_codes": [
+                  {
+                    "okved_code": "52.29",
+                    "okved_name": "Деятельность вспомогательная прочая, связанная с перевозками",
+                    "counterparties_count": 43,
+                    "amount_rub": 409056000,
+                    "share_pct": 13.39
+                  },
+                  {
+                    "okved_code": "52.10",
+                    "okved_name": "Деятельность по складированию и хранению",
+                    "counterparties_count": 3,
+                    "amount_rub": 3577000,
+                    "share_pct": 0.12
+                  },
+                  {
+                    "okved_code": "52.24",
+                    "okved_name": "Транспортная обработка грузов",
+                    "counterparties_count": 1,
+                    "amount_rub": 1367000,
+                    "share_pct": 0.04
+                  }
+                ]
+              },
+              {
+                "okved_class": "49",
+                "okved_name": "Деятельность сухопутного и трубопроводного транспорта",
+                "counterparties_count": 14,
+                "amount_rub": 89725000,
+                "share_pct": 2.94,
+                "top_codes": [
+                  {
+                    "okved_code": "49.41",
+                    "okved_name": "Деятельность автомобильного грузового транспорта",
+                    "counterparties_count": 6,
+                    "amount_rub": 63114000,
+                    "share_pct": 2.07
+                  },
+                  {
+                    "okved_code": "49.41.2",
+                    "okved_name": "Перевозка грузов неспециализированными автотранспортными средствами",
+                    "counterparties_count": 1,
+                    "amount_rub": 8764000,
+                    "share_pct": 0.29
+                  },
+                  {
+                    "okved_code": "49.42",
+                    "okved_name": "Предоставление услуг по перевозкам",
+                    "counterparties_count": 4,
+                    "amount_rub": 8472000,
+                    "share_pct": 0.28
+                  }
+                ]
+              }
+            ],
+            "geography": {
+              "top_regions": [
+                {
+                  "region": "Москва",
+                  "counterparties_count": 190,
+                  "amount_rub": 1900237000,
+                  "share_pct": 62.2
+                },
+                {
+                  "region": "Санкт-Петербург",
+                  "counterparties_count": 70,
+                  "amount_rub": 366289000,
+                  "share_pct": 11.99
+                },
+                {
+                  "region": "Ростовская область",
+                  "counterparties_count": 5,
+                  "amount_rub": 169636000,
+                  "share_pct": 5.55
+                }
+              ],
+              "top_cities": [
+                {
+                  "city": "г. Москва",
+                  "counterparties_count": 190,
+                  "amount_rub": 1900237000,
+                  "share_pct": 62.2
+                },
+                {
+                  "city": "г. Санкт-Петербург",
+                  "counterparties_count": 70,
+                  "amount_rub": 366289000,
+                  "share_pct": 11.99
+                },
+                {
+                  "city": "г. Ростов-На-Дону",
+                  "counterparties_count": 4,
+                  "amount_rub": 169594000,
+                  "share_pct": 5.55
+                }
+              ]
+            },
+            "two_way_links": {
+              "count": 37,
+              "share_pct": 11.28,
+              "top_3": [
+                {
+                  "company_id": "U_46827",
+                  "okved_code": "52.29",
+                  "okved_name": "Деятельность вспомогательная прочая, связанная с перевозками",
+                  "region": "Москва",
+                  "incoming_amount_rub": 66557000,
+                  "outgoing_amount_rub": 88034000,
+                  "turnover_rub": 154591000
+                },
+                {
+                  "company_id": "U_122486",
+                  "okved_code": "46.38",
+                  "okved_name": "Торговля оптовая прочими пищевыми продуктами, включая рыбу, ракообразных и моллюсков",
+                  "region": "Москва",
+                  "incoming_amount_rub": 119648000,
+                  "outgoing_amount_rub": 221000,
+                  "turnover_rub": 119869000
+                },
+                {
+                  "company_id": "U_255246",
+                  "okved_code": "46.46",
+                  "okved_name": "Торговля оптовая фармацевтической продукцией",
+                  "region": "Москва",
+                  "incoming_amount_rub": 55930000,
+                  "outgoing_amount_rub": 11000,
+                  "turnover_rub": 55941000
+                }
+              ]
+            }
+          }
+        },
+        {
+          "company_id": "U_46827",
+          "main": {
+            "okved": {
+              "code": "52.29",
+              "name": "Деятельность вспомогательная прочая, связанная с перевозками",
+              "section": {
+                "code": "H",
+                "name": "Транспортировка и хранение"
+              }
+            },
+            "bank_services": {
+              "cash_settlement_rko": true,
+              "bank_guarantees": false,
+              "loans": true,
+              "leasing": false,
+              "deposits": false,
+              "salary_project": true,
+              "factoring": false
+            },
+            "location": {
+              "city": "г. Москва",
+              "region": "Москва"
+            },
+            "ownership_form": "СОВМЕСТНАЯ ЧАСТНАЯ И ИНОСТРАННАЯ СОБСТВЕННОСТЬ",
+            "annual_revenue_rub": 2548893300,
+            "annual_revenue_bn_rub": 2.55,
+            "foreign_trade_countries": [],
+            "business_stage": "Стремительный рост",
+            "client_type": "CLIENT",
+            "group_id": "group_133846_sb"
+          },
+          "payments": {
+            "totals": {
+              "incoming_amount_rub": 843295000,
+              "outgoing_amount_rub": 172868000,
+              "turnover_rub": 1016163000,
+              "incoming_payments_count": 3301,
+              "outgoing_payments_count": 405,
+              "edges_count": 167,
+              "unique_counterparties_count": 152,
+              "external_counterparties_count": 151,
+              "intragroup_counterparties_count": 1,
+              "intragroup_amount_rub": 154591000,
+              "intragroup_share_pct": 15.21,
+              "average_edge_amount_rub": 6084808
+            },
+            "counterparties": {
+              "unique_count": 152,
+              "top_1_share_pct": 15.21,
+              "top_3_share_pct": 27.24,
+              "hhi": 433.1,
+              "top_3": [
+                {
+                  "company_id": "U_46911",
+                  "okved_code": "52.29",
+                  "okved_name": "Деятельность вспомогательная прочая, связанная с перевозками",
+                  "region": "Московская область",
+                  "city": "г. Красногорск",
+                  "is_intragroup": true,
+                  "incoming_amount_rub": 88034000,
+                  "outgoing_amount_rub": 66557000,
+                  "turnover_rub": 154591000,
+                  "payments_count": 22,
+                  "share_pct": 15.21
+                },
+                {
+                  "company_id": "U_14866",
+                  "okved_code": "20.16",
+                  "okved_name": "Производство пластмасс и синтетических смол в первичных формах",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 64279000,
+                  "outgoing_amount_rub": 0,
+                  "turnover_rub": 64279000,
+                  "payments_count": 82,
+                  "share_pct": 6.33
+                },
+                {
+                  "company_id": "U_197924",
+                  "okved_code": "46.90",
+                  "okved_name": "Торговля оптовая неспециализированная",
+                  "region": "Самарская область",
+                  "city": "г. Тольятти",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 57901000,
+                  "outgoing_amount_rub": 0,
+                  "turnover_rub": 57901000,
+                  "payments_count": 154,
+                  "share_pct": 5.7
+                }
+              ]
+            },
+            "top_okved": [
+              {
+                "okved_class": "46",
+                "okved_name": "Торговля оптовая, кроме оптовой торговли автотранспортными средствами и мотоциклами",
+                "counterparties_count": 72,
+                "amount_rub": 537954000,
+                "share_pct": 52.94,
+                "top_codes": [
+                  {
+                    "okved_code": "46.90",
+                    "okved_name": "Торговля оптовая неспециализированная",
+                    "counterparties_count": 19,
+                    "amount_rub": 190657000,
+                    "share_pct": 18.76
+                  },
+                  {
+                    "okved_code": "46.69.9",
+                    "okved_name": "Торговля оптовая прочими машинами, приборами, аппаратурой и оборудованием общепромышленного и специального назначения",
+                    "counterparties_count": 8,
+                    "amount_rub": 73135000,
+                    "share_pct": 7.2
+                  },
+                  {
+                    "okved_code": "46.75.2",
+                    "okved_name": "Торговля оптовая промышленными химикатами",
+                    "counterparties_count": 3,
+                    "amount_rub": 70374000,
+                    "share_pct": 6.93
+                  }
+                ]
+              },
+              {
+                "okved_class": "52",
+                "okved_name": "Складское хозяйство и вспомогательная транспортная деятельность",
+                "counterparties_count": 40,
+                "amount_rub": 265961000,
+                "share_pct": 26.17,
+                "top_codes": [
+                  {
+                    "okved_code": "52.29",
+                    "okved_name": "Деятельность вспомогательная прочая, связанная с перевозками",
+                    "counterparties_count": 34,
+                    "amount_rub": 263643000,
+                    "share_pct": 25.94
+                  },
+                  {
+                    "okved_code": "52.24.2",
+                    "okved_name": "Транспортная обработка прочих грузов",
+                    "counterparties_count": 1,
+                    "amount_rub": 1000000,
+                    "share_pct": 0.1
+                  },
+                  {
+                    "okved_code": "52.10",
+                    "okved_name": "Деятельность по складированию и хранению",
+                    "counterparties_count": 3,
+                    "amount_rub": 837000,
+                    "share_pct": 0.08
+                  }
+                ]
+              },
+              {
+                "okved_class": "20",
+                "okved_name": "Производство химических веществ и химических продуктов",
+                "counterparties_count": 3,
+                "amount_rub": 79372000,
+                "share_pct": 7.81,
+                "top_codes": [
+                  {
+                    "okved_code": "20.16",
+                    "okved_name": "Производство пластмасс и синтетических смол в первичных формах",
+                    "counterparties_count": 1,
+                    "amount_rub": 64279000,
+                    "share_pct": 6.33
+                  },
+                  {
+                    "okved_code": "20.42",
+                    "okved_name": "Производство парфюмерных и косметических средств",
+                    "counterparties_count": 2,
+                    "amount_rub": 15093000,
+                    "share_pct": 1.49
+                  }
+                ]
+              }
+            ],
+            "geography": {
+              "top_regions": [
+                {
+                  "region": "Москва",
+                  "counterparties_count": 87,
+                  "amount_rub": 501318000,
+                  "share_pct": 49.33
+                },
+                {
+                  "region": "Московская область",
+                  "counterparties_count": 4,
+                  "amount_rub": 155705000,
+                  "share_pct": 15.32
+                },
+                {
+                  "region": "Санкт-Петербург",
+                  "counterparties_count": 35,
+                  "amount_rub": 151529000,
+                  "share_pct": 14.91
+                }
+              ],
+              "top_cities": [
+                {
+                  "city": "г. Москва",
+                  "counterparties_count": 87,
+                  "amount_rub": 501318000,
+                  "share_pct": 49.33
+                },
+                {
+                  "city": "г. Красногорск",
+                  "counterparties_count": 1,
+                  "amount_rub": 154591000,
+                  "share_pct": 15.21
+                },
+                {
+                  "city": "г. Санкт-Петербург",
+                  "counterparties_count": 35,
+                  "amount_rub": 151529000,
+                  "share_pct": 14.91
+                }
+              ]
+            },
+            "two_way_links": {
+              "count": 15,
+              "share_pct": 9.87,
+              "top_3": [
+                {
+                  "company_id": "U_46911",
+                  "okved_code": "52.29",
+                  "okved_name": "Деятельность вспомогательная прочая, связанная с перевозками",
+                  "region": "Московская область",
+                  "incoming_amount_rub": 88034000,
+                  "outgoing_amount_rub": 66557000,
+                  "turnover_rub": 154591000
+                },
+                {
+                  "company_id": "U_116902",
+                  "okved_code": "52.29",
+                  "okved_name": "Деятельность вспомогательная прочая, связанная с перевозками",
+                  "region": "Москва",
+                  "incoming_amount_rub": 53000,
+                  "outgoing_amount_rub": 34490000,
+                  "turnover_rub": 34543000
+                },
+                {
+                  "company_id": "U_181120",
+                  "okved_code": "45.31.1",
+                  "okved_name": "Торговля оптовая автомобильными деталями, узлами и принадлежностями, кроме деятельности агентов",
+                  "region": "Санкт-Петербург",
+                  "incoming_amount_rub": 29521000,
+                  "outgoing_amount_rub": 311000,
+                  "turnover_rub": 29832000
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "group_id": "group_134232_sb",
+      "selection": {
+        "rank": 3,
+        "okved_section": {
+          "code": "L",
+          "name": "Деятельность по операциям с недвижимым имуществом"
+        },
+        "okved_class": "68",
+        "main_okved": {
+          "code": "68.20.2",
+          "name": "Аренда и управление собственным или арендованным нежилым недвижимым имуществом"
+        },
+        "headquarters_region": "Московская область",
+        "headquarters_city": "г. Фрязино",
+        "group_edges_count": 61,
+        "min_company_edges_count": 61,
+        "reason": "Группа 3 из 3: раздел ОКВЭД L (Деятельность по операциям с недвижимым имуществом), регион Московская область; 1 компаний, 61 связей. Тройка покрывает 3 раздела ОКВЭД и 3 региона."
+      },
+      "summary": {
+        "composition": {
+          "companies_count": 1,
+          "total_revenue_rub": 16953859423,
+          "total_revenue_bn_rub": 16.95,
+          "regions": [
+            "Московская область"
+          ],
+          "cities": [
+            "г. Фрязино"
+          ],
+          "okved_sections": [
+            {
+              "code": "L",
+              "name": "Деятельность по операциям с недвижимым имуществом",
+              "companies_count": 1
+            }
+          ],
+          "okved_classes": [
+            {
+              "code": "68.20.2",
+              "name": "Аренда и управление собственным или арендованным нежилым недвижимым имуществом",
+              "companies_count": 1
+            }
+          ]
+        },
+        "transactions": {
+          "edges_count": 61,
+          "turnover_rub": 3444979000,
+          "payments_count": 428,
+          "unique_counterparties_count": 61,
+          "external_counterparties_count": 61,
+          "intragroup_counterparties_count": 0,
+          "intragroup_amount_rub": 0,
+          "intragroup_share_pct": 0.0
+        }
+      },
+      "companies": [
+        {
+          "company_id": "U_99802",
+          "main": {
+            "okved": {
+              "code": "68.20.2",
+              "name": "Аренда и управление собственным или арендованным нежилым недвижимым имуществом",
+              "section": {
+                "code": "L",
+                "name": "Деятельность по операциям с недвижимым имуществом"
+              }
+            },
+            "bank_services": {
+              "cash_settlement_rko": false,
+              "bank_guarantees": false,
+              "loans": false,
+              "leasing": false,
+              "deposits": true,
+              "salary_project": false,
+              "factoring": false
+            },
+            "location": {
+              "city": "г. Фрязино",
+              "region": "Московская область"
+            },
+            "ownership_form": "ЧАСТНАЯ СОБСТВЕННОСТЬ",
+            "annual_revenue_rub": 16953859423,
+            "annual_revenue_bn_rub": 16.95,
+            "foreign_trade_countries": [],
+            "business_stage": "Оптимизация",
+            "client_type": "CLIENT",
+            "group_id": "group_134232_sb"
+          },
+          "payments": {
+            "totals": {
+              "incoming_amount_rub": 1847000,
+              "outgoing_amount_rub": 3443132000,
+              "turnover_rub": 3444979000,
+              "incoming_payments_count": 5,
+              "outgoing_payments_count": 423,
+              "edges_count": 61,
+              "unique_counterparties_count": 61,
+              "external_counterparties_count": 61,
+              "intragroup_counterparties_count": 0,
+              "intragroup_amount_rub": 0,
+              "intragroup_share_pct": 0.0,
+              "average_edge_amount_rub": 56475066
+            },
+            "counterparties": {
+              "unique_count": 61,
+              "top_1_share_pct": 49.46,
+              "top_3_share_pct": 71.93,
+              "hhi": 2834.61,
+              "top_3": [
+                {
+                  "company_id": "U_167504",
+                  "okved_code": "56.10",
+                  "okved_name": "Деятельность ресторанов и услуги по доставке продуктов питания",
+                  "region": "Республика Татарстан",
+                  "city": "г. Казань",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 0,
+                  "outgoing_amount_rub": 1703829000,
+                  "turnover_rub": 1703829000,
+                  "payments_count": 56,
+                  "share_pct": 49.46
+                },
+                {
+                  "company_id": "U_10574",
+                  "okved_code": "41.20.9",
+                  "okved_name": "Прочие виды строительства жилых и нежилых зданий",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 0,
+                  "outgoing_amount_rub": 396206000,
+                  "turnover_rub": 396206000,
+                  "payments_count": 15,
+                  "share_pct": 11.5
+                },
+                {
+                  "company_id": "U_84607",
+                  "okved_code": "71.12",
+                  "okved_name": "Деятельность в области инженерных изысканий, инженерно-технического проектирования, управления проектами строительства, выполнения строительного контроля и авторского надзора, предоставление технических консультаций в этих областях",
+                  "region": "Москва",
+                  "city": "г. Москва",
+                  "is_intragroup": false,
+                  "incoming_amount_rub": 0,
+                  "outgoing_amount_rub": 378032000,
+                  "turnover_rub": 378032000,
+                  "payments_count": 13,
+                  "share_pct": 10.97
+                }
+              ]
+            },
+            "top_okved": [
+              {
+                "okved_class": "56",
+                "okved_name": "Деятельность по предоставлению продуктов питания и напитков",
+                "counterparties_count": 1,
+                "amount_rub": 1703829000,
+                "share_pct": 49.46,
+                "top_codes": [
+                  {
+                    "okved_code": "56.10",
+                    "okved_name": "Деятельность ресторанов и услуги по доставке продуктов питания",
+                    "counterparties_count": 1,
+                    "amount_rub": 1703829000,
+                    "share_pct": 49.46
+                  }
+                ]
+              },
+              {
+                "okved_class": "41",
+                "okved_name": "Строительство зданий",
+                "counterparties_count": 5,
+                "amount_rub": 969480000,
+                "share_pct": 28.14,
+                "top_codes": [
+                  {
+                    "okved_code": "41.20",
+                    "okved_name": "Строительство жилых и нежилых зданий",
+                    "counterparties_count": 3,
+                    "amount_rub": 529415000,
+                    "share_pct": 15.37
+                  },
+                  {
+                    "okved_code": "41.20.9",
+                    "okved_name": "Прочие виды строительства жилых и нежилых зданий",
+                    "counterparties_count": 2,
+                    "amount_rub": 440065000,
+                    "share_pct": 12.77
+                  }
+                ]
+              },
+              {
+                "okved_class": "71",
+                "okved_name": "Деятельность в области архитектуры и инженерно-технического проектирования",
+                "counterparties_count": 2,
+                "amount_rub": 392830000,
+                "share_pct": 11.4,
+                "top_codes": [
+                  {
+                    "okved_code": "71.12",
+                    "okved_name": "Деятельность в области инженерных изысканий, инженерно-технического проектирования, управления проектами строительства, выполнения строительного контроля и авторского надзора, предоставление технических консультаций в этих областях",
+                    "counterparties_count": 1,
+                    "amount_rub": 378032000,
+                    "share_pct": 10.97
+                  },
+                  {
+                    "okved_code": "71.11.1",
+                    "okved_name": "Деятельность в области архитектуры, связанная с созданием архитектурного объекта",
+                    "counterparties_count": 1,
+                    "amount_rub": 14798000,
+                    "share_pct": 0.43
+                  }
+                ]
+              }
+            ],
+            "geography": {
+              "top_regions": [
+                {
+                  "region": "Республика Татарстан",
+                  "counterparties_count": 1,
+                  "amount_rub": 1703829000,
+                  "share_pct": 49.46
+                },
+                {
+                  "region": "Москва",
+                  "counterparties_count": 52,
+                  "amount_rub": 1676498000,
+                  "share_pct": 48.66
+                },
+                {
+                  "region": "Самарская область",
+                  "counterparties_count": 1,
+                  "amount_rub": 54095000,
+                  "share_pct": 1.57
+                }
+              ],
+              "top_cities": [
+                {
+                  "city": "г. Казань",
+                  "counterparties_count": 1,
+                  "amount_rub": 1703829000,
+                  "share_pct": 49.46
+                },
+                {
+                  "city": "г. Москва",
+                  "counterparties_count": 52,
+                  "amount_rub": 1676498000,
+                  "share_pct": 48.66
+                },
+                {
+                  "city": "г. Самара",
+                  "counterparties_count": 1,
+                  "amount_rub": 54095000,
+                  "share_pct": 1.57
+                }
+              ]
+            },
+            "two_way_links": {
+              "count": 0,
+              "share_pct": 0.0,
+              "top_3": []
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
