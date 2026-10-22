@@ -140,6 +140,18 @@ class PostgresTests(unittest.TestCase):
         self.assertIsInstance(self.vectors.pending(self.profile_id, 1)[0], EmbeddingInput)
         self.assertIsInstance(self.repo.list_articles()[0], NewsArticleDTO)
 
+    def test_title_match_precedes_repeated_body_mentions(self):
+        # The isolated token avoids depending on other test/corpus records.
+        term = 'scope' + self.token
+        title = self.article('title').model_copy(update={'title': term + ' в заголовке'})
+        body = self.article('body').model_copy(update={'text': (term + ' ') * 80})
+        self.repo.save(title)
+        self.repo.save(body)
+        found = self.repo.search_text(term, 2)
+        self.assertEqual([row['id'] for row in found], [title.id, body.id])
+        self.assertTrue(found[0]['title_match'])
+        self.assertFalse(found[1]['title_match'])
+
     def test_legacy_history_adopted_without_losing_rows(self):
         article = self.article()
         self.repo.save(article)

@@ -1,5 +1,5 @@
 """Opt-in company persistence and vector tests on a disposable *_test database."""
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import hashlib
 import os
 import unittest
@@ -143,6 +143,34 @@ class PostgresTests(unittest.TestCase):
         with self.sessions() as session:
             self.assertIsNotNone(session.scalar(select(CompanyImportRun).where(
                 CompanyImportRun.status == 'test-completed')))
+
+    def test_unchanged_snapshot_preserves_availability_time(self):
+        with self.sessions() as session:
+            imported_at = session.get(Company, self.company_id).imported_at
+        self.repo.save_company(self.company)
+        with self.sessions() as session:
+            self.assertEqual(session.get(Company, self.company_id).imported_at, imported_at)
+
+    def test_company_search_and_profile_exclude_future_snapshots(self):
+        from research.ai.company_repository import CompanyReader
+        with self.sessions() as session:
+            imported_at = session.get(Company, self.company_id).imported_at
+        provider = self.provider()
+        provider.run()
+        service = CompanySearchService(self.vectors, provider)
+        before = imported_at - timedelta(seconds=1)
+        after = imported_at + timedelta(seconds=1)
+        self.assertNotIn(self.company_id, [row['id'] for row in service.search('fixture', 100, as_of=before)])
+        self.assertIn(self.company_id, [row['id'] for row in service.search('fixture', 100, as_of=after)])
+        with self.assertRaises(ValueError):
+            service.search('fixture', 1, as_of=datetime(2026, 1, 1))
+        reader = CompanyReader(os.environ['NEWS_DATABASE_URL'])
+        with self.assertRaises(ValueError):
+            reader.get_company_profile(self.company_id, as_of=before)
+        self.assertEqual(reader.get_company_profile(self.company_id, as_of=after).id, self.company_id)
+        metrics = reader.get_company_metrics(self.company_id, as_of=after)
+        self.assertTrue(metrics)
+        self.assertTrue(all(source.company_id == self.company_id for source in metrics))
 
 
 if __name__ == '__main__':

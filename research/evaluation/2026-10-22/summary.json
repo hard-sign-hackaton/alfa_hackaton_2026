@@ -1,0 +1,373 @@
+{
+  "manifest": {
+    "as_of": "2026-10-22T13:45:06.870942+00:00",
+    "dataset_sha256": "d81e8dd714247e0d8a8a2e7812a87fe77d7b71a40d93ec644c9e66d4b97d58fa",
+    "protocol": 1,
+    "notes": [
+      "Model judgments are not ground truth.",
+      "Corpus is one short news snapshot. Payment periods unknown."
+    ]
+  },
+  "base_commit": "1881ea0",
+  "corpus": {
+    "news": 153,
+    "companies": 12,
+    "groups": 3,
+    "possible_pairs": 1836,
+    "news_min": "2026-10-21T12:31:50+00:00",
+    "news_max": "2026-10-21T20:19:32+00:00",
+    "embedding_profile": {
+      "id": "9a3f23610b4fbc3364edb63f1e1e1e195200e4f03b4a007ea1ec5b4d39207469",
+      "model": "intfloat/multilingual-e5-small",
+      "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+      "dimensions": 384,
+      "normalized": true,
+      "preparation": "e5-title64-body384-overlap64-mean-l2-v1"
+    },
+    "bank_documents_loaded": 0
+  },
+  "classification": {
+    "success": 151,
+    "failed": 2,
+    "first_pass_success": 133,
+    "business": 97,
+    "topics": {
+      "other_business": 61,
+      "energy": 37,
+      "regulation": 51,
+      "not_business": 54,
+      "financial_markets": 23,
+      "retail_ecommerce": 6,
+      "logistics": 9,
+      "metallurgy": 1,
+      "automotive": 2,
+      "construction": 3
+    }
+  },
+  "reviews": {
+    "planned": 64,
+    "success": 64,
+    "failed": 0,
+    "labels": {
+      "unrelated": 31,
+      "weak": 29,
+      "indirect": 4
+    },
+    "selection": "Union of top-2 profile/payment E5 candidates plus named domain/negative controls, crossed with one company per distinct OKVED class in each group. Biased diagnostic sample, not random or a holdout."
+  },
+  "analyses": {
+    "planned": 8,
+    "success": 8,
+    "failed": 0,
+    "citations_checked": 61,
+    "metric_context_runs": 8
+  },
+  "baseline": [
+    {
+      "company_id": "U_128194",
+      "evaluated": 151,
+      "nonzero": 0,
+      "at_least_50": 0,
+      "max_score": 0
+    },
+    {
+      "company_id": "U_125887",
+      "evaluated": 151,
+      "nonzero": 0,
+      "at_least_50": 0,
+      "max_score": 0
+    },
+    {
+      "company_id": "U_123091",
+      "evaluated": 151,
+      "nonzero": 0,
+      "at_least_50": 0,
+      "max_score": 0
+    },
+    {
+      "company_id": "U_122970",
+      "evaluated": 151,
+      "nonzero": 0,
+      "at_least_50": 0,
+      "max_score": 0
+    },
+    {
+      "company_id": "U_122506",
+      "evaluated": 151,
+      "nonzero": 0,
+      "at_least_50": 0,
+      "max_score": 0
+    },
+    {
+      "company_id": "U_199606",
+      "evaluated": 151,
+      "nonzero": 0,
+      "at_least_50": 0,
+      "max_score": 0
+    },
+    {
+      "company_id": "U_210204",
+      "evaluated": 151,
+      "nonzero": 0,
+      "at_least_50": 0,
+      "max_score": 0
+    },
+    {
+      "company_id": "U_222900",
+      "evaluated": 151,
+      "nonzero": 0,
+      "at_least_50": 0,
+      "max_score": 0
+    },
+    {
+      "company_id": "U_37452",
+      "evaluated": 151,
+      "nonzero": 0,
+      "at_least_50": 0,
+      "max_score": 0
+    },
+    {
+      "company_id": "U_46911",
+      "evaluated": 151,
+      "nonzero": 9,
+      "at_least_50": 9,
+      "max_score": 70
+    },
+    {
+      "company_id": "U_46827",
+      "evaluated": 151,
+      "nonzero": 9,
+      "at_least_50": 9,
+      "max_score": 70
+    },
+    {
+      "company_id": "U_99802",
+      "evaluated": 151,
+      "nonzero": 0,
+      "at_least_50": 0,
+      "max_score": 0
+    }
+  ],
+  "comparison": [
+    {
+      "company_id": "U_128194",
+      "variant": "profile",
+      "k": 5,
+      "judged": 3,
+      "model_positive": 0,
+      "unjudged": 2,
+      "labels": [
+        "unrelated",
+        "unrelated",
+        "not_reviewed",
+        "not_reviewed",
+        "unrelated"
+      ]
+    },
+    {
+      "company_id": "U_128194",
+      "variant": "payments",
+      "k": 5,
+      "judged": 3,
+      "model_positive": 0,
+      "unjudged": 2,
+      "labels": [
+        "unrelated",
+        "unrelated",
+        "not_reviewed",
+        "not_reviewed",
+        "unrelated"
+      ]
+    },
+    {
+      "company_id": "U_37452",
+      "variant": "profile",
+      "k": 5,
+      "judged": 3,
+      "model_positive": 0,
+      "unjudged": 2,
+      "labels": [
+        "weak",
+        "unrelated",
+        "weak",
+        "not_reviewed",
+        "not_reviewed"
+      ]
+    },
+    {
+      "company_id": "U_37452",
+      "variant": "payments",
+      "k": 5,
+      "judged": 4,
+      "model_positive": 0,
+      "unjudged": 1,
+      "labels": [
+        "weak",
+        "weak",
+        "unrelated",
+        "not_reviewed",
+        "weak"
+      ]
+    },
+    {
+      "company_id": "U_46911",
+      "variant": "profile",
+      "k": 5,
+      "judged": 4,
+      "model_positive": 0,
+      "unjudged": 1,
+      "labels": [
+        "weak",
+        "weak",
+        "not_reviewed",
+        "weak",
+        "weak"
+      ]
+    },
+    {
+      "company_id": "U_46911",
+      "variant": "payments",
+      "k": 5,
+      "judged": 4,
+      "model_positive": 0,
+      "unjudged": 1,
+      "labels": [
+        "unrelated",
+        "unrelated",
+        "not_reviewed",
+        "weak",
+        "weak"
+      ]
+    },
+    {
+      "company_id": "U_99802",
+      "variant": "profile",
+      "k": 5,
+      "judged": 4,
+      "model_positive": 0,
+      "unjudged": 1,
+      "labels": [
+        "weak",
+        "unrelated",
+        "weak",
+        "not_reviewed",
+        "unrelated"
+      ]
+    },
+    {
+      "company_id": "U_99802",
+      "variant": "payments",
+      "k": 5,
+      "judged": 4,
+      "model_positive": 0,
+      "unjudged": 1,
+      "labels": [
+        "unrelated",
+        "weak",
+        "unrelated",
+        "weak",
+        "not_reviewed"
+      ]
+    }
+  ],
+  "models": [
+    {
+      "model": "google/gemma-4-26b-a4b-it",
+      "attempts": 254,
+      "validated": 151,
+      "statuses": {
+        "validated_references": 151,
+        "LLM transport failure": 61,
+        "invalid_output": 42
+      },
+      "tokens": 282369,
+      "cost_usd": 3.504385,
+      "median_seconds": 4.32,
+      "p95_seconds": 10.55
+    },
+    {
+      "model": "deepseek/deepseek-v4.1-flash",
+      "attempts": 121,
+      "validated": 91,
+      "statuses": {
+        "validated_references": 72,
+        "LLM transport failure": 27,
+        "invalid_output": 2,
+        "tool_calls": 16,
+        "finished": 3,
+        "failed": 1
+      },
+      "tokens": 632715,
+      "cost_usd": 17.809459,
+      "median_seconds": 11.35,
+      "p95_seconds": 24.28
+    },
+    {
+      "model": "qwen/qwen3.6-35b-a3b",
+      "attempts": 7,
+      "validated": 3,
+      "statuses": {
+        "LLM transport failure": 3,
+        "validated_references": 3,
+        "truncated": 1
+      },
+      "tokens": 27093,
+      "cost_usd": 1.996505,
+      "median_seconds": 29.02,
+      "p95_seconds": 75.76
+    }
+  ],
+  "qualitative_audit": [
+    {
+      "company_id": "U_99802",
+      "news_id": "1056dce3cfa282c8aee1ecd173c5273091e4715beda0b3930c733a3261c46b2e",
+      "field": "result.summary",
+      "observed": "годовые поступления от депозитов",
+      "severity": "requires_review",
+      "finding": "Summary превращает годовую выручку и наличие услуги «Депозиты» в годовые поступления от депозитов. В источниках такого показателя нет.",
+      "source_fields": {
+        "annual_revenue_rub": 16953859423.0,
+        "banking_services": [
+          "Депозиты"
+        ]
+      },
+      "interpretation": "Качественный разбор конкретного сохранённого ответа. Это не независимая оценка частоты галлюцинаций."
+    }
+  ],
+  "classification_failures": [
+    {
+      "news_id": "12eb21b082d59223d306bccf42349f0ebad187efe7c3d1b495131c977514956f",
+      "title": "На форуме ТПП обсудили практику борьбы со схемами налоговой оптимизации",
+      "error": "ModelError: No valid classification JSON after 2 attempts",
+      "attempts": 8,
+      "validation": [
+        "ValueError: Invalid publication evidence",
+        "ValueError: Invalid publication evidence"
+      ],
+      "cause": "Цитата не совпала с исходным текстом"
+    },
+    {
+      "news_id": "bdf5b6841ab2b1d20c6a6590f107f65223470143f0e9270b90656d36ade20fec",
+      "title": "Более 100 тыс. сотовых абонентов в РФ воспользовались услугой межрегионального переноса номера",
+      "error": "ModelError: No valid classification JSON after 2 attempts",
+      "attempts": 8,
+      "validation": [
+        "ValueError: Invalid publication evidence"
+      ],
+      "cause": "Цитата не совпала с исходным текстом"
+    }
+  ],
+  "attempts": 382,
+  "reported_cost_usd": 23.310349,
+  "usage_missing_attempts": 92,
+  "limitations": [
+    "Модельные оценки не являются независимой экспертной разметкой или измеренной точностью.",
+    "Выборка пар целевая: лучшие E5-кандидаты и контроли; она не случайная и не отложенная.",
+    "Новости покрывают только один неполный день. Результат нельзя переносить на весь поток.",
+    "Дат и периода платежей нет; текущая экспозиция, динамика и причинный эффект не установлены.",
+    "Проверка цитат подтверждает наличие текста в источнике, но не истинность вывода и не логическое следование.",
+    "Полные банковские документы не загружены: интеграция этого корпуса в исследовании не проверена.",
+    "Cosine similarity E5 не является вероятностью релевантности. Платежное расширение запроса может вносить шум.",
+    "Расход — сумма cost в ответах шлюза; для попыток без usage стоимость неизвестна."
+  ]
+}

@@ -81,11 +81,12 @@ class NewsRepository:
             raise ValueError('Nonempty query and top-k between 1 and 100 required')
         vector = func.to_tsvector(RUSSIAN, Article.title + ' ' + Article.text)
         terms = func.websearch_to_tsquery(RUSSIAN, query)
-        statement = select(*hit_columns(query)).where(vector.op('@@')(terms), Article.published_at <= search_time(as_of))
+        title_match = func.to_tsvector(RUSSIAN, Article.title).op('@@')(terms)
+        statement = select(*hit_columns(query), title_match.label('title_match')).where(vector.op('@@')(terms), Article.published_at <= search_time(as_of))
         if exclude_id is not None:
             statement = statement.where(Article.id != exclude_id)
         with self.session() as s:
-            return [hit(row) for row in s.execute(statement.order_by(func.ts_rank(vector, terms).desc(),
+            return [hit(row) for row in s.execute(statement.order_by(title_match.desc(), func.ts_rank(vector, terms).desc(),
                     Article.published_at.desc(), Article.id).limit(top_k))]
 
 

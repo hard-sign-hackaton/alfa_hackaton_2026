@@ -26,6 +26,7 @@ class ToolSession:
         self.sources = {}
         self.trace = []
         self._cache = {}
+        self._unavailable_tools = set()
         self.tools = [
             StructuredTool.from_function(self.profile, name='get_company_profile', args_schema=NoArguments,
                                          description='Read the selected company profile. Cannot select another company.'),
@@ -58,7 +59,13 @@ class ToolSession:
         return {'status': 'found', 'company': self.company.model_dump()}
 
     def metrics(self):
-        return self._collect(self.repository.get_company_metrics(self.company.id, as_of=self.as_of))
+        values = self.repository.get_company_metrics(self.company.id, as_of=self.as_of)
+        priority = {'top_okved': 0, 'counterparties': 1, 'totals': 2}
+        values = sorted(values, key=lambda value: priority.get(value.source_id.rsplit(':', 1)[-1], 3))
+        result = self._collect(values[:3])
+        if len(values) > 3:
+            result['note'] += ' Returned three selected metric sources; other aggregates were not included in context.'
+        return result
 
     def news_search(self, query, limit=3):
         return self._collect(self.repository.search_news(query, as_of=self.as_of, exclude_id=self.news.id, limit=limit))
@@ -69,9 +76,9 @@ class ToolSession:
     def invoke(self, name, args):
         from database import DatabaseError
         key = json.dumps([name, args], sort_keys=True, ensure_ascii=False)
-        cached = key in self._cache
+        cached = key in self._cache or name in self._unavailable_tools
         if cached:
-            result = self._cache[key]
+            result = self._cache.get(key, {'status': 'unavailable', 'reason': 'Source unavailable during this run; no repeated database request'})
         else:
             tool = next((tool for tool in self.tools if tool.name == name), None)
             if tool is None:
@@ -82,6 +89,7 @@ class ToolSession:
                     result = tool.invoke(validated.model_dump())
                 except DatabaseError:
                     result = {'status': 'unavailable', 'reason': 'Database read failed'}
+                    self._unavailable_tools.add(name)
                 except (ValueError, TypeError):
                     result = {'status': 'rejected', 'reason': 'Invalid arguments or retrieved source'}
             self._cache[key] = result

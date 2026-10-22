@@ -6,3 +6,11 @@ __pycache__/
 *.pyc
 research/ai/private_data/
 research/ai/live_results/
+
+*.dump
+
+дамп/
+
+dump/
+
+local_runtime/

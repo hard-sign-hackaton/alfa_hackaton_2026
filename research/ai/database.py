@@ -83,9 +83,10 @@ class BankArticle(StrictModel):
 
 
 class PostgresRepository:
-    def __init__(self, settings, *, news_reader=None):
+    def __init__(self, settings, *, news_reader=None, company_reader=None, as_of=None):
         self.settings = settings
         self.news_reader = news_reader
+        self.company_reader, self.as_of = company_reader, as_of
 
     def resolve_news_id(self, news_id, *, as_of=None):
         if self.news_reader is None:
@@ -113,6 +114,8 @@ class PostgresRepository:
         return rows[0]['company_id'], rows[0]['news_id']
 
     def get_company_profile(self, company_id):
+        if self.company_reader is not None and not company_id.startswith('demo-'):
+            return self.company_reader.get_company_profile(company_id, as_of=self.as_of)
         rows = self._read('SELECT payload FROM company_profiles WHERE id = %s', (company_id,))
         if not rows:
             raise ValueError('Company not found')
@@ -134,6 +137,8 @@ class PostgresRepository:
         return value
 
     def get_company_metrics(self, company_id, *, as_of, limit=5):
+        if self.company_reader is not None and not company_id.startswith('demo-'):
+            return self.company_reader.get_company_metrics(company_id, as_of=as_of, limit=limit)
         rows = self._read('SELECT payload FROM company_metrics WHERE company_id = %s '
                           'AND available_at <= %s ORDER BY available_at DESC, id LIMIT %s',
                           (company_id, timestamp(as_of), min(max(limit, 1), 5)))

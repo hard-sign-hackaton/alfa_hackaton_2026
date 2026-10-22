@@ -51,7 +51,8 @@ class ArchitectureTests(unittest.TestCase):
         config = Config()
         config.set_main_option('script_location', str(ROOT / 'migrations'))
         script = ScriptDirectory.from_config(config)
-        self.assertIn('0004_companies', script.get_heads())
+        self.assertEqual(len(script.get_heads()), 1)
+        self.assertIn('0004_companies', [revision.revision for revision in script.walk_revisions()])
         self.assertEqual(script.get_revision('0004_companies').down_revision, '0003_pgvector_only')
 
     def test_project_cli_dispatches_companies(self):

@@ -4,7 +4,16 @@ from pydantic import Field, model_validator
 from contracts import StrictModel, Claim, Evidence
 
 Topic = Literal['metallurgy', 'electronics', 'automotive', 'construction', 'retail_ecommerce',
-                'logistics', 'financial_markets', 'energy', 'regulation', 'other_business', 'not_business']
+                'logistics', 'financial_markets', 'energy', 'regulation', 'wholesale_trade',
+                'real_estate', 'other_business', 'not_business']
+
+
+def validate_classification(value, news):
+    if value.news_id != news.id:
+        raise ValueError('Wrong publication ID')
+    body = news.title + '\n' + news.text
+    if any(item.source_id != 'news:' + news.id or item.quote not in body for item in value.evidence):
+        raise ValueError('Invalid publication evidence')
 
 
 class TopicClassification(StrictModel):

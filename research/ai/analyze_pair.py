@@ -10,6 +10,7 @@ from model_config import load_environment
 from provider import LangChainClient, ModelError
 from retrieval import timestamp
 from news_repository import NewsReader
+from company_repository import CompanyReader
 
 
 def main():
@@ -28,7 +29,8 @@ def main():
     try:
         if not client.api_key:
             raise ModelError('LLM_API_KEY is required')
-        repository = PostgresRepository(DatabaseSettings.from_env(), news_reader=NewsReader.from_env())
+        repository = PostgresRepository(DatabaseSettings.from_env(), news_reader=NewsReader.from_env(),
+                                        company_reader=CompanyReader.from_env(), as_of=args.as_of)
         company_id, news_id = ((args.company_id, args.news_id) if args.company_id else
                                repository.get_pair(args.pair_id or 'demo-metal-primary'))
         state = DatabaseResearchAgent(repository, client, as_of=args.as_of).run(company_id, news_id, question=args.question)

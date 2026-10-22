@@ -1,0 +1,144 @@
+{
+  "as_of": "2026-10-22T13:45:06.870942+00:00",
+  "news": 153,
+  "companies": 12,
+  "classification_before": {
+    "success": 151,
+    "failed": 2,
+    "first_pass_success": 133,
+    "business": 97,
+    "topics": {
+      "other_business": 61,
+      "energy": 37,
+      "regulation": 51,
+      "not_business": 54,
+      "financial_markets": 23,
+      "retail_ecommerce": 6,
+      "logistics": 9,
+      "metallurgy": 1,
+      "automotive": 2,
+      "construction": 3
+    }
+  },
+  "classification_after": {
+    "success": 153,
+    "failed": 0,
+    "topics": {
+      "other_business": 54,
+      "energy": 31,
+      "regulation": 47,
+      "not_business": 63,
+      "financial_markets": 22,
+      "retail_ecommerce": 7,
+      "logistics": 6,
+      "construction": 3,
+      "wholesale_trade": 5,
+      "metallurgy": 1,
+      "automotive": 2
+    }
+  },
+  "okved_covered_before": 2,
+  "okved_covered_after": 12,
+  "known_model_positive_pairs": 4,
+  "found_before_top5": 0,
+  "found_after_top5": 4,
+  "retrieval_comparison": [
+    {
+      "company_id": "U_128194",
+      "variant": "before",
+      "returned": 5,
+      "judged": 3,
+      "model_positive": 0,
+      "unjudged": 2
+    },
+    {
+      "company_id": "U_128194",
+      "variant": "after",
+      "returned": 2,
+      "judged": 2,
+      "model_positive": 2,
+      "unjudged": 0
+    },
+    {
+      "company_id": "U_37452",
+      "variant": "before",
+      "returned": 5,
+      "judged": 3,
+      "model_positive": 0,
+      "unjudged": 2
+    },
+    {
+      "company_id": "U_37452",
+      "variant": "after",
+      "returned": 1,
+      "judged": 1,
+      "model_positive": 1,
+      "unjudged": 0
+    },
+    {
+      "company_id": "U_46911",
+      "variant": "before",
+      "returned": 5,
+      "judged": 4,
+      "model_positive": 0,
+      "unjudged": 1
+    },
+    {
+      "company_id": "U_46911",
+      "variant": "after",
+      "returned": 4,
+      "judged": 3,
+      "model_positive": 1,
+      "unjudged": 1
+    },
+    {
+      "company_id": "U_99802",
+      "variant": "before",
+      "returned": 5,
+      "judged": 4,
+      "model_positive": 0,
+      "unjudged": 1
+    },
+    {
+      "company_id": "U_99802",
+      "variant": "after",
+      "returned": 3,
+      "judged": 2,
+      "model_positive": 0,
+      "unjudged": 1
+    }
+  ],
+  "analyses_success": 8,
+  "analyses_planned": 8,
+  "model_attempts": 259,
+  "statuses": {
+    "validated_references": 164,
+    "LLM transport failure": 55,
+    "tool_calls": 18,
+    "finished": 8,
+    "truncated": 3,
+    "failed": 11
+  },
+  "reported_cost_usd": 10.466893,
+  "per_model": {
+    "deepseek/deepseek-v4.1-flash": {
+      "attempts": 51,
+      "cost_usd": 5.137947
+    },
+    "google/gemma-4-26b-a4b-it": {
+      "attempts": 199,
+      "cost_usd": 1.937748
+    },
+    "qwen/qwen3.6-35b-a3b": {
+      "attempts": 9,
+      "cost_usd": 3.391199
+    }
+  },
+  "limitations": [
+    "Оценки 64 пар заморожены из исходного диагностического прогона; это не независимая разметка.",
+    "Новые кандидаты без старой оценки не считались ни правильными, ни ошибочными. Precision/recall всего потока не измерялись.",
+    "Участие отрасли контрагента не доказывает роль покупателя/поставщика и текущий эффект.",
+    "Дословные цитаты и summary из claims не гарантируют смысловую корректность самих claims.",
+    "Банковский корпус не загружен, этот источник по-прежнему недоступен."
+  ]
+}

@@ -65,6 +65,9 @@ class CompanyRepository:
             session.execute(sql('SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))'),
                             {'key': record.company_id})
             old = session.get(Company, record.company_id)
+            if old is not None and old.details == values['details']:
+                # Re-importing the same snapshot must not move its availability date.
+                values['imported_at'] = old.imported_at
             outcome = ('inserted' if old is None else
                        'updated' if old.content_hash != company.content_hash else 'unchanged')
             statement = insert(Company).values(**values)
@@ -132,9 +135,12 @@ class CompanyEmbeddingRepository:
                       for key in ('input_hash', 'token_count', 'truncated', 'vector', 'created_at')}))
             return True
 
-    def search_pg(self, vector, profile_id, top_k):
+    def search_pg(self, vector, profile_id, top_k, *, as_of=None):
         if not 1 <= top_k <= 100:
             raise ValueError('top-k must be between 1 and 100')
+        cutoff = as_of or datetime.now(timezone.utc)
+        if cutoff.tzinfo is None:
+            raise ValueError('Search time requires a timezone')
         distance = CompanyEmbedding.vector.cosine_distance(vector)
         with self.session() as session:
             session.execute(sql("SET LOCAL hnsw.iterative_scan = 'strict_order'"))
@@ -152,7 +158,8 @@ class CompanyEmbeddingRepository:
             ).select_from(CompanyEmbedding).join(
                 Company, Company.id == CompanyEmbedding.company_id).where(
                     CompanyEmbedding.profile_id == profile_id,
-                    CompanyEmbedding.input_hash == Company.content_hash)
+                    CompanyEmbedding.input_hash == Company.content_hash,
+                    Company.imported_at <= cutoff)
             rows = session.execute(statement.order_by(distance, Company.id).limit(top_k)).all()
         return [hit(row) for row in rows]
 

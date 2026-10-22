@@ -10,3 +10,7 @@ research/ai/private_data
 research/ai/live_results
 research/ai/results/*
 !research/ai/results/company_profile.schema.json
+*.dump
+дамп/
+dump/
+local_runtime/

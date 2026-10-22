@@ -14,6 +14,8 @@ from langsmith import tracing_context
 from contracts import Insight, evidence_sources, validate_evidence
 from model_config import GatewaySettings
 from tasks import TopicClassification, EventExtraction, NewsPreparation
+from grounding import (ClassificationSelection, ExtractionSelection, fragment_catalog,
+                       resolve_selection, finalize_insight)
 
 SYSTEM = '''Верни только JSON согласно переданной JSON Schema. Пиши по-русски.
 Каждое утверждение подкрепляй точной короткой цитатой и source_id из sources.
@@ -29,16 +31,25 @@ SYSTEM += '''
 TASK_INSTRUCTIONS = {
     'classification': '''Определи деловую релевантность и 1–3 темы публикации.
 Если публикация не относится к бизнесу, business_relevant=false и topics=["not_business"].
-Приведи 1–2 коротких точных цитаты из новости, обосновывающих классификацию.''',
+Военные сводки, дипломатия, спорт и происшествия сами по себе не являются деловыми
+новостями: нужен явно описанный экономический факт. Слово «логистический» в военной
+сводке не означает коммерческую логистику.
+В evidence укажи только fragment_id из fragments. Поля source_id и quote не заполняй:
+текст цитаты подставит код. Не придумывай номера фрагментов.''',
     'extraction': '''Извлеки 1–3 основных факта, которые сообщает публикация.
 У каждого факта kind="fact" и точная цитата из новости. Сохраняй атрибуцию:
 прогноз, оценка и заявление источника не становятся установленным будущим событием.
-Не добавляй гипотезы о компаниях, не упомянутых в источнике.''',
+Не добавляй гипотезы о компаниях, не упомянутых в источнике.
+В evidence укажи только fragment_id из fragments. Поля source_id и quote не заполняй:
+текст цитаты подставит код.''',
     'analysis': '''Оцени применимость новости к указанной компании. Разделяй факты
 и гипотезы. Для персональной гипотезы указывай основания и из новости, и из профиля.
 summary только резюмирует claims. Не выводи долю рынка, операционную географию,
 экспорт или роль контрагентов из отсутствующих данных. Регистрация не доказывает
 место деятельности. Банковский сервис не доказывает бизнес-модель.
+Годовая выручка не является доходом от банковской услуги или депозитов.
+Топ-3 отрасли контрагентов не являются полным перечнем: отсутствие отрасли в топ-3
+не доказывает отсутствие экспозиции. План и прогноз не являются уже случившимся событием.
 При нехватке оснований укажи status="insufficient_data" и missing_data.
 Без уточняющего вопроса follow_up_answer=null.''',
     'chat': '''Ответь на question в контексте выбранной компании и новости.
@@ -74,7 +85,7 @@ class LangChainClient:
         self._http_client = None
 
     def model_signature(self):
-        return self.settings.signature()
+        return {**self.settings.signature(), 'pipeline_version': 3}
 
     def _model(self, task, max_tokens=None, *, json_response=True):
         if task not in self.settings.routes:
@@ -104,7 +115,8 @@ class LangChainClient:
             if not self.api_key:
                 raise ModelError('LLM_API_KEY is required for live mode')
             if self._http_client is None:
-                self._http_client = httpx.Client(follow_redirects=False, timeout=self.settings.timeout)
+                self._http_client = httpx.Client(follow_redirects=False, timeout=self.settings.timeout,
+                                                limits=httpx.Limits(max_keepalive_connections=0))
             model = ChatOpenAI(
                 model=route.model, api_key=self.api_key, base_url=self.base_url,
                 temperature=0, max_tokens=route.max_tokens, timeout=self.settings.timeout,
@@ -119,16 +131,29 @@ class LangChainClient:
 
     def _invoke(self, task, data, output_model, validate):
         route = self.settings.routes[task]
-        payload = {**data, 'schema': output_model.model_json_schema()}
+        schema = output_model.model_json_schema()
+        if output_model in (ClassificationSelection, ExtractionSelection):
+            # Show only the fragment-selection protocol to the model. Legacy quote
+            # parsing stays available for saved outputs and existing integrations.
+            reference = schema['$defs']['CitationChoice']
+            reference['properties'].pop('quote', None)
+            reference['properties'].pop('source_id', None)
+            reference['properties']['fragment_id'] = {'type': 'string', 'enum': list(data['fragments'])}
+            reference['required'] = ['fragment_id']
+            schema['properties'].pop('news_id', None)
+            schema['required'] = [key for key in schema['required'] if key != 'news_id']
+        payload = {**data, 'schema': schema}
         max_tokens = route.max_tokens
-        for attempt in range(2):
+        invalid_attempts, transport_failures, hint = 0, 0, ''
+        for attempt in range(5):
             metric = {'task': task, 'model': route.model, 'attempt': attempt + 1,
                       'max_tokens': max_tokens, 'latency_ms': None, 'usage': None, 'status': 'invalid'}
             self.telemetry.append(metric)
             messages = [('system', SYSTEM + '\n' + TASK_INSTRUCTIONS[task]), ('human', '{payload}')]
             if attempt:
                 messages.append(('human', 'Предыдущий ответ не прошёл проверку. Верни полный JSON по схеме, '
-                                 'с верными ID и точными короткими цитатами из sources.'))
+                                 'с верными ID. Для фрагментов выбирай существующий fragment_id; '
+                                 'не переписывай и не сокращай цитаты. ' + hint))
             prompt = ChatPromptTemplate.from_messages(messages)
 
             def parse(message):
@@ -153,8 +178,15 @@ class LangChainClient:
             except TruncatedOutput:
                 metric['status'] = 'truncated'
                 max_tokens = min(max_tokens * 2, 12288)
-            except ValueError:
+                invalid_attempts += 1
+            except ValueError as exc:
                 metric['status'] = 'invalid_output'
+                invalid_attempts += 1
+                if hasattr(exc, 'errors'):
+                    hint = 'Ошибка полей: ' + ', '.join('.'.join(map(str, e['loc'])) + ':' + e['type'] for e in exc.errors(include_input=False)[:4])
+                else:
+                    hint = str(exc).replace(self.api_key, '[redacted]')[:180] if self.api_key else str(exc)[:180]
+                metric['validation_error'] = hint
             except Exception as exc:
                 metric['error_type'] = type(exc).__name__
                 if type(exc).__name__ == 'LengthFinishReasonError':
@@ -162,6 +194,9 @@ class LangChainClient:
                     usage = getattr(getattr(exc, 'completion', None), 'usage', None)
                     metric['usage'] = usage.model_dump() if hasattr(usage, 'model_dump') else usage
                     max_tokens = min(max_tokens * 2, 12288)
+                    invalid_attempts += 1
+                    if invalid_attempts >= 2:
+                        raise ModelError(f'No valid {task} JSON after 2 invalid outputs') from None
                     continue
                 if isinstance(exc, (TypeError, AttributeError)):
                     metric['error_detail'] = str(exc).replace(self.api_key, '[redacted]')[:200] if self.api_key else str(exc)[:200]
@@ -176,12 +211,15 @@ class LangChainClient:
                     message = 'LLM invocation failed'
                 metric['status'] = message
                 retryable = message in ('LLM HTTP 429', 'LLM transport failure') or message.startswith('LLM HTTP 5')
-                if attempt or not retryable:
+                transport_failures += 1
+                if transport_failures >= 3 or not retryable:
                     raise ModelError(message) from None
-                self.sleep(1)
+                self.sleep(2 ** (transport_failures - 1))
             finally:
                 metric['latency_ms'] = round((time.perf_counter() - started) * 1000)
-        raise ModelError(f'No valid {task} JSON after 2 attempts')
+            if invalid_attempts >= 2:
+                break
+        raise ModelError(f'No valid {task} JSON after bounded retries')
 
     @staticmethod
     def _validate_news_evidence(value, news):
@@ -193,12 +231,16 @@ class LangChainClient:
             raise ValueError('Invalid publication evidence')
 
     def classify(self, news):
-        return self._invoke('classification', {'news_id': news.id, 'sources': {f'news:{news.id}': news.title + '\n' + news.text}},
-                            TopicClassification, lambda value: self._validate_news_evidence(value, news))
+        return self._publication_selection('classification', news, ClassificationSelection)
 
     def extract(self, news):
-        return self._invoke('extraction', {'news_id': news.id, 'sources': {f'news:{news.id}': news.title + '\n' + news.text}},
-                            EventExtraction, lambda value: self._validate_news_evidence(value, news))
+        return self._publication_selection('extraction', news, ExtractionSelection)
+
+    def _publication_selection(self, task, news, output_model):
+        catalog = fragment_catalog(news)
+        data = {'news_id': news.id, 'source_id': 'news:' + news.id, 'fragments': catalog}
+        selected = self._invoke(task, data, output_model, lambda value: resolve_selection(value, news, catalog))
+        return resolve_selection(selected, news, catalog)
 
     def prepare(self, news):
         fingerprint = hashlib.sha256(news.model_dump_json().encode()).hexdigest()
@@ -210,8 +252,17 @@ class LangChainClient:
 
     def research_step(self, messages, tools):
         """Ask for native tool calls; execution and authorization stay in the caller."""
+        for attempt in range(3):
+            try:
+                return self._research_attempt(messages, tools, attempt + 1)
+            except ModelError as exc:
+                if attempt == 2 or not (str(exc) in ('LLM transport failure', 'LLM HTTP 429') or str(exc).startswith('LLM HTTP 5')):
+                    raise
+                self.sleep(2 ** attempt)
+
+    def _research_attempt(self, messages, tools, attempt):
         route = self.settings.routes['research']
-        metric = {'task': 'research', 'model': route.model, 'attempt': 1,
+        metric = {'task': 'research', 'model': route.model, 'attempt': attempt,
                   'max_tokens': route.max_tokens, 'usage': None, 'status': 'pending'}
         self.telemetry.append(metric)
         started = time.perf_counter()
@@ -231,6 +282,8 @@ class LangChainClient:
             if isinstance(exc, ModelError):
                 raise
             status = getattr(exc, 'status_code', None)
+            if isinstance(exc, (httpx.TransportError, TimeoutError)) or type(exc).__name__ in ('APIConnectionError', 'OpenAIConnectionError', 'APITimeoutError'):
+                raise ModelError('LLM transport failure') from None
             raise ModelError(f'LLM HTTP {status}' if status else 'Research model invocation failed') from None
         finally:
             metric['latency_ms'] = round((time.perf_counter() - started) * 1000)
@@ -262,7 +315,8 @@ class LangChainClient:
             if question and not value.follow_up_answer:
                 raise ValueError('Follow-up answer missing')
 
-        return self._invoke('chat' if question else 'analysis', data, Insight, validate)
+        result = self._invoke('chat' if question else 'analysis', data, Insight, validate)
+        return finalize_insight(result, company, news)
 
     def close(self):
         if self._http_client:

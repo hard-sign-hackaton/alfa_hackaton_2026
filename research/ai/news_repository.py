@@ -10,8 +10,8 @@ class NewsReader:
     def __init__(self, url, *, mode='lexical', profile_id=None, embeddings=None):
         from app.shared.db.session import get_session_factory
         from app.modules.news.repositories import NewsRepository, NewsEmbeddingRepository
-        if mode not in ('lexical', 'semantic'):
-            raise ValueError('NEWS_SEARCH_MODE must be lexical or semantic')
+        if mode not in ('lexical', 'semantic', 'hybrid'):
+            raise ValueError('NEWS_SEARCH_MODE must be lexical, semantic or hybrid')
         self.articles = NewsRepository(get_session_factory(url))
         self.vectors = NewsEmbeddingRepository(get_session_factory(url))
         self.mode, self.profile_id, self.embeddings = mode, profile_id, embeddings
@@ -65,11 +65,30 @@ class NewsReader:
                 raise DatabaseError('Semantic model unavailable; use the semantic agent image or NEWS_SEARCH_MODE=lexical') from None
         return NewsSearchService(self.vectors, self.embeddings)
 
-    def search_news(self, query, *, as_of, exclude_id, limit=3):
-        if self.mode == 'semantic':
+    def search_hits(self, query, *, as_of, exclude_id=None, limit=3, lexical_query=None):
+        if not query.strip() or not 1 <= limit <= 100:
+            raise ValueError('Nonempty query and top-k between 1 and 100 required')
+        if self.mode == 'semantic' and lexical_query is None:
             results = self._read(lambda: self._semantic().search(query, limit, as_of=timestamp(as_of), exclude_id=exclude_id))
+        elif self.mode in ('hybrid', 'semantic'):
+            from matching import merge_hits
+            pool = min(100, max(20, limit * 3))
+            lexical = self._read(lambda: self.articles.search_text(lexical_query or query, pool, as_of=timestamp(as_of), exclude_id=exclude_id))
+            semantic = self._read(lambda: self._semantic().search(query, pool, as_of=timestamp(as_of), exclude_id=exclude_id))
+            primary = self._read(lambda: self.articles.get_article(exclude_id, as_of=timestamp(as_of))) if exclude_id else None
+            excluded = [{'title': primary.title, 'text': primary.text}] if primary else []
+            results = merge_hits(lexical, semantic, limit, excluded=excluded)
         else:
-            results = self._read(lambda: self.articles.search_text(query, limit, as_of=timestamp(as_of), exclude_id=exclude_id))
+            results = self._read(lambda: self.articles.search_text(lexical_query or query, limit, as_of=timestamp(as_of), exclude_id=exclude_id))
+            results = [{**row, 'retrieval_score': 1 / (30 + rank), 'retrieval_channels': ['lexical']} for rank, row in enumerate(results, 1)]
+        return results
+
+    def search_news(self, query, *, as_of, exclude_id, limit=3):
+        results = self.search_hits(query, as_of=as_of, exclude_id=exclude_id, limit=limit)
         return [RetrievedSource(source_id='news:' + row['id'], kind='news', title=row['title'][:500],
                     text=(row['title'] + '\n' + row['text'])[:6000], published_at=row['published_at'],
                     locator=row['url'], url=row['url'], publisher=row['publisher'], collected_at=row['collected_at']) for row in results]
+
+    def match_company(self, company, *, as_of, metrics=(), classifications=None, limit=10):
+        from matching import match_company
+        return match_company(self, company, as_of=as_of, metrics=metrics, classifications=classifications, limit=limit)

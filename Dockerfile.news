@@ -4,6 +4,10 @@ WORKDIR /app
 COPY requirements.txt /tmp/news-requirements.txt
 RUN pip install --index-url https://download.pytorch.org/whl/cpu 'torch>=2.4,<3'
 RUN pip install -r /tmp/news-requirements.txt
+# OCR dependencies may otherwise install a CUDA torchvision next to CPU torch.
+RUN pip install --upgrade --index-url https://download.pytorch.org/whl/cpu 'torch>=2.4,<3' 'torchvision>=0.19,<1' \
+    && python -c "import torch, torchvision; assert torch.version.cuda is None; torchvision.ops.nms(torch.zeros((0, 4)), torch.zeros(0), 0.5)" \
+    && pip check
 RUN groupadd --gid 10001 newspipeline \
     && useradd --uid 10001 --gid newspipeline --no-create-home newspipeline \
     && mkdir -p /runtime /models && chown newspipeline:newspipeline /runtime /models

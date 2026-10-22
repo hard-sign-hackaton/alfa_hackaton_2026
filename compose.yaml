@@ -105,6 +105,8 @@ services:
       NEWS_DATABASE_URL: &news_read_url postgresql+psycopg://analysis_news_reader:${NEWS_READER_PASSWORD:?Set NEWS_READER_PASSWORD in .env}@postgres:5432/${NEWS_DATABASE_NAME:-alfa_news}
       NEWS_SEARCH_MODE: ${NEWS_SEARCH_MODE:-lexical}
       NEWS_EMBEDDING_PROFILE: ${NEWS_EMBEDDING_PROFILE:-}
+      COMPANY_DATABASE_URL: ${COMPANY_DATABASE_URL:-}
+      COMPANY_EMBEDDING_PROFILE: ${COMPANY_EMBEDDING_PROFILE:-}
     volumes:
       - ./research/ai/live_results:/output
     command: [python, analyze_pair.py, --pair-id, demo-metal-primary]
@@ -190,7 +192,7 @@ services:
     image: alfa-hackaton-agent-semantic:local
     environment:
       <<: *agent_environment
-      NEWS_SEARCH_MODE: semantic
+      NEWS_SEARCH_MODE: hybrid
       NEWS_EMBEDDING_DEVICE: cpu
       HF_HOME: /models
     volumes:
