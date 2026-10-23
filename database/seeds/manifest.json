@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "exported_at": "2026-10-23T18:11:11.646452+00:00",
+  "groups": {
+    "news": {
+      "file": "01_news.sql",
+      "sha256": "7c54570d1d2bb9e399ee79b45c0a8e7fbde7ad0e994ddd24df1b745e93915c58",
+      "counts": {
+        "news_sources": 3,
+        "news_articles": 153,
+        "news_embedding_profiles": 1,
+        "news_embeddings": 153
+      }
+    },
+    "companies": {
+      "file": "02_companies.sql",
+      "sha256": "2f5b1fc5707e99baf0f45bc7aea6e8ace4f4dd3d73ea7fcf1b21cce392d60ff1",
+      "counts": {
+        "company_groups": 3,
+        "companies": 12,
+        "company_embedding_profiles": 1,
+        "company_embeddings": 12
+      }
+    },
+    "bank": {
+      "file": "03_bank.sql",
+      "sha256": "02c6297fc15ed5ad365b30b3c28b088c1fa6f6056da1b4860c99885a23eaf239",
+      "counts": {
+        "analytics_documents": 9,
+        "analytics_chunks": 138,
+        "analytics_tables": 0,
+        "analytics_embedding_profiles": 1,
+        "analytics_chunk_embeddings": 138
+      }
+    },
+    "links": {
+      "file": "04_links.sql",
+      "sha256": "44f729af90303b9ce010b6e91f4ea83b3bacaea36c21548dc2c70a6e3c1031e9",
+      "counts": {
+        "news_company_links": 27
+      }
+    },
+    "legacy": {
+      "file": "05_agent.sql",
+      "sha256": "db3753f8bd9ef71543db4adf246b97e538b414752174f6e0c9e32f9ad0cbeadf",
+      "counts": {
+        "company_profiles": 2,
+        "news": 8,
+        "bank_analytics": 0,
+        "company_metrics": 0,
+        "analysis_pairs": 2
+      }
+    }
+  }
+}

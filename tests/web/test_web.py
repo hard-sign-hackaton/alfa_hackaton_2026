@@ -24,7 +24,7 @@ class WebTests(unittest.TestCase):
         def chat_runner(state, question, history, progress):
             return {'summary': question, 'claims': [], 'follow_up_answer': 'Ответ по выбранному контексту',
                     'company_id': state['company_id'], 'news_id': state['news_id']}
-        self.app = Application(runtime=self.temp.name, runner=runner, chat_runner=chat_runner)
+        self.app = Application(enable_links=False, runtime=self.temp.name, runner=runner, chat_runner=chat_runner)
         self.state = next(iter(self.app.analyses.values()))
         self.company_id, self.news_id = self.state['company_id'], self.state['news_id']
         self.server = ThreadingHTTPServer(('127.0.0.1', 0), make_handler(self.app, Path(self.temp.name)))
@@ -74,7 +74,7 @@ class WebTests(unittest.TestCase):
         self.release.set()
         self.assertEqual(self.wait(first)['status'], 'done')
         self.assertEqual(len(list(Path(self.temp.name).glob('analysis-*.json'))), 1)
-        restored = Application(runtime=self.temp.name)
+        restored = Application(enable_links=False, runtime=self.temp.name)
         self.assertIn((self.company_id, self.news_id), restored.analyses)
         restored.executor.shutdown()
 
@@ -82,7 +82,7 @@ class WebTests(unittest.TestCase):
         for name, timestamp in [('analysis-a.json', '2026-10-25T00:00:00+00:00'),
                                 ('analysis-z.json', '2026-10-24T00:00:00+00:00')]:
             (Path(self.temp.name) / name).write_text(json.dumps({**self.state, 'as_of': timestamp}), encoding='utf-8')
-        restored = Application(runtime=self.temp.name)
+        restored = Application(enable_links=False, runtime=self.temp.name)
         self.assertEqual(restored.analyses[(self.company_id, self.news_id)]['as_of'], '2026-10-25T00:00:00+00:00')
         restored.executor.shutdown()
 
@@ -144,6 +144,31 @@ class WebTests(unittest.TestCase):
         self.assertNotIn('secret', result['error'])
         self.assertIs(original, self.app.analyses[(self.company_id, self.news_id)])
 
+    def test_chat_job_returns_fresh_sources_and_keeps_them_in_its_own_history(self):
+        seen = []
+        source = {'source_id': 'news:other', 'title': 'Другая новость', 'text': 'Другая тема'}
+        def retrieve(state, question, history, progress):
+            seen.append(list(history))
+            return {'answer': {'summary': question, 'claims': [], 'follow_up_answer': 'По найденной новости'},
+                'retrieved_sources': [source],
+                'retrieval': {'as_of': '2026-10-23T00:00:00+00:00', 'fresh_source_ids': ['news:other'], 'trace': []}}
+        self.app.chat_runner = retrieve
+        first = self.app.start_job(self.payload(question='А что по другой новости?'), 'chat')
+        result = self.wait(first)
+        self.assertEqual(result['status'], 'done')
+        with urlopen(self.base + '/api/jobs/' + first['id']) as response:
+            result = json.load(response)
+        self.assertEqual(result['retrieved_sources'], [source])
+        self.assertEqual(result['answer']['follow_up_answer'], 'По найденной новости')
+        second = self.app.start_job(self.payload(question='А почему?', conversation_id=first['conversation_id']), 'chat')
+        self.assertEqual(self.wait(second)['status'], 'done')
+        self.assertEqual(seen[1][0]['question'], 'А что по другой новости?')
+        self.assertEqual(seen[1][0]['retrieved_sources'], [source])
+        third = self.app.start_job(self.payload(question='Отдельный диалог'), 'chat')
+        self.assertEqual(self.wait(third)['status'], 'done')
+        self.assertEqual(seen[2], [])
+        self.assertNotIn('news:other', {s['source_id'] for s in self.state.get('retrieved_sources', [])})
+
     def test_api_does_not_expose_environment(self):
         with urlopen(self.base + '/api/bootstrap') as response:
             value = json.load(response)
@@ -152,6 +177,15 @@ class WebTests(unittest.TestCase):
         with self.assertRaises(HTTPError) as error:
             urlopen(self.base + '/.env')
         self.assertEqual(error.exception.code, 404)
+
+    def test_reverse_lookup_has_explicit_storage_availability(self):
+        with urlopen(self.base + '/api/news-companies?news_id=' + self.news_id) as response:
+            result = json.load(response)
+        self.assertFalse(result['available'])
+        self.assertEqual(result['items'], [])
+        with self.assertRaises(HTTPError) as error:
+            self.post('/api/matches', self.payload())
+        self.assertEqual(error.exception.code, 503)
 
 
 if __name__ == '__main__':

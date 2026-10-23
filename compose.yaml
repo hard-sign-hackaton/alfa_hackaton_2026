@@ -79,6 +79,8 @@ services:
         condition: service_healthy
       news-db-init:
         condition: service_completed_successfully
+      data-init:
+        condition: service_completed_successfully
     environment:
       DB_HOST: db
       DB_PORT: 5432
@@ -86,6 +88,25 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       NEWS_SEED_DATABASE_URL: postgresql+psycopg://alfa_news:${NEWS_DB_PASSWORD:-local-news-development-only}@postgres:5432/${NEWS_DATABASE_NAME:-alfa_news}
     command: [python, database.py, --seed-demo]
+
+  data-init:
+    build: .
+    image: alfa-hackaton-research:local
+    profiles: [database, agent, semantic, web]
+    init: true
+    depends_on:
+      db:
+        condition: service_healthy
+      news-db-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql+psycopg://alfa_news:${NEWS_DB_PASSWORD:-local-news-development-only}@postgres:5432/${NEWS_DATABASE_NAME:-alfa_news}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: alfa
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      STARTUP_DATA_ENABLED: ${STARTUP_DATA_ENABLED:-true}
+    command: [python, /app/scripts/load_startup_data.py]
 
   ai-agent:
     build: .
@@ -96,6 +117,8 @@ services:
       db:
         condition: service_healthy
       news-db-init:
+        condition: service_completed_successfully
+      data-init:
         condition: service_completed_successfully
     environment: &agent_environment
       <<: *llm_environment
@@ -190,6 +213,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://alfa_news:${NEWS_DB_PASSWORD:-local-news-development-only}@postgres:5432/${NEWS_DATABASE_NAME:-alfa_news}
       NEWS_READER_PASSWORD: ${NEWS_READER_PASSWORD:?Set NEWS_READER_PASSWORD in .env}
+      LINKS_WRITER_PASSWORD: ${LINKS_WRITER_PASSWORD:-${NEWS_READER_PASSWORD}}
     command: [python, /app/scripts/init_news_reader.py]
 
   ai-agent-semantic:
@@ -221,6 +245,10 @@ services:
       dockerfile: Dockerfile.news
       target: web
     image: alfa-hackaton-web:local
+    environment:
+      LINKS_DATABASE_URL: postgresql+psycopg://analysis_links_writer:${LINKS_WRITER_PASSWORD:-${NEWS_READER_PASSWORD}}@postgres:5432/${NEWS_DATABASE_NAME:-alfa_news}
+      LINKS_SYNC_SECONDS: ${LINKS_SYNC_SECONDS:-300}
+      LLM_IMPORTANCE_MODEL: ${LLM_IMPORTANCE_MODEL:-google/gemma-4-26b-a4b-it}
     command: []
     ports:
       - "127.0.0.1:${WEB_PORT:-8080}:8080"

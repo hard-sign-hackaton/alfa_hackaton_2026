@@ -22,9 +22,12 @@ COPY --chown=researcher:researcher research /app/research
 COPY --chown=researcher:researcher app /app/app
 COPY --chown=researcher:researcher migrations /app/migrations
 COPY --chown=researcher:researcher scripts /app/scripts
+COPY --chown=researcher:researcher database/seeds /app/database/seeds
+COPY --chown=researcher:researcher tests/startup /app/tests/startup
 COPY --chown=researcher:researcher tests/news /app/tests/news
 COPY --chown=researcher:researcher tests/companies /app/tests/companies
 COPY --chown=researcher:researcher tests/analytics /app/tests/analytics
+COPY --chown=researcher:researcher tests/links /app/tests/links
 COPY --chown=researcher:researcher docs/companies /app/docs/companies
 COPY --chown=researcher:researcher alembic.ini /app/alembic.ini
 USER researcher

@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import re
 import sys
-from threading import RLock
+from threading import RLock, Event, Thread
 import time
 from urllib.parse import urlparse, parse_qs
 from uuid import uuid4
@@ -35,7 +35,7 @@ def now():
 
 
 class Application:
-    def __init__(self, root=ROOT, runtime=None, runner=None, chat_runner=None):
+    def __init__(self, root=ROOT, runtime=None, runner=None, chat_runner=None, enable_links=True):
         self.root = Path(root)
         self.runtime = Path(runtime or os.environ.get('WEB_RUNTIME_DIR', ROOT / 'local_runtime' / 'web'))
         self.runtime.mkdir(parents=True, exist_ok=True)
@@ -46,7 +46,86 @@ class Application:
         self.events, self.companies, self.classifications, self.matches = {}, {}, {}, {}
         self.database_status = 'snapshot'
         self.database_checked = 0.0
+        self.links = None
+        self.link_rows = {}
+        self.links_initialized = False
+        self.links_sync = {'status': 'disabled', 'stage': '', 'updated_at': None}
+        self.links_stop = Event()
+        if enable_links and os.environ.get('LINKS_DATABASE_URL'):
+            from app.modules.links.repository import LinkRepository
+            self.links = LinkRepository(os.environ['LINKS_DATABASE_URL'])
+            self.links_sync['status'] = 'pending'
         self.load_snapshots()
+
+    def initialize_links(self):
+        if self.links_initialized or not self.links:
+            return
+        existing = {(r['company_id'], r['news_id']): r for r in self.links.list()}
+        for company_id, values in self.matches.items():
+            for hit in values:
+                if company_id in self.companies and hit['id'] in self.events and (company_id, hit['id']) not in existing:
+                    self.links.ensure(company_id, hit['id'], method='hybrid', score=hit.get('retrieval_score'),
+                        reasons=hit.get('match_reasons', []), topics=self.classifications.get(hit['id'], {}).get('topics', []))
+        for (company_id, news_id), state in list(self.analyses.items()):
+            if company_id not in self.companies or news_id not in self.events:
+                continue
+            try:
+                pair = existing.get((company_id, news_id)) or self.links.ensure(company_id, news_id, method='saved_analysis',
+                    reasons=[{'kind': 'saved_analysis'}], topics=state.get('preparation', {}).get('classification', {}).get('topics', []))
+                self.links.analysis(pair, state)
+            except ValueError:
+                LOG.warning('Skipped incompatible stored analysis')
+        self.links_initialized = True
+        self.reload_links()
+
+    def reload_links(self):
+        if not self.links or not self.links_initialized:
+            return
+        rows = self.links.list()
+        with self.lock:
+            self.link_rows = {(r['company_id'], r['news_id']): r for r in rows}
+            self.analyses = {(r['company_id'], r['news_id']): r['analysis_result'] for r in rows if r['analysis_result']}
+            self.matches = {company_id: [dict(id=r['news_id'], retrieval_score=r['match_score'] or 0,
+                match_reasons=r['match_reasons']) for r in rows if r['company_id'] == company_id and r['active']]
+                for company_id in self.companies}
+
+    def start_links_worker(self):
+        if not self.links:
+            return
+        def work():
+            while not self.links_stop.is_set():
+                service = None
+                try:
+                    self.refresh_database()
+                    if self.database_status != 'connected':
+                        raise RuntimeError('Source database unavailable')
+                    self.links_sync.update(status='running', stage='Подготовка связей')
+                    self.initialize_links()
+                    from app.modules.links.service import LinkService
+                    service = LinkService(self.links, self.classifications,
+                        lambda stage: self.links_sync.update(stage=stage))
+                    service.sync()
+                    self.classifications.update(service.classifications)
+                    self.reload_links()
+                    self.links_sync.update(status='done', stage='Связи обновлены', updated_at=now())
+                except Exception as exc:
+                    self.links_sync.update(status='failed', stage='Не удалось обновить связи', updated_at=now())
+                    LOG.warning('Link synchronization failed (%s)', type(exc).__name__)
+                finally:
+                    if service:
+                        service.close()
+                self.links_stop.wait(max(30, int(os.environ.get('LINKS_SYNC_SECONDS', '300'))))
+        Thread(target=work, name='link-sync', daemon=True).start()
+
+    def news_companies(self, news_id):
+        if news_id not in self.events:
+            raise ApiError(404, 'Новость не найдена')
+        self.reload_links()
+        rows = [dict(company=self.companies[r['company_id']], **r) for r in self.link_rows.values()
+                if r['news_id'] == news_id and r['active'] and r['company_id'] in self.companies]
+        rows.sort(key=lambda r: ({'high': 3, 'medium': 2, 'low': 1}.get(r['importance'], 0), r['match_score'] or 0), reverse=True)
+        return {'items': [{k: v for k, v in r.items() if k != 'analysis_result'} for r in rows],
+                'available': self.links_initialized, 'sync': dict(self.links_sync)}
 
     def load_snapshots(self):
         base = self.root / 'research' / 'evaluation'
@@ -134,6 +213,7 @@ class Application:
 
     def bootstrap(self):
         self.refresh_database()
+        self.reload_links()
         with self.lock:
             return {
                 'companies': list(self.companies.values()),
@@ -141,7 +221,9 @@ class Application:
                 'status': {'database': self.database_status, 'news_count': len(self.events),
                            'company_count': len(self.companies), 'document_count': len(self.documents),
                            'analysis_count': len(self.analyses), 'live_available': bool(os.environ.get('LLM_API_KEY')) and self.database_status == 'connected',
-                           'updated_at': max((e['published_at'] for e in self.events.values()), default=None)},
+                           'updated_at': max((e['published_at'] for e in self.events.values()), default=None),
+                           'links_sync': dict(self.links_sync), 'links_count': len(self.link_rows),
+                           'links_available': self.links_initialized},
             }
 
     def pair(self, company_id, news_id):
@@ -155,12 +237,17 @@ class Application:
         state = self.analyses.get((company_id, event['id']))
         brief = (state or {}).get('brief')
         classification = (brief or {}).get('classification') or self.classifications.get(event['id'], {})
+        link = self.link_rows.get((company_id, event['id']))
+        if link:
+            classification = {**classification, 'importance': link['importance'], 'importance_reason': link['importance_reason'],
+                'importance_method': link['importance_method'], 'topics': link['topics'] or classification.get('topics', [])}
         return {
             **event, 'text': event['text'][:1500], 'publisher': event.get('publisher') or self.publisher(event['url']),
             'classification': classification, 'has_analysis': bool(state), 'brief': brief,
             'analysis_status': (state or {}).get('result', {}).get('status'),
             'match_reasons': (candidate or {}).get('match_reasons', []),
             'retrieval_channels': (candidate or {}).get('retrieval_channels', []),
+            'link': {k: link[k] for k in ('importance_status', 'analysis_status', 'match_method', 'match_score', 'importance_evidence')} if link else None,
         }
 
     @staticmethod
@@ -174,20 +261,25 @@ class Application:
     def feed(self, company_id):
         if company_id not in self.companies:
             raise ApiError(404, 'Компания не найдена')
+        self.reload_links()
         candidates = {r['id']: r for r in self.matches.get(company_id, [])}
         with self.lock:
             cards = [self.card(company_id, event, candidates.get(event['id'])) for event in self.events.values()]
         importance_order = {'high': 3, 'medium': 2, 'low': 1}
-        cards.sort(key=lambda c: (c['has_analysis'], importance_order.get(c['classification'].get('importance'), 0), c['id'] in candidates,
+        cards.sort(key=lambda c: (c['id'] in candidates, importance_order.get(c['classification'].get('importance'), 0), c['has_analysis'],
                                   candidates.get(c['id'], {}).get('retrieval_score', 0), c['published_at']), reverse=True)
-        return {'items': cards, 'matched_ids': list(candidates), 'matching_as_of': '2026-10-22',
-                'matching_note': 'Подбор на основе сохранённого сопоставления. Новые публикации доступны в общей ленте.'}
+        return {'items': cards, 'matched_ids': list(candidates),
+                'matching_as_of': (self.links_sync.get('updated_at') or now())[:10] if self.links_initialized else '2026-10-22',
+                'sync': dict(self.links_sync), 'links_available': self.links_initialized,
+                'pending_importance': sum(r['active'] and r['importance_status'] == 'pending' for r in self.link_rows.values()),
+                'matching_note': 'Связи хранятся в базе; сходство не является доказанным влиянием.' if self.links_initialized else 'Сохранённый набор сопоставлений.'}
 
     def analysis(self, company_id, news_id):
         key = self.pair(company_id, news_id)
+        self.reload_links()
         with self.lock:
             state = self.analyses.get(key)
-        return {'state': state, 'event': self.events[news_id], 'company': self.companies[company_id]}
+        return {'state': state, 'event': self.events[news_id], 'company': self.companies[company_id], 'link': self.link_rows.get(key)}
 
     def bank_sources(self):
         with self.lock:
@@ -217,9 +309,11 @@ class Application:
 
     def start_job(self, data, kind='analysis'):
         company_id, news_id = self.pair(data.get('company_id'), data.get('news_id'))
+        if kind == 'matching' and not self.links_initialized:
+            raise ApiError(503, 'Хранилище связей ещё не готово')
         if not os.environ.get('LLM_API_KEY') and self.runner == self.run_analysis:
             raise ApiError(503, 'Для новых разборов нужен ключ LLM_API_KEY на сервере')
-        if kind == 'analysis' and self.runner == self.run_analysis and self.database_status != 'connected':
+        if kind in ('analysis', 'matching') and self.runner == self.run_analysis and self.database_status != 'connected':
             raise ApiError(503, 'Для нового разбора нужна доступная база данных')
         with self.lock:
             active = [j for j in self.jobs.values() if j['status'] in ('queued', 'running')]
@@ -269,28 +363,59 @@ class Application:
         def progress(stage):
             with self.lock:
                 job['stage'] = stage
+        pair = None
         try:
             if job['kind'] == 'analysis':
+                if self.links:
+                    pair = self.links.ensure(job['company_id'], job['news_id'])
+                    self.links.claim_analysis(pair, job_id)
                 state = self.runner(job['company_id'], job['news_id'], progress)
                 if (state['company_id'], state['news_id']) != (job['company_id'], job['news_id']):
                     raise ValueError('Analysis identity mismatch')
+                if pair and not self.links.analysis(pair, state, run_id=job_id):
+                    raise ValueError('Source records changed while analysis was running')
                 path = self.runtime / ('analysis-' + job['id'] + '.json')
                 temporary = path.with_suffix('.tmp')
                 temporary.write_text(json.dumps(state, ensure_ascii=False), encoding='utf-8')
                 temporary.replace(path)
                 with self.lock:
                     self.analyses[(job['company_id'], job['news_id'])] = state
+                self.reload_links()
+            elif job['kind'] == 'matching':
+                if not self.links or not self.links_initialized:
+                    raise ValueError('Link storage unavailable')
+                from app.modules.links.service import LinkService
+                service = LinkService(self.links, self.classifications, progress)
+                try:
+                    service.match_news(job['news_id'])
+                    self.classifications.update(service.classifications)
+                finally:
+                    service.close()
+                self.reload_links()
+                job['matches'] = self.news_companies(job['news_id'])
             else:
                 with self.lock:
                     state = self.conversations[job['conversation_id']]['state']
                     history = list(self.conversations[job['conversation_id']]['turns'])
-                answer = self.chat_runner(state, question, history, progress)
+                response = self.chat_runner(state, question, history, progress)
+                # Test/custom runners may still return an Insight directly.
+                answer = response.get('answer', response)
+                sources = response.get('retrieved_sources', [])
+                retrieval = response.get('retrieval', {})
                 with self.lock:
-                    self.conversations[job['conversation_id']]['turns'].append({'question': question, 'answer': answer})
+                    self.conversations[job['conversation_id']]['turns'].append({'question': question, 'answer': answer,
+                        'retrieved_sources': sources, 'retrieval': retrieval})
                     job['answer'] = answer
+                    job['retrieved_sources'] = sources
+                    job['retrieval'] = retrieval
             with self.lock:
                 job.update(status='done', stage='Готово', finished_at=now())
         except Exception as exc:
+            if pair:
+                try:
+                    self.links.analysis_failed(pair, job_id)
+                except Exception:
+                    LOG.warning('Could not persist analysis failure')
             LOG.warning('Job %s failed (%s)', job_id, type(exc).__name__)
             with self.lock:
                 job.update(status='failed', stage='Запрос не выполнен', finished_at=now(),
@@ -330,19 +455,18 @@ class Application:
 
     @staticmethod
     def run_chat(state, question, history, progress):
-        from contracts import CompanyProfile, NewsEvent
-        from tasks import NewsPreparation
-        from retrieval import RetrievedSource
+        from bank_repository import BankReader
+        from company_repository import CompanyReader
+        from database import DatabaseSettings, PostgresRepository
+        from chat_agent import DatabaseChatAgent
+        from news_repository import NewsReader
         from provider import LangChainClient
-        progress('Ответ по материалам выбранного разбора')
         client = LangChainClient()
         try:
-            result = client.analyze(CompanyProfile.model_validate(state['company']), NewsEvent.model_validate(state['event']),
-                preparation=NewsPreparation.model_validate(state['preparation']),
-                retrieved_sources=[RetrievedSource.model_validate(s) for s in state.get('retrieved_sources', [])],
-                question=question, history=[state['result']] + [turn['answer'] for turn in history[-3:]],
-                news_metadata=state.get('news_metadata'))
-            return result.model_dump()
+            cutoff = datetime.now(timezone.utc)
+            repository = PostgresRepository(DatabaseSettings.from_env(), news_reader=NewsReader.from_env(),
+                company_reader=CompanyReader.from_env(), bank_reader=BankReader.from_env(), as_of=cutoff)
+            return DatabaseChatAgent(repository, client, as_of=cutoff, progress=progress).run(state, question, history)
         finally:
             client.close()
 
@@ -377,6 +501,8 @@ def make_handler(application, static_root):
                     return self.send(200, application.feed(company_id))
                 if url.path == '/api/analysis':
                     return self.send(200, application.analysis(company_id, news_id))
+                if url.path == '/api/news-companies':
+                    return self.send(200, application.news_companies(news_id))
                 if url.path == '/api/bank-sources':
                     return self.send(200, application.bank_sources())
                 if url.path == '/api/bank-document':
@@ -427,9 +553,10 @@ def make_handler(application, static_root):
                     raise ApiError(400, 'Некорректные поля запроса')
                 if not isinstance(data.get('company_id'), str) or not isinstance(data.get('news_id'), str):
                     raise ApiError(400, 'Укажите компанию и новость')
-                if self.path not in ('/api/analysis', '/api/chat'):
+                if self.path not in ('/api/analysis', '/api/chat', '/api/matches'):
                     raise ApiError(404, 'Маршрут не найден')
-                return self.send(202, application.start_job(data, 'chat' if self.path == '/api/chat' else 'analysis'))
+                kind = {'/api/chat': 'chat', '/api/matches': 'matching', '/api/analysis': 'analysis'}[self.path]
+                return self.send(202, application.start_job(data, kind))
             except ApiError as exc:
                 self.send(exc.status, {'error': exc.message})
             except Exception as exc:
@@ -443,12 +570,14 @@ def main():
     from model_config import load_environment
     load_environment()
     application = Application()
+    application.start_links_worker()
     static_root = Path(os.environ.get('WEB_STATIC_DIR', ROOT / 'frontend' / 'dist'))
     server = ThreadingHTTPServer((os.environ.get('WEB_HOST', '127.0.0.1'), int(os.environ.get('WEB_PORT', '8080'))), make_handler(application, static_root))
     LOG.info('Web application is listening on port %s', server.server_port)
     try:
         server.serve_forever()
     finally:
+        application.links_stop.set()
         server.server_close()
         application.executor.shutdown(wait=False, cancel_futures=True)
 

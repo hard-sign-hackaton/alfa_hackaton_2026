@@ -57,6 +57,7 @@ COPY research/evaluation/2026-10-22/evaluation.json /app/research/evaluation/202
 COPY research/evaluation/2026-10-22-improved/comparison.json /app/research/evaluation/2026-10-22-improved/comparison.json
 COPY research/evaluation/2026-10-22-bank/results.json research/evaluation/2026-10-22-bank/default-cli-result.json /app/research/evaluation/2026-10-22-bank/
 COPY tests/web /app/tests/web
+COPY tests/links /app/tests/links
 COPY research/news/news_examples.json /app/research/news/news_examples.json
 ENV WEB_HOST=0.0.0.0 WEB_PORT=8080 WEB_RUNTIME_DIR=/runtime/web
 WORKDIR /app

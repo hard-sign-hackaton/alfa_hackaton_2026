@@ -7,6 +7,7 @@ from app.shared.db.session import get_engine
 from app.modules.companies import models as company_models  # noqa: F401
 from app.modules.news import models  # Register module-owned tables in the common metadata.
 from app.modules.analytics import models as analytics_models  # Register analytics tables.
+from app.modules.links import models as link_models  # Register company/news links.
 
 
 def adopt_legacy_history(connection):
