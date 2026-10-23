@@ -51,7 +51,7 @@ services:
 
   db:
     image: postgres:17-alpine
-    profiles: [database, agent, semantic, test]
+    profiles: [database, agent, semantic, web, test]
     environment:
       POSTGRES_DB: alfa
       POSTGRES_USER: postgres
@@ -133,7 +133,7 @@ services:
 
   postgres:
     image: pgvector/pgvector:0.8.1-pg16
-    profiles: [pipeline, database, agent, semantic, test]
+    profiles: [pipeline, database, agent, semantic, web, test]
     environment:
       POSTGRES_DB: alfa_news
       POSTGRES_USER: alfa_news
@@ -183,7 +183,7 @@ services:
   news-db-init:
     build: .
     image: alfa-hackaton-research:local
-    profiles: [database, agent, semantic, test]
+    profiles: [database, agent, semantic, web, test]
     depends_on:
       postgres:
         condition: service_healthy
@@ -211,6 +211,22 @@ services:
       - ./research/ai/live_results:/output
       - news-models:/models
     command: [--pair-id, demo-metal-primary]
+
+  web:
+    extends:
+      service: ai-agent-semantic
+    profiles: [web]
+    build:
+      context: .
+      dockerfile: Dockerfile.news
+      target: web
+    image: alfa-hackaton-web:local
+    command: []
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
+    volumes:
+      - web-runtime:/runtime
+    restart: unless-stopped
 
   integration-tests:
     build: .
@@ -257,3 +273,4 @@ volumes:
   news-postgres:
   news-runtime:
   news-models:
+  web-runtime:

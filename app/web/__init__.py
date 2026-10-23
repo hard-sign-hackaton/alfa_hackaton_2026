@@ -1,0 +1,1 @@
+"""Business news web application."""

@@ -15,3 +15,7 @@ research/ai/results/*
 дамп/
 dump/
 local_runtime/
+
+**/node_modules
+frontend/dist
+Alfa-guides.pdf

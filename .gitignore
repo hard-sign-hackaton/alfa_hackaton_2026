@@ -15,3 +15,6 @@ research/ai/live_results/
 dump/
 
 local_runtime/
+
+frontend/node_modules/
+frontend/dist/
