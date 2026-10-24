@@ -4,33 +4,35 @@
 
 ## Навигация
 
-| Каталог / файл | Назначение |
-|---|---|
-| [app/shared/db](app/shared/db/) | Общие SQLAlchemy Base, Engine, фабрика сессий и запуск миграций |
-| [app/shared/embeddings](app/shared/embeddings/) | Интерфейс embedding-провайдера и локальная E5; без зависимостей от новостей и БД |
-| [app/modules/news](app/modules/news/) | Прикладной модуль новостей: DTO, парсеры, ORM-модели, репозитории, сервисы и CLI |
-| [app/modules/analytics](app/modules/analytics/) | Хранение аналитических PDF: документы, чанки, таблицы, эмбеддинги и поиск |
-| [migrations](migrations/) и [alembic.ini](alembic.ini) | Общая история изменений схемы PostgreSQL |
-| [tests/news](tests/news/) | Проверки слоев, парсеров, сервисов, PostgreSQL, индексов и совместимости |
-| [tests/analytics](tests/analytics/) | Проверки импорта, чанков, PostgreSQL и поиска аналитики |
-| [research/news](research/news/) | Исходное исследование N01/N02: проверки источников, сохраненные материалы и первый сборщик |
-| [research/ai](research/ai/) | Исследовательский агент, ранжирование, модели входов/выходов и эксперименты |
-| [research/contracts](research/contracts/) | JSON Schema, примеры и валидаторы контрактов |
-| [research/contracts/t01](research/contracts/t01/) | Границы AI/UX, адаптер сборки и проверки совместимости |
-| [research/data](research/data/) | Результаты исследования данных компаний и связей |
-| [research/ux](research/ux/) | UX-прототип и материалы его проверки |
-| [docs/news-pipeline.md](docs/news-pipeline.md) | Подробный запуск новостного пайплайна, параметры и ограничения |
-| [docs/news-database-handoff.md](docs/news-database-handoff.md) | Передача дампа коллеге, восстановление и подключение AI-части |
-| [docs/analytics-storage.md](docs/analytics-storage.md) | Схема, манифест, импорт PDF, эмбеддинги и поиск аналитики |
-| [scripts/restore_news_dump.py](scripts/restore_news_dump.py) | Загрузка дампа из файла или по HTTPS в отдельную пустую БД |
-| [docs/archive/news-pipeline-checks.json](docs/archive/news-pipeline-checks.json) | Первый живой прогон, модель и контрольная поисковая выдача |
-| [docs/archive/news-layout-checks.json](docs/archive/news-layout-checks.json) | Проверки после разделения на слои |
-| [docs/news-pgvector-checks.json](docs/news-pgvector-checks.json) | Проверки текущего поиска через PostgreSQL |
-| [compose.yaml](compose.yaml) | PostgreSQL/новостной CLI и существующие исследовательские сервисы |
-| [Dockerfile.news](Dockerfile.news) | Образ приложения с новостным модулем |
-| [Dockerfile](Dockerfile) | Существующий образ исследовательских экспериментов |
-| [requirements.txt](requirements.txt) | Зависимости приложения; для регрессионных тестов также нужны requirements исследовательских модулей |
-| [news_pipeline](news_pipeline/) | Совместимый переходник старой CLI-команды; реализации здесь больше нет |
+| Каталог / файл                                                                   | Назначение                                                                                          |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [app/shared/db](app/shared/db/)                                                  | Общие SQLAlchemy Base, Engine, фабрика сессий и запуск миграций                                     |
+| [app/shared/embeddings](app/shared/embeddings/)                                  | Интерфейс embedding-провайдера и локальная E5; без зависимостей от новостей и БД                    |
+| [app/modules/news](app/modules/news/)                                            | Прикладной модуль новостей: DTO, парсеры, ORM-модели, репозитории, сервисы и CLI                    |
+| [app/modules/analytics](app/modules/analytics/)                                  | Хранение аналитических PDF: документы, чанки, таблицы, эмбеддинги и поиск                           |
+| [migrations](migrations/) и [alembic.ini](alembic.ini)                           | Общая история изменений схемы PostgreSQL                                                            |
+| [tests/news](tests/news/)                                                        | Проверки слоев, парсеров, сервисов, PostgreSQL, индексов и совместимости                            |
+| [tests/analytics](tests/analytics/)                                              | Проверки импорта, чанков, PostgreSQL и поиска аналитики                                             |
+| [research/news](research/news/)                                                  | Исходное исследование N01/N02: проверки источников, сохраненные материалы и первый сборщик          |
+| [research/ai](research/ai/)                                                      | Исследовательский агент, ранжирование, модели входов/выходов и эксперименты                         |
+| [research/contracts](research/contracts/)                                        | JSON Schema, примеры и валидаторы контрактов                                                        |
+| [research/contracts/t01](research/contracts/t01/)                                | Границы AI/UX, адаптер сборки и проверки совместимости                                              |
+| [research/data](research/data/)                                                  | Результаты исследования данных компаний и связей                                                    |
+| [research/ux](research/ux/)                                                      | UX-прототип и материалы его проверки                                                                |
+| [docs/news-pipeline.md](docs/news-pipeline.md)                                   | Подробный запуск новостного пайплайна, параметры и ограничения                                      |
+| [docs/news-database-handoff.md](docs/news-database-handoff.md)                   | Передача дампа коллеге, восстановление и подключение AI-части                                       |
+| [docs/analytics-storage.md](docs/analytics-storage.md)                           | Схема, манифест, импорт PDF, эмбеддинги и поиск аналитики                                           |
+| [docs/test-tours](docs/test-tours/)                                              | Пользовательские тест-туры: сквозные сценарии от лица руководителей крупного бизнеса                |
+| [docs/test-tours/00-full-walkthrough.md](docs/test-tours/00-full-walkthrough.md) | Большой тест-тур: показывает основной функционал приложения                                         |
+| [scripts/restore_news_dump.py](scripts/restore_news_dump.py)                     | Загрузка дампа из файла или по HTTPS в отдельную пустую БД                                          |
+| [docs/archive/news-pipeline-checks.json](docs/archive/news-pipeline-checks.json) | Первый живой прогон, модель и контрольная поисковая выдача                                          |
+| [docs/archive/news-layout-checks.json](docs/archive/news-layout-checks.json)     | Проверки после разделения на слои                                                                   |
+| [docs/news-pgvector-checks.json](docs/news-pgvector-checks.json)                 | Проверки текущего поиска через PostgreSQL                                                           |
+| [compose.yaml](compose.yaml)                                                     | PostgreSQL/новостной CLI и существующие исследовательские сервисы                                   |
+| [Dockerfile.news](Dockerfile.news)                                               | Образ приложения с новостным модулем                                                                |
+| [Dockerfile](Dockerfile)                                                         | Существующий образ исследовательских экспериментов                                                  |
+| [requirements.txt](requirements.txt)                                             | Зависимости приложения; для регрессионных тестов также нужны requirements исследовательских модулей |
+| [news_pipeline](news_pipeline/)                                                  | Совместимый переходник старой CLI-команды; реализации здесь больше нет                              |
 
 Модуль аналитических материалов реализован в `app/modules/analytics/`. Модули компаний и других доменов будут подключаться коллегами в `app/modules/`; их реализации в `app/` пока нет.
 
