@@ -15,10 +15,12 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / 'research' / 'ai'))
 
 
-def pending_jobs(rows):
+def pending_jobs(rows, *, refresh_bank_context=False):
     """Keep company identity even when companies belong to the same industry profile."""
+    from bank_context import needs_bank_refresh
     return [row for row in rows if row['active'] and
-            (not row['analysis_result'] or not row['analysis_result'].get('brief'))]
+            (not row['analysis_result'] or not row['analysis_result'].get('brief') or
+             (refresh_bank_context and needs_bank_refresh(row['analysis_result'])))]
 
 
 def main():
@@ -39,6 +41,8 @@ def main():
     parser.add_argument('--attempts', type=int, default=2, choices=range(1, 4))
     parser.add_argument('--limit', type=int)
     parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--refresh-bank-context', action='store_true',
+                        help='Rebuild old business analyses that have no bank excerpts or initial bank search')
     parser.add_argument('--output', type=Path, default=Path(os.environ.get('WEB_RUNTIME_DIR', ROOT / 'local_runtime' / 'web')) / 'precompute')
     args = parser.parse_args()
     if args.limit is not None and args.limit < 1:
@@ -46,12 +50,15 @@ def main():
     load_environment()
     links = LinkRepository(os.environ['LINKS_DATABASE_URL'])
     rows = links.list(active_only=True)
-    jobs = pending_jobs(rows)
+    from bank_context import needs_bank_refresh
+    jobs = pending_jobs(rows, refresh_bank_context=args.refresh_bank_context)
+    def full_research(row):
+        return not row['analysis_result'] or (args.refresh_bank_context and needs_bank_refresh(row['analysis_result']))
     if args.limit:
         jobs = jobs[:args.limit]
     print(json.dumps({'stage': 'plan', 'active_pairs': len(rows), 'jobs': len(jobs),
-        'full_research': sum(not r['analysis_result'] for r in jobs),
-        'brief_only': sum(bool(r['analysis_result']) for r in jobs), 'workers': args.workers}), flush=True)
+        'full_research': sum(full_research(r) for r in jobs),
+        'brief_only': sum(not full_research(r) for r in jobs), 'workers': args.workers}), flush=True)
     if args.dry_run or not jobs:
         return
     args.output.mkdir(parents=True, exist_ok=True)
@@ -89,7 +96,7 @@ def main():
             except ValueError:
                 continue
         preparation_client._preparations.update(prepared)
-        for news_id in dict.fromkeys(row['news_id'] for row in jobs if not row['analysis_result']):
+        for news_id in dict.fromkeys(row['news_id'] for row in jobs if full_research(row)):
             event = preparation_repository.get_news(news_id, as_of=cutoff)
             print(json.dumps({'stage': 'preparation', 'news_id': news_id}), flush=True)
             preparation_client.prepare(event)
@@ -107,7 +114,7 @@ def main():
                 clients.append(worker_local.client)
         client, repo = worker_local.client, worker_local.repository
         identity = {'company_id': row['company_id'], 'news_id': row['news_id']}
-        use_existing = bool(row['analysis_result'])
+        use_existing = not full_research(row)
         for attempt in range(args.attempts):
             pair = links.ensure(row['company_id'], row['news_id'])
             run_id = uuid4().hex
@@ -156,7 +163,7 @@ def main():
     finally:
         for client in clients:
             client.close()
-    remaining = pending_jobs(links.list(active_only=True))
+    remaining = pending_jobs(links.list(active_only=True), refresh_bank_context=args.refresh_bank_context)
     print(json.dumps({'stage': 'complete', 'completed': len(report['completed']), 'failed': len(report['failed']),
                       'remaining': len(remaining)}), flush=True)
     if report['failed'] or (not args.limit and remaining):

@@ -72,6 +72,10 @@ class RestoreTests(unittest.TestCase):
         if coverage:
             self.assertEqual(self.connection.execute('SELECT count(*) FROM news_company_links WHERE active AND analysis_result IS NOT NULL').fetchone()[0], coverage['active_with_analysis'])
             self.assertEqual(self.connection.execute("SELECT count(*) FROM news_company_links WHERE active AND analysis_result->'brief' IS NOT NULL AND analysis_result->'brief'<>'null'::jsonb").fetchone()[0], coverage['active_with_brief'])
+            if 'active_with_bank_context' in coverage:
+                actual = self.connection.execute("SELECT count(*) FROM news_company_links WHERE active AND EXISTS ("
+                    "SELECT 1 FROM jsonb_array_elements(analysis_result->'retrieved_sources') s WHERE s->>'kind'='bank')").fetchone()[0]
+                self.assertEqual(actual, coverage['active_with_bank_context'])
         for table in ('news_embeddings', 'company_embeddings', 'analytics_chunk_embeddings'):
             value, maximum = self.connection.execute(
                 "SELECT nextval(pg_get_serial_sequence(%s, 'id')), (SELECT max(id) FROM " + table + ')', (table,)).fetchone()
@@ -82,6 +86,17 @@ class RestoreTests(unittest.TestCase):
         self.connection.execute("UPDATE news_articles SET title='Пользовательское изменение' WHERE id=(SELECT id FROM news_articles ORDER BY id LIMIT 1)")
         self.assertEqual(self.load()['status'], 'skipped_existing')
         self.assertEqual(self.connection.execute("SELECT count(*) FROM news_articles WHERE title='Пользовательское изменение'").fetchone()[0], 1)
+
+    def test_empty_bank_group_can_be_added_to_existing_news_without_overwriting_sources(self):
+        self.load()
+        self.connection.execute('TRUNCATE analytics_documents, analytics_embedding_profiles CASCADE')
+        self.connection.execute("UPDATE news_articles SET title='Сохранить' WHERE id=(SELECT id FROM news_articles ORDER BY id LIMIT 1)")
+        self.assertEqual(self.load()['status'], 'skipped_existing')
+        result = restore(self.connection, ('bank',), self.manifest, self.content)
+        self.assertEqual(result['status'], 'restored')
+        self.assertEqual(result['counts']['analytics_chunks'], 138)
+        self.assertEqual(self.connection.execute("SELECT count(*) FROM news_articles WHERE title='Сохранить'").fetchone()[0], 1)
+        self.assertEqual(restore(self.connection, ('bank',), self.manifest, self.content)['status'], 'skipped_existing')
 
     def test_partial_existing_database_is_not_filled_or_overwritten(self):
         self.connection.execute("INSERT INTO company_embedding_profiles(id,model,revision,dimensions,normalized,preparation) VALUES ('existing','local','revision',384,true,'existing')")

@@ -281,11 +281,13 @@ class Application:
                 'matching_note': 'Связи хранятся в базе; сходство не является доказанным влиянием.' if self.links_initialized else 'Сохранённый набор сопоставлений.'}
 
     def analysis(self, company_id, news_id):
+        from bank_context import describe_bank_context
         key = self.pair(company_id, news_id)
         self.reload_links()
         with self.lock:
             state = self.analyses.get(key)
-        return {'state': state, 'event': self.events[news_id], 'company': self.companies[company_id], 'link': self.link_rows.get(key)}
+        return {'state': state, 'event': self.events[news_id], 'company': self.companies[company_id],
+                'bank_context': describe_bank_context(state), 'link': self.link_rows.get(key)}
 
     def bank_sources(self):
         with self.lock:

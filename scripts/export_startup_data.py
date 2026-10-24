@@ -54,6 +54,11 @@ def main():
                 "'active_with_analysis', count(*) FILTER (WHERE active AND analysis_result IS NOT NULL), "
                 "'active_with_brief', count(*) FILTER (WHERE active AND analysis_result->'brief' IS NOT NULL "
                 "AND analysis_result->'brief' <> 'null'::jsonb), "
+                "'active_with_bank_context', count(*) FILTER (WHERE active AND EXISTS (SELECT 1 "
+                "FROM jsonb_array_elements(analysis_result->'retrieved_sources') s WHERE s->>'kind'='bank')), "
+                "'active_citing_bank', count(*) FILTER (WHERE active AND EXISTS (SELECT 1 "
+                "FROM jsonb_array_elements(analysis_result->'result'->'claims') c "
+                "CROSS JOIN jsonb_array_elements(c->'evidence') e WHERE e->>'source_id' LIKE 'bank:%')), "
                 "'supported', count(*) FILTER (WHERE analysis_result->'result'->>'status'='supported'), "
                 "'insufficient_data', count(*) FILTER (WHERE analysis_result->'result'->>'status'='insufficient_data')) "
                 "FROM news_company_links;"))

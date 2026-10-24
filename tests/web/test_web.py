@@ -68,6 +68,19 @@ class WebTests(unittest.TestCase):
         other = next(c for c in self.app.companies if c != self.company_id)
         self.assertIsNone(self.app.analysis(other, self.news_id)['state']) if (other, self.news_id) not in self.app.analyses else None
 
+    def test_analysis_exposes_uncited_bank_context_instead_of_hiding_it(self):
+        text = 'В банковском обзоре ожидается замедление инфляции и снижение ключевой ставки.'
+        state = {**self.state, 'retrieved_sources': [{'kind': 'bank', 'source_id': 'bank:context', 'text': text}],
+                 'result': {**self.state['result'], 'claims': []}}
+        self.app.analyses[(self.company_id, self.news_id)] = state
+        response = self.app.analysis(self.company_id, self.news_id)
+        self.assertEqual(response['bank_context']['status'], 'retrieved')
+        self.assertEqual(response['bank_context']['retrieved_count'], 1)
+        self.assertEqual(response['bank_context']['cited_count'], 0)
+        self.assertEqual(response['bank_context']['summary']['highlights'][0]['text'], text)
+        self.assertIsNone(response['bank_context']['summary']['impact'])
+        self.assertIs(response['state'], state)
+
     def test_profiles_partition_companies_by_industry_without_sharing_results(self):
         value = self.app.bootstrap()
         profiles = {p['id']: p for p in value['profiles']}

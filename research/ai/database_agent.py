@@ -4,13 +4,15 @@ import json
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 
 from contracts import validate_evidence
+from bank_context import bank_query, describe_bank_context
 from ranking import rank_pair
 from research_tools import ToolSession
 from retrieval import source_registry, timestamp
 
 RESEARCH_SYSTEM = '''Собери дополнительный контекст для анализа новости для выбранной компании.
 Используй только предоставленные инструменты чтения. Профиль и новость уже переданы.
-При необходимости проверь показатели компании и найди отраслевую/банковскую аналитику
+Первичный поиск банковской аналитики уже выполнен и передан в initial_bank_search.
+При необходимости проверь показатели компании и уточни поиск отраслевой/банковской аналитики
 или связанные новости. Формулируй короткие поисковые запросы по-русски.
 Если поиск пустой, можно переформулировать запрос. Не повторяй одинаковые запросы.
 Если инструмент вернул unavailable, не вызывай его снова с другими словами.
@@ -58,10 +60,12 @@ class DatabaseResearchAgent:
             state['brief'] = fallback_brief(Insight.model_validate(state['result']), company, news, preparation).model_dump()
             return state
         state['ranking'] = rank_pair(company, news.model_copy(update={'topics': preparation.classification.topics}), as_of=self.as_of)
+        initial_bank = session.invoke('search_bank_analytics', {'query': bank_query(news, preparation), 'limit': 2})
+        state['bank_context_version'] = 1
         messages = [SystemMessage(content=RESEARCH_SYSTEM), HumanMessage(content=json.dumps({
             'company': company.model_dump(), 'news': news.model_dump(), 'preparation': preparation.model_dump(),
-            'question': question, 'as_of': self.as_of.isoformat()}, ensure_ascii=False))]
-        tool_count = 0
+            'question': question, 'as_of': self.as_of.isoformat(), 'initial_bank_search': initial_bank}, ensure_ascii=False))]
+        tool_count = 1
         state['research_stop'] = 'round_limit'
         for _ in range(self.MAX_ROUNDS):
             from langchain_provider import ModelError
@@ -117,4 +121,5 @@ class DatabaseResearchAgent:
             except ModelError:
                 state['brief_error'] = 'Brief model unavailable; extractive summary returned without importance label'
         state['brief'] = compact.model_dump()
+        state['bank_context'] = describe_bank_context(state)
         return state

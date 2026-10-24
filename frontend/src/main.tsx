@@ -47,6 +47,37 @@ function ChatSources({ message, sources }: { message: Message; sources: Record<s
   return <><Evidence items={message.claims?.flatMap(c => c.evidence) || []} sources={registry}/>{message.retrieval && <div className="chat-retrieval"><small><Search size={12}/>{found.length ? `Найдено материалов: ${found.length}` : 'Новых материалов по вопросу не найдено'}</small>{unavailable && <p>Часть источников поиска сейчас недоступна.</p>}{message.retrieval.stop && message.retrieval.stop !== 'model_finished' && <p>Уточнение поиска завершено не полностью. Ответ опирается на доступные материалы.</p>}{found.length > 0 && <details><summary>Материалы поиска<ChevronDown size={13}/></summary>{found.map(source => <div className="chat-source" key={source.source_id}><b>{source.title}</b><small>{source.kind === 'bank' ? 'Материал банка' : source.publisher || 'Новость'} · {date(source.published_at, true)}</small><details><summary>Посмотреть фрагмент</summary><pre>{source.text}</pre></details>{safeUrl(source.url || '') && <a className="text-link" href={safeUrl(source.url)} target="_blank" rel="noreferrer">Открыть публикацию <ExternalLink size={12}/></a>}</div>)}</details>}</div>}</>;
 }
 
+function BankDigest({ summary, sources }: { summary?: Obj; sources: Record<string, Obj> }) {
+  if (!summary?.highlights?.length) return null;
+  const attribution = (item: Obj) => item.source_ids.map((id: string) => sources[id] ? `${sources[id].title} · ${date(sources[id].published_at, true)}` : '').filter(Boolean).join(' · ');
+  return <div className="bank-digest"><div className="eyebrow">КРАТКАЯ ВЫЖИМКА</div>
+    {summary.highlights.map((item: Obj, index: number) => <div className="bank-digest-point" key={index}><p>{item.text}</p><small>{item.method === 'excerpt' ? 'Выдержка из материала' : 'Из выводов разбора'} · {attribution(item)}</small><Evidence items={item.evidence || []} sources={sources}/></div>)}
+    {summary.impact ? <div className="bank-digest-impact"><b>Возможное значение для компании</b><p>{summary.impact.text}</p><Evidence items={summary.impact.evidence || []} sources={sources}/></div> : <p className="muted small bank-digest-note">{summary.note}</p>}
+  </div>;
+}
+
+function BankContext({ state, context }: { state: Obj; context?: Obj }) {
+  const cited = new Set<string>((state.result?.claims || []).flatMap((c: Obj) => c.evidence || []).map((e: Obj) => e.source_id));
+  const found = (state.retrieved_sources || []).filter((s: Obj) => s.kind === 'bank').sort((a: Obj, b: Obj) => Number(cited.has(b.source_id)) - Number(cited.has(a.source_id)));
+  const used = found.filter((s: Obj) => cited.has(s.source_id)).length;
+  const registry = Object.fromEntries(found.map((source: Obj) => [source.source_id, source]));
+  const empty: Record<string, string> = {
+    unavailable: 'Не удалось получить материалы банка из базы. Обновите разбор после восстановления подключения.',
+    incomplete: 'Поиск банковского контекста не завершён. Обновите разбор, чтобы повторить поиск.',
+    not_found: 'По запросам этого разбора банковские материалы не найдены. Это не подтверждает отсутствие рисков для компании.',
+    not_searched: 'В сохранённом разборе банковский контекст не был получен. Обновите разбор, чтобы выполнить поиск.',
+  };
+  return <section className="panel bank-panel"><div className="section-icon"><span className="mini-alfa">A</span><h2>Контекст Альфа-Банка</h2></div>
+    {found.length ? <><BankDigest summary={context?.summary || state.bank_context?.summary} sources={registry}/><p className="muted small">Найдено фрагментов: {found.length} · Использовано в выводах: {used}. Материалы без цитат показаны для проверки контекста.</p>
+      {found.map((source: Obj) => <details className="bank-citation" key={source.source_id}>
+        <summary><div><b>{source.title}</b><small>{date(source.published_at, true)} · {cited.has(source.source_id) ? 'Использован в выводах' : 'Найден поиском'}</small></div><ChevronDown size={18}/></summary>
+        {state.bank_metadata?.[source.source_id]?.pages?.length > 0 && <p className="muted small">Страницы: {state.bank_metadata[source.source_id].pages.join(', ')}</p>}
+        <pre>{source.text}</pre>
+        {(state.result?.claims || []).flatMap((c: Obj) => c.evidence || []).filter((e: Obj) => e.source_id === source.source_id).map((e: Obj, i: number) => <blockquote key={i}>«{e.quote}»</blockquote>)}
+      </details>)}<p className="muted small">Обзоры и прогнозы относятся к дате публикации; они не подтверждают текущие показатели конкретной компании.</p></> : <p>{empty[context?.status || 'not_searched'] || empty.not_searched}</p>}
+  </section>;
+}
+
 function Payments({ company, compact = false }: { company: Company; compact?: boolean }) {
   const payments = company.payments;
   const totals = payments?.totals;
@@ -239,7 +270,7 @@ function App() {
           <section className="panel"><div className="section-icon"><Newspaper size={18}/><h2>Что произошло</h2></div><p>{state.brief?.news_summary || state.preparation?.extraction?.facts?.[0]?.text || news.text.slice(0, 350)}</p><Evidence items={state.brief?.evidence?.news_summary || state.preparation?.extraction?.facts?.[0]?.evidence} sources={sources}/></section>
           <section className="panel"><div className="section-icon"><Building2 size={18}/><h2>Почему это касается вас</h2></div><div className="context-row"><span>Основная деятельность</span><b>{company?.industry}</b></div><div className="context-row"><span>Регион регистрации</span><b>{company?.region}</b></div><div className="context-row"><span>Годовая выручка</span><b>{company && money(company.revenue_rub)}</b></div><p className="muted small">Год выручки и период платежей не указаны. Банковские услуги сами по себе не подтверждают долговую нагрузку.</p>{detailClassification.importance_reason && <div className="importance-explanation"><Badge value={detailClassification.importance}/><p>{detailClassification.importance_reason}</p><Evidence items={detail.link?.importance_evidence || state.brief?.evidence?.importance} sources={sources}/></div>}</section>
           {company && <Payments company={company} compact/>}<section className="panel"><div className="section-icon"><TrendingUp size={19}/><h2>Факты и возможное влияние</h2></div>{state.result.claims.map((claim: Obj, i: number) => <div className="claim" key={i}><span className={'claim-type ' + claim.kind}>{claim.kind === 'fact' ? 'ФАКТ' : 'ГИПОТЕЗА'}</span><p>{claim.text}</p><Evidence items={claim.evidence} sources={sources}/></div>)}</section>
-          <section className="panel bank-panel"><div className="section-icon"><span className="mini-alfa">A</span><h2>Контекст Альфа-Банка</h2></div>{citedBank.size ? <><p className="muted">Материалы, использованные в этом разборе. Дата обзора важна: исторические выводы могут не описывать текущую ситуацию.</p>{[...citedBank].map(id => sources[id] && <details className="bank-citation" key={id}><summary><div><b>{sources[id].title}</b><small>{date(sources[id].published_at, true)}</small></div><ChevronDown size={18}/></summary>{state.result.claims.flatMap((c: Obj) => c.evidence).filter((e: Obj) => e.source_id === id).map((e: Obj, i: number) => <blockquote key={i}>«{e.quote}»</blockquote>)}</details>)}</> : <p>В выводах этого разбора нет ссылок на материалы банка. Найденные при поиске фрагменты можно проверить во вкладке «Источники».</p>}</section>
+          <BankContext state={state} context={detail.bank_context}/>
           {!!state.result.missing_data?.length && <section className="panel limitations"><div className="section-icon"><CircleHelp size={19}/><h2>Что ещё нужно уточнить</h2></div><ul>{[...new Set<string>(state.result.missing_data.map(limitationText))].map((item: string, i: number) => <li key={i}>{item}</li>)}</ul></section>}
           <div className="analysis-bottom"><span><Clock3 size={14}/> Разбор от {date(state.as_of, true)}</span><Button view="transparent" size={40} disabled={!!busy || !boot.status.live_available} onClick={() => start('analysis')} leftAddons={<RefreshCw size={15}/>}>Обновить разбор</Button></div>
         </>}

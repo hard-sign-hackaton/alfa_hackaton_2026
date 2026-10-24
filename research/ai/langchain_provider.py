@@ -121,7 +121,7 @@ class LangChainClient:
         self._http_client = None
 
     def model_signature(self):
-        return {**self.settings.signature(), 'pipeline_version': 5}
+        return {**self.settings.signature(), 'pipeline_version': 6}
 
     def _model(self, task, max_tokens=None, *, json_response=True):
         if task not in self.settings.routes:

@@ -63,6 +63,11 @@ def main():
     with psycopg.connect(url, connect_timeout=10) as connection:
         result = restore(connection, ('news', 'companies', 'bank', 'links'), manifest, content)
         print(json.dumps({'database': 'sources', **result}))
+        # Bank documents have no dependency on news/company rows. Older volumes may
+        # already contain news but no analytics; fill only a completely empty bank group.
+        if result['status'] == 'skipped_existing':
+            bank = restore(connection, ('bank',), manifest, content)
+            print(json.dumps({'database': 'bank', **bank}))
     with psycopg.connect(host=os.environ.get('DB_HOST', 'db'), port=int(os.environ.get('DB_PORT', '5432')),
                          dbname=os.environ.get('DB_NAME', 'alfa'), user='postgres',
                          password=os.environ['POSTGRES_PASSWORD'], connect_timeout=10) as connection:

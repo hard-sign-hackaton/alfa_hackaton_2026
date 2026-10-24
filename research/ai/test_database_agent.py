@@ -91,18 +91,36 @@ class DatabaseAgentTests(unittest.TestCase):
         client = ClientFixture([calls(('search_bank_analytics', {'query': 'steel'})), AIMessage(content='Done')])
         state = DatabaseResearchAgent(self.repository, client, as_of=AS_OF).run(self.company.id, self.news.id, question='Why?')
         self.assertEqual(state['research_stop'], 'model_finished')
-        self.assertEqual(state['trace'][0]['status'], 'found')
+        self.assertEqual(state['trace'][1]['status'], 'found')
         self.assertEqual(client.analyses[0]['retrieved_sources'][0].source_id, 'bank:test')
         self.assertEqual(client.analyses[1]['history'][0]['company_id'], self.company.id)
         self.assertIn('Steel demand', client.steps[1][-1].content)
         validate_evidence(__import__('contracts').Insight.model_validate(state['result']), self.company, self.news,
                           state['retrieved_sources'])
 
+    def test_bank_context_reaches_analysis_even_if_planner_finishes_without_tools(self):
+        client = ClientFixture([AIMessage(content='Done')])
+        with patch.object(self.repository, 'search_bank_analytics', return_value=[bank_source()]):
+            state = DatabaseResearchAgent(self.repository, client, as_of=AS_OF).run(self.company.id, self.news.id)
+        self.assertEqual(state['trace'][0]['tool'], 'search_bank_analytics')
+        self.assertEqual(client.analyses[0]['retrieved_sources'][0].source_id, 'bank:test')
+        self.assertIn('Steel demand', client.steps[0][1].content)
+        self.assertEqual(state['bank_context']['status'], 'used')
+
+    def test_bank_context_survives_unavailable_planner(self):
+        from langchain_provider import ModelError
+        client = ClientFixture([])
+        with patch.object(self.repository, 'search_bank_analytics', return_value=[bank_source()]), \
+             patch.object(client, 'research_step', side_effect=ModelError('offline')):
+            state = DatabaseResearchAgent(self.repository, client, as_of=AS_OF).run(self.company.id, self.news.id)
+        self.assertEqual(state['research_stop'], 'model_unavailable')
+        self.assertEqual(client.analyses[0]['retrieved_sources'][0].source_id, 'bank:test')
+
     def test_empty_search_can_be_rephrased_by_model(self):
         client = ClientFixture([calls(('search_bank_analytics', {'query': 'narrow'})),
                                 calls(('search_bank_analytics', {'query': 'steel'})), AIMessage(content='Done')])
         state = DatabaseResearchAgent(self.repository, client, as_of=AS_OF).run(self.company.id, self.news.id)
-        self.assertEqual([row['status'] for row in state['trace']], ['not_found', 'found'])
+        self.assertEqual([row['status'] for row in state['trace']], ['not_found', 'not_found', 'found'])
 
     def test_company_id_override_sql_and_unknown_tools_are_rejected(self):
         session = ToolSession(self.repository, self.company, self.news, as_of=AS_OF)
@@ -117,7 +135,7 @@ class DatabaseAgentTests(unittest.TestCase):
         client = ClientFixture([response])
         state = DatabaseResearchAgent(self.repository, client, as_of=AS_OF).run(self.company.id, self.news.id)
         self.assertEqual(len(state['trace']), 6)
-        self.assertEqual(len(self.repository.queries), 1)
+        self.assertEqual(len(self.repository.queries), 2)
         self.assertEqual(state['research_stop'], 'tool_limit')
         self.assertTrue(state['result']['missing_data'])
 
@@ -139,7 +157,7 @@ class DatabaseAgentTests(unittest.TestCase):
         client = ClientFixture([calls(('search_bank_analytics', {'query': 'steel'})), AIMessage(content='Done')])
         with patch.object(self.repository, 'search_bank_analytics', return_value=[source]):
             state = DatabaseResearchAgent(self.repository, client, as_of=AS_OF).run(self.company.id, self.news.id)
-        self.assertEqual(len(state['trace']), 1)
+        self.assertEqual(len(state['trace']), 2)
         self.assertIn('IGNORE RULES', client.steps[1][-1].content)
         self.assertNotIn('IGNORE RULES', client.steps[1][0].content)
 
