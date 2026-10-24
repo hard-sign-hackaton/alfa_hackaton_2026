@@ -1,9 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from datetime import datetime, timezone
+from functools import partial
 import time
 import requests
 from ..normalization import normalize_article
+from ..deduplication import SaveResult
+from .deduplication import LazyNewsEmbeddings
 from ..parsers.discovery import discover
 from ..parsers.http import HttpClient
 
@@ -13,7 +16,7 @@ def collect_source(source, start, end, limit, settings, save, client_factory=Htt
                   from_date=start.isoformat(), to_date=end.isoformat(), limit=limit,
                   discovered=0, discovery_outside_period=0, attempted=0, saved=0,
                   inserted=0, updated=0, unchanged=0, outside_period=0,
-                  truncated=False, errors=[])
+                  duplicates=0, duplicate_matches=[], deduplication_limitations=[], truncated=False, errors=[])
     client = client_factory(source, settings)
     try:
         references = discover(source, client, start, end, settings, report)
@@ -29,6 +32,18 @@ def collect_source(source, start, end, limit, settings, save, client_factory=Htt
                     report['outside_period'] += 1
                     continue
                 outcome = save(article)
+                if isinstance(outcome, SaveResult):
+                    if outcome.outcome == 'duplicate':
+                        report['duplicates'] += 1
+                        report['duplicate_matches'].append(dict(url=article.url, original_id=outcome.original_id,
+                            original_url=outcome.original_url, reason=outcome.reason))
+                        if outcome.text_similarity is not None:
+                            report['duplicate_matches'][-1].update(text_similarity=outcome.text_similarity,
+                                embedding_similarity=outcome.embedding_similarity)
+                        continue
+                    if outcome.limitation:
+                        report['deduplication_limitations'].append(dict(url=article.url, reason=outcome.limitation))
+                    outcome = outcome.outcome
                 report[outcome] += 1
                 report['saved'] += 1
                 if limit is not None and report['saved'] >= limit:
@@ -58,12 +73,14 @@ def collect_parallel(sources, start, end, limit, settings, save, client_factory=
 
 
 class NewsIngestionService:
-    def __init__(self, repository, sources, settings):
+    def __init__(self, repository, sources, settings, *, embeddings=None):
         self.repository, self.sources, self.settings = repository, sources, settings
+        self.embeddings = embeddings if embeddings is not None else LazyNewsEmbeddings()
 
     def collect(self, start, end, limit=None):
         self.repository.seed([source.source for source in self.sources])
-        reports = collect_parallel(self.sources, start, end, limit, self.settings, self.repository.save)
+        reports = collect_parallel(self.sources, start, end, limit, self.settings,
+                                   partial(self.repository.save_deduplicated, embeddings=self.embeddings))
         return dict(settings=asdict(self.settings), workers=len(reports), reports=reports,
             coverage='Available discovery documents only; article/request limits and publisher coverage may truncate the period.')
 

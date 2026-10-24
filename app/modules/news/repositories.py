@@ -1,9 +1,33 @@
 from datetime import datetime, timezone
+import logging
 from sqlalchemy import select, text as sql, func, literal_column
 from sqlalchemy.dialects.postgresql import insert
 from .models import NewsSource, Article, IngestionRun, EmbeddingProfile, Embedding
 from .dto import NewsArticleDTO, EmbeddingInput
 from .identity import input_hash
+from .deduplication import (DEDUPLICATION_WINDOW, EMBEDDING_SIMILARITY_THRESHOLD,
+                            SaveResult, normalized_body, hybrid_text_similarity)
+from app.shared.embeddings.provider import normalize
+
+LOG = logging.getLogger(__name__)
+
+
+class EmbeddingUnavailable(Exception):
+    pass
+
+
+def encode_one(embeddings, article):
+    try:
+        outputs = embeddings.encode_articles([article])
+        if len(outputs) != 1:
+            raise ValueError("Expected one embedding")
+        vector, chunks = outputs[0]
+        vector = normalize(vector)
+        if vector.ndim != 1 or type(chunks) is not int or chunks < 1:
+            raise ValueError("Invalid article embedding")
+        return vector, chunks
+    except Exception as exc:
+        raise EmbeddingUnavailable(type(exc).__name__) from None
 
 EXCERPT_OPTIONS = 'MaxWords=180, MinWords=60, MaxFragments=1, StartSel="", StopSel=""'
 RUSSIAN = literal_column("'russian'::regconfig")
@@ -43,17 +67,82 @@ class NewsRepository:
                 s.execute(stmt.on_conflict_do_update(index_elements=['id'], set_=dict(name=source.name, sitemap=source.sitemap, rss=source.rss)))
 
     def save(self, article):
+        """Legacy URL upsert; collection uses save_deduplicated instead."""
+        with self.session.begin() as s:
+            return self._save(s, article)
+
+    def save_deduplicated(self, article, *, embeddings=None):
+        with self.session.begin() as s:
+            # The shared lock covers comparison, cache writes and article insert.
+            # READ COMMITTED observes the preceding collector's committed rows.
+            s.execute(sql('SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))'),
+                      {'key': 'news:full-body-deduplication:v1'})
+            incoming_vector = None
+            profile = None
+            limitation = None
+            if s.get(Article, article.id) is None:
+                body = normalized_body(article.text)
+                candidates = list(s.scalars(select(Article).where(
+                    Article.published_at >= article.published_at - DEDUPLICATION_WINDOW,
+                    Article.published_at <= article.published_at + DEDUPLICATION_WINDOW,
+                ).order_by(Article.collected_at, Article.id)))
+                for candidate in candidates:
+                    if body and body == normalized_body(candidate.text):
+                        return SaveResult('duplicate', candidate.id, candidate.url, 'normalized_body_equal')
+                near = [(c, score) for c in candidates
+                        if (score := hybrid_text_similarity(c.text, article.text)) is not None]
+                if near and embeddings is not None:
+                    try:
+                        try:
+                            profile = embeddings.profile
+                        except Exception as exc:
+                            raise EmbeddingUnavailable(type(exc).__name__) from None
+                        s.execute(insert(EmbeddingProfile).values(**profile).on_conflict_do_nothing(index_elements=['id']))
+                        incoming_vector = encode_one(embeddings, article)
+                        for candidate, score in near:
+                            vector = s.scalar(select(Embedding.vector).where(
+                                Embedding.article_id == candidate.id,
+                                Embedding.profile_id == profile['id'],
+                                Embedding.input_hash == candidate.content_hash))
+                            if vector is None:
+                                vector, chunks = encode_one(embeddings, candidate)
+                                self._cache_embedding(s, candidate.id, candidate.content_hash,
+                                                      profile['id'], vector, chunks)
+                            similarity = float(incoming_vector[0] @ normalize(vector))
+                            if similarity >= EMBEDDING_SIMILARITY_THRESHOLD:
+                                return SaveResult('duplicate', candidate.id, candidate.url,
+                                    'hybrid_text_embedding', score, similarity)
+                    except EmbeddingUnavailable as exc:
+                        # Model failures must not discard a potentially distinct story.
+                        limitation = 'embedding_unavailable'
+                        LOG.warning('Hybrid deduplication fell back to exact matching (%s)', exc)
+            outcome = self._save(s, article)
+            if incoming_vector is not None:
+                vector, chunks = incoming_vector
+                self._cache_embedding(s, article.id, input_hash(article.title, article.text),
+                                      profile['id'], vector, chunks)
+            return SaveResult(outcome, limitation=limitation)
+
+    @staticmethod
+    def _cache_embedding(s, article_id, content_hash, profile_id, vector, chunks):
+        # Use the same profile/hash as the regular embed stage, in this transaction.
+        stmt = insert(Embedding).values(article_id=article_id, profile_id=profile_id,
+            input_hash=content_hash, vector=vector, chunk_count=chunks, created_at=datetime.now(timezone.utc))
+        s.execute(stmt.on_conflict_do_update(index_elements=['article_id', 'profile_id'],
+            set_={k: getattr(stmt.excluded, k) for k in ('vector', 'input_hash', 'chunk_count', 'created_at')}))
+
+    @staticmethod
+    def _save(s, article):
         data = article.model_dump(mode='json')
         values = dict(id=article.id, source_id=article.source_id, url=article.url, title=article.title,
                       text=article.text, published_at=article.published_at, collected_at=article.collected_at,
                       content_hash=input_hash(article.title, article.text), details=data)
-        with self.session.begin() as s:
-            # Serialize same-URL updates even across CLI processes; triggers invalidate changed vectors.
-            s.execute(sql('SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))'), {'key': article.id})
-            old = s.get(Article, article.id)
-            outcome = 'inserted' if old is None else 'updated' if old.content_hash != values['content_hash'] else 'unchanged'
-            stmt = insert(Article).values(**values)
-            s.execute(stmt.on_conflict_do_update(index_elements=['id'], set_={k: v for k, v in values.items() if k != 'id'}))
+        # Serialize same-URL updates even across CLI processes; triggers invalidate changed vectors.
+        s.execute(sql('SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))'), {'key': article.id})
+        old = s.get(Article, article.id)
+        outcome = 'inserted' if old is None else 'updated' if old.content_hash != values['content_hash'] else 'unchanged'
+        stmt = insert(Article).values(**values)
+        s.execute(stmt.on_conflict_do_update(index_elements=['id'], set_={k: v for k, v in values.items() if k != 'id'}))
         return outcome
 
     def record_run(self, report):
