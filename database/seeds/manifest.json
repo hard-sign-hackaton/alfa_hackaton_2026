@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exported_at": "2026-10-23T18:11:11.646452+00:00",
+  "exported_at": "2026-10-24T10:47:56.368194+00:00",
   "groups": {
     "news": {
       "file": "01_news.sql",
@@ -35,7 +35,7 @@
     },
     "links": {
       "file": "04_links.sql",
-      "sha256": "44f729af90303b9ce010b6e91f4ea83b3bacaea36c21548dc2c70a6e3c1031e9",
+      "sha256": "f8a9214b3f5945b266f67a56c471d36765ce92377b7beb1c7f9ddaa457270d18",
       "counts": {
         "news_company_links": 27
       }
@@ -51,5 +51,13 @@
         "analysis_pairs": 2
       }
     }
+  },
+  "analysis_coverage": {
+    "active_pairs": 27,
+    "analyses": 27,
+    "active_with_analysis": 27,
+    "active_with_brief": 27,
+    "supported": 14,
+    "insufficient_data": 13
   }
 }

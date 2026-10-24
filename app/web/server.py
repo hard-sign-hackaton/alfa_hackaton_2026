@@ -12,6 +12,7 @@ from threading import RLock, Event, Thread
 import time
 from urllib.parse import urlparse, parse_qs
 from uuid import uuid4
+from .profiles import list_profiles, profile_id
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'research' / 'ai'))
@@ -72,6 +73,10 @@ class Application:
             try:
                 pair = existing.get((company_id, news_id)) or self.links.ensure(company_id, news_id, method='saved_analysis',
                     reasons=[{'kind': 'saved_analysis'}], topics=state.get('preparation', {}).get('classification', {}).get('topics', []))
+                # An equally dated DB record may contain a subsequently completed brief.
+                # Import only strictly newer file snapshots, never downgrade persisted results.
+                if pair.get('analysis_result') and pair.get('analysis_as_of') and datetime.fromisoformat(pair['analysis_as_of']) >= datetime.fromisoformat(state['as_of']):
+                    continue
                 self.links.analysis(pair, state)
             except ValueError:
                 LOG.warning('Skipped incompatible stored analysis')
@@ -216,7 +221,8 @@ class Application:
         self.reload_links()
         with self.lock:
             return {
-                'companies': list(self.companies.values()),
+                'companies': [{**c, 'profile_id': profile_id(c['okved'])} for c in self.companies.values()],
+                'profiles': list_profiles(list(self.companies.values())),
                 'documents': self.documents,
                 'status': {'database': self.database_status, 'news_count': len(self.events),
                            'company_count': len(self.companies), 'document_count': len(self.documents),

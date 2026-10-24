@@ -51,6 +51,7 @@ RUN pnpm run check && pnpm run build
 
 FROM agent AS web
 USER root
+COPY scripts/precompute_analyses.py /app/scripts/precompute_analyses.py
 COPY --chown=newspipeline:newspipeline app/web /app/app/web
 COPY --from=frontend-build /frontend/dist /app/frontend/dist
 COPY research/evaluation/2026-10-22/evaluation.json /app/research/evaluation/2026-10-22/evaluation.json

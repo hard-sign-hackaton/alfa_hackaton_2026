@@ -4,6 +4,7 @@ from pathlib import Path
 import tempfile
 from threading import Thread, Event
 import unittest
+from unittest.mock import Mock
 from urllib.error import HTTPError
 from urllib.request import Request, build_opener, ProxyHandler
 from http.server import ThreadingHTTPServer
@@ -67,6 +68,18 @@ class WebTests(unittest.TestCase):
         other = next(c for c in self.app.companies if c != self.company_id)
         self.assertIsNone(self.app.analysis(other, self.news_id)['state']) if (other, self.news_id) not in self.app.analyses else None
 
+    def test_profiles_partition_companies_by_industry_without_sharing_results(self):
+        value = self.app.bootstrap()
+        profiles = {p['id']: p for p in value['profiles']}
+        self.assertEqual(set(profiles), {'automotive', 'appliances', 'logistics', 'real_estate'})
+        self.assertEqual({key: len(p['company_ids']) for key, p in profiles.items()},
+            {'automotive': 8, 'appliances': 1, 'logistics': 2, 'real_estate': 1})
+        ids = [company_id for p in profiles.values() for company_id in p['company_ids']]
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertEqual(set(ids), set(self.app.companies))
+        for company in value['companies']:
+            self.assertIn(company['id'], profiles[company['profile_id']]['company_ids'])
+
     def test_job_deduplication_and_persistence(self):
         first = self.app.start_job(self.payload())
         second = self.app.start_job(self.payload())
@@ -85,6 +98,20 @@ class WebTests(unittest.TestCase):
         restored = Application(enable_links=False, runtime=self.temp.name)
         self.assertEqual(restored.analyses[(self.company_id, self.news_id)]['as_of'], '2026-10-25T00:00:00+00:00')
         restored.executor.shutdown()
+
+    def test_equal_timestamp_file_cache_cannot_replace_completed_database_brief(self):
+        snapshot = {**self.state, 'brief': None}
+        completed = {**self.state, 'brief': {'short_answer': 'Дополненная сводка из БД'}}
+        self.app.analyses = {(self.company_id, self.news_id): snapshot}
+        self.app.matches = {}
+        row = {'company_id': self.company_id, 'news_id': self.news_id, 'active': True,
+               'analysis_as_of': self.state['as_of'], 'analysis_result': completed,
+               'match_score': 0.1, 'match_reasons': []}
+        self.app.links = Mock()
+        self.app.links.list.return_value = [row]
+        self.app.initialize_links()
+        self.app.links.analysis.assert_not_called()
+        self.assertEqual(self.app.analyses[(self.company_id, self.news_id)]['brief']['short_answer'], 'Дополненная сводка из БД')
 
     def test_unknown_pair_rejected_before_model(self):
         with self.assertRaises(ApiError) as error:

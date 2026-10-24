@@ -47,6 +47,16 @@ def main():
         table_flags = [flag for name in tables + list(sequences.values()) for flag in ('--table', name)]
         dump = run(service, 'pg_dump', '-U', user, '-d', database, '--data-only', '--no-owner',
                    '--no-acl', '--no-comments', '--column-inserts', '--on-conflict-do-nothing', *table_flags)
+        if service == 'postgres':
+            manifest['analysis_coverage'] = json.loads(run(service, 'psql', '-U', user, '-d', database, '-At', '-c',
+                "SELECT json_build_object('active_pairs', count(*) FILTER (WHERE active), "
+                "'analyses', count(analysis_result), "
+                "'active_with_analysis', count(*) FILTER (WHERE active AND analysis_result IS NOT NULL), "
+                "'active_with_brief', count(*) FILTER (WHERE active AND analysis_result->'brief' IS NOT NULL "
+                "AND analysis_result->'brief' <> 'null'::jsonb), "
+                "'supported', count(*) FILTER (WHERE analysis_result->'result'->>'status'='supported'), "
+                "'insufficient_data', count(*) FILTER (WHERE analysis_result->'result'->>'status'='insufficient_data')) "
+                "FROM news_company_links;"))
         dump = re.sub(r'^\\(?:un)?restrict[^\n]*\n', '', dump, flags=re.M)
         sections = list(SECTION.finditer(dump))
         if not sections or '\\' in dump[:sections[0].start()]:

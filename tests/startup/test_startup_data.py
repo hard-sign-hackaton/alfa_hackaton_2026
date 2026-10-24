@@ -67,7 +67,11 @@ class RestoreTests(unittest.TestCase):
         result = self.load()
         self.assertEqual(result['status'], 'restored')
         self.assertEqual(result['counts']['analytics_chunk_embeddings'], 138)
-        self.assertEqual(self.connection.execute('SELECT count(*) FROM news_company_links WHERE analysis_result IS NOT NULL').fetchone()[0], 10)
+        coverage = self.manifest.get('analysis_coverage', {})
+        self.assertEqual(self.connection.execute('SELECT count(*) FROM news_company_links WHERE analysis_result IS NOT NULL').fetchone()[0], coverage.get('analyses', 10))
+        if coverage:
+            self.assertEqual(self.connection.execute('SELECT count(*) FROM news_company_links WHERE active AND analysis_result IS NOT NULL').fetchone()[0], coverage['active_with_analysis'])
+            self.assertEqual(self.connection.execute("SELECT count(*) FROM news_company_links WHERE active AND analysis_result->'brief' IS NOT NULL AND analysis_result->'brief'<>'null'::jsonb").fetchone()[0], coverage['active_with_brief'])
         for table in ('news_embeddings', 'company_embeddings', 'analytics_chunk_embeddings'):
             value, maximum = self.connection.execute(
                 "SELECT nextval(pg_get_serial_sequence(%s, 'id')), (SELECT max(id) FROM " + table + ')', (table,)).fetchone()
