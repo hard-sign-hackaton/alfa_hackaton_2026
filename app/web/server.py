@@ -242,6 +242,10 @@ class Application:
     def card(self, company_id, event, candidate=None):
         state = self.analyses.get((company_id, event['id']))
         brief = (state or {}).get('brief')
+        short_answer = (brief or {}).get('short_answer')
+        if not short_answer and state:
+            from brief import _shorten
+            short_answer = _shorten((state.get('result') or {}).get('summary') or '') or None
         classification = (brief or {}).get('classification') or self.classifications.get(event['id'], {})
         link = self.link_rows.get((company_id, event['id']))
         if link:
@@ -249,7 +253,7 @@ class Application:
                 'importance_method': link['importance_method'], 'topics': link['topics'] or classification.get('topics', [])}
         return {
             **event, 'text': event['text'][:1500], 'publisher': event.get('publisher') or self.publisher(event['url']),
-            'classification': classification, 'has_analysis': bool(state), 'brief': brief,
+            'classification': classification, 'has_analysis': bool(state), 'brief': brief, 'short_answer': short_answer,
             'analysis_status': (state or {}).get('result', {}).get('status'),
             'match_reasons': (candidate or {}).get('match_reasons', []),
             'retrieval_channels': (candidate or {}).get('retrieval_channels', []),

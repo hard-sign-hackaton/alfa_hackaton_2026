@@ -81,6 +81,27 @@ class WebTests(unittest.TestCase):
         self.assertIsNone(response['bank_context']['summary']['impact'])
         self.assertIs(response['state'], state)
 
+    def test_legacy_analysis_card_uses_saved_summary_when_compact_answer_is_missing(self):
+        state = {**self.state, 'result': {**self.state['result'], 'summary': 'Сохранённый персональный вывод. ' * 30}}
+        state.pop('brief', None)
+        self.app.analyses[(self.company_id, self.news_id)] = state
+        card = self.app.card(self.company_id, self.app.events[self.news_id])
+        self.assertTrue(card['has_analysis'])
+        self.assertTrue(card['short_answer'].startswith('Сохранённый персональный вывод.'))
+        self.assertLessEqual(len(card['short_answer']), 360)
+        self.assertNotIn('brief', state)
+        other = next(c for c in self.app.companies if c != self.company_id)
+        self.app.analyses.pop((other, self.news_id), None)
+        self.assertIsNone(self.app.card(other, self.app.events[self.news_id])['short_answer'])
+
+    def test_compact_answer_takes_priority_over_full_summary(self):
+        state = {**self.state, 'brief': {'short_answer': 'Короткий вывод'}}
+        self.app.analyses[(self.company_id, self.news_id)] = state
+        card = self.app.card(self.company_id, self.app.events[self.news_id])
+        self.assertEqual(card['short_answer'], 'Короткий вывод')
+        state['brief']['short_answer'] = ''
+        self.assertTrue(self.app.card(self.company_id, self.app.events[self.news_id])['short_answer'])
+
     def test_profiles_partition_companies_by_industry_without_sharing_results(self):
         value = self.app.bootstrap()
         profiles = {p['id']: p for p in value['profiles']}
