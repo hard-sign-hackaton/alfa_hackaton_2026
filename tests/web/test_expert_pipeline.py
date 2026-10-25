@@ -13,6 +13,7 @@ class ExpertPipelineTests(unittest.TestCase):
                       'text': 'Вымышленная новость о снижении ставки.', 'published_at': '2026-10-25T00:00:00+00:00',
                       'url': 'https://expert-demo.invalid/test/0'}
         self.steps = []
+        self.updates = []
         self.links, self.articles, self.vectors, self.embeddings = Mock(), Mock(), Mock(), Mock()
         self.articles.save_deduplicated.return_value = SimpleNamespace(outcome='inserted')
         self.embeddings.profile = {'id': 'real-profile'}
@@ -27,8 +28,8 @@ class ExpertPipelineTests(unittest.TestCase):
         self.service = Mock()
         self.service.classifications = {self.event['id']: {'business_relevant': True}}
         self.service.client.telemetry = [{'task': 'classification'}, {'task': 'importance'}]
-        def match(news_id, limit, on_matched, on_classified):
-            on_classified(); on_matched()
+        def match(news_id, limit, on_matched, on_classified, on_assessed):
+            on_classified(); on_matched(); on_assessed()
             return {'candidates': [{'id': 'found'}]}
         self.service.match_news.side_effect = match
         self.pipeline = ExpertPipeline(self.links, self.runner)
@@ -39,8 +40,24 @@ class ExpertPipelineTests(unittest.TestCase):
              patch('news_repository.NewsReader.from_env') as reader, \
              patch('app.modules.links.service.LinkService', return_value=self.service):
             reader.return_value._semantic.return_value.embeddings = self.embeddings
-            return self.pipeline(deepcopy(self.event), company_id,
-                lambda phase, stage, **values: self.steps.append(phase), lambda: False)
+            def progress(phase, stage, **values):
+                self.steps.append(phase)
+                self.updates.append((phase, deepcopy(values)))
+            return self.pipeline(deepcopy(self.event), company_id, progress, lambda: False)
+
+    def test_importance_is_published_before_matching_finishes_or_analysis_starts(self):
+        def match(news_id, limit, on_matched, on_classified, on_assessed):
+            on_classified()
+            on_matched()
+            row = {'company_id': 'found', 'importance': 'high', 'importance_status': 'ready'}
+            self.links.list.return_value = [row]
+            on_assessed()
+            self.runner.assert_not_called()
+            self.assertEqual(self.updates[-1], ('assessing', {'matches': [row]}))
+            return {'candidates': [{'id': 'found'}]}
+        self.service.match_news.side_effect = match
+        self.run_pipeline()
+        self.runner.assert_called_once()
 
     def test_real_services_receive_publication_and_model_output_is_saved_unchanged(self):
         result = self.run_pipeline()

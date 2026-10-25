@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { uiFeatures } from "./config";
 import { Button } from "@alfalab/core-components-button";
 import "@alfalab/core-components-vars/index.css";
 import {
@@ -691,15 +692,18 @@ function Payments({
   const payments = company.payments;
   const totals = payments?.totals;
   if (!totals) return null;
+  const Container = compact ? "details" : "section";
+  const Heading = compact ? "summary" : "div";
   return (
-    <section
-      className={"panel payments-panel " + (compact ? "compact-payments" : "")}
+    <Container
+      className={"panel payments-panel " + (compact ? "compact-payments collapsible-panel" : "")}
     >
-      <div className="section-icon">
+      <Heading className="section-icon">
         <Wallet size={19} />
         <h2>Платёжные связи</h2>
         <span className="period-label">Период не указан</span>
-      </div>
+        {compact && <ChevronDown size={18} className="section-chevron" />}
+      </Heading>
       {!compact && (
         <div className="payment-stats">
           <div>
@@ -761,7 +765,7 @@ function Payments({
         Оборот не равен выручке. Роли контрагентов, динамика и сезонность не
         установлены; перечень отраслей неполный.
       </p>
-    </section>
+    </Container>
   );
 }
 
@@ -1235,7 +1239,7 @@ function App() {
             onClick={() => navigate("bank")}
           >
             <Layers3 size={21} />
-            Аналитика банка
+            Аналитика Альфа-Банка
           </button>
           <button
             className={section === "company" ? "active" : ""}
@@ -1245,14 +1249,14 @@ function App() {
             Моя компания
           </button>
         </nav>
-        <div className="sidebar-note">
+        {uiFeatures.showSidebarNote && <div className="sidebar-note">
           <div className="note-symbol">
             <ShieldCheck size={23} />
           </div>
           <b>Выводы с основаниями</b>
           <p>У каждого разбора есть факты, источники и ограничения.</p>
-        </div>
-        <div className="sidebar-bottom">
+        </div>}
+        {uiFeatures.showDataStatus && <div className="sidebar-bottom">
           <span
             className={
               "status-dot " +
@@ -1266,7 +1270,7 @@ function App() {
             {boot.status.news_count} новостей · {boot.status.company_count}{" "}
             компаний
           </small>
-        </div>
+        </div>}
       </aside>
       <div className="workspace">
         <header className="topbar">
@@ -1277,7 +1281,7 @@ function App() {
             Бизнес <ChevronRight size={14} />
             <span>
               {section === "bank"
-                ? "Аналитика банка"
+                ? "Аналитика Альфа-Банка"
                 : section === "company"
                   ? "Профиль компании"
                   : "Персональная аналитика"}
@@ -1421,7 +1425,7 @@ function App() {
             className={section === "bank" ? "active" : ""}
             onClick={() => navigate("bank")}
           >
-            Аналитика банка
+            Аналитика Альфа-Банка
           </button>
           <button
             className={section === "company" ? "active" : ""}
@@ -1720,19 +1724,17 @@ function App() {
                               sources={sources}
                             />
                           </section>
-                          {company && <Payments company={company} compact />}
-                          <section className="panel">
-                            <div className="section-icon">
+                          {company && <Payments key={companyId + ":" + selectedId} company={company} compact />}
+                          <details key={companyId + ":" + selectedId + ":facts"} className="panel collapsible-panel">
+                            <summary className="section-icon">
                               <TrendingUp size={19} />
                               <h2>Факты и возможное влияние</h2>
-                            </div>
+                              <ChevronDown size={18} className="section-chevron" />
+                            </summary>
                             {state.result.claims
                               .filter((claim: Obj) => claim.kind === "fact")
                               .map((claim: Obj, i: number) => (
                                 <div className="claim" key={i}>
-                                  <span className="claim-type fact">
-                                    ФАКТ
-                                  </span>
                                   <p>{claim.text}</p>
                                   <Evidence
                                     items={claim.evidence}
@@ -1740,13 +1742,17 @@ function App() {
                                   />
                                 </div>
                               ))}
-                          </section>
+                          </details>
                           {!!state.result.missing_data?.length && (
-                            <section className="panel limitations">
-                              <div className="section-icon">
+                            <details key={companyId + ":" + selectedId + ":limitations"} className="panel limitations collapsible-panel">
+                              <summary className="section-icon">
                                 <CircleHelp size={19} />
                                 <h2>Что ещё нужно уточнить</h2>
-                              </div>
+                                <ChevronDown size={18} className="section-chevron" />
+                              </summary>
+                              <p className="clarification-chat-hint">
+                                Ответы на эти вопросы можно отправить в чат, чтобы получить более персональную аналитику для вашей компании.
+                              </p>
                               <ul>
                                 {[
                                   ...new Set<string>(
@@ -1758,22 +1764,24 @@ function App() {
                                   <li key={i}>{item}</li>
                                 ))}
                               </ul>
-                            </section>
+                            </details>
                           )}
                           <div className="analysis-bottom">
                             <span>
                               <Clock3 size={14} /> Разбор от{" "}
                               {date(state.as_of, true)}
                             </span>
-                            <Button
-                              view="transparent"
-                              size={40}
-                              disabled={!!busy || (!boot.status.live_available || !!detail?.is_demo)}
-                              onClick={() => start("analysis")}
-                              leftAddons={<RefreshCw size={15} />}
-                            >
-                              Обновить разбор
-                            </Button>
+                            {uiFeatures.showRefreshAnalysisButton && (
+                              <Button
+                                view="transparent"
+                                size={40}
+                                disabled={!!busy || (!boot.status.live_available || !!detail?.is_demo)}
+                                onClick={() => start("analysis")}
+                                leftAddons={<RefreshCw size={15} />}
+                              >
+                                Обновить разбор
+                              </Button>
+                            )}
                           </div>
                           <AnalysisFeedback key={detail.analysis_version} companyId={companyId} newsId={selectedId} version={detail.analysis_version} isDemo={!!detail.is_demo} demoId={detail.is_demo ? demo?.id : undefined}/>
                         </>
@@ -1917,39 +1925,48 @@ function App() {
                       </small>
                     </aside>
                   </div>
-                  <button
+                  {!chatOpen && <button
                     className="mobile-chat-button"
                     onClick={() => setChatOpen(true)}
                   >
                     <MessageSquare size={19} />
                     Обсудить новость
                     <ArrowUpRight size={18} />
-                  </button>
+                  </button>}
                 </>
               )}
             </>
           ) : section === "feed" ? (
             <>
               <div className="page-kicker">
-                <span>
+                {uiFeatures.showFeedLabel && <span>
                   <span className="status-dot green" />
                   ПЕРСОНАЛЬНАЯ ЛЕНТА
-                </span>
+                </span>}
                 <span className="feed-tools"><span>Лента обновляется автоматически</span><button className="expert-toggle" aria-expanded={expertOpen} onClick={() => setExpertOpen(v => !v)}>Сценарий для эксперта</button></span>
               </div>
               {expertOpen && <ExpertScenario companyCount={boot.companies.length} session={feed?.demo || demo} busy={demoBusy} error={demoError} onStart={startDemo} onStop={stopDemo} onRetry={retryDemo}/>}
-              <div className="hero">
+              <div className={"hero" + (uiFeatures.showFeaturedInsight ? "" : " hero-without-insight") + (uiFeatures.useCompactFeedHeader ? " feed-hero-compact" : "")}>
                 <div className="hero-copy">
-                  <h1>
-                    События рынка.
-                    <br />
-                    <span>Контекст вашего бизнеса.</span>
-                  </h1>
-                  <p>
-                    Важные новости, их влияние на вашу компанию
-                    <br className="desktop-break" /> и основания для решений — в
-                    одном месте.
-                  </p>
+                  {uiFeatures.useCompactFeedHeader ? (
+                    <>
+                      <h1>Ваша новостная повестка</h1>
+                      <p>Подбор с учётом деятельности и связей компании</p>
+                    </>
+                  ) : (
+                    <>
+                      <h1>
+                        События рынка.
+                        <br />
+                        <span>Контекст вашего бизнеса.</span>
+                      </h1>
+                      <p>
+                        Важные новости, их влияние на вашу компанию
+                        <br className="desktop-break" /> и основания для решений — в
+                        одном месте.
+                      </p>
+                    </>
+                  )}
                   <div className="hero-profile">
                     <span>
                       <Building2 size={15} />
@@ -1962,7 +1979,7 @@ function App() {
                     </span>
                   </div>
                 </div>
-                <button
+                {uiFeatures.showFeaturedInsight && <button
                   className="hero-insight"
                   onClick={() => featured && setSelectedId(featured.id)}
                   disabled={!featured}
@@ -1988,13 +2005,13 @@ function App() {
                     <span>Читать разбор</span>
                     <ArrowRight size={18} />
                   </div>
-                </button>
+                </button>}
               </div>
-              <div className="section-heading">
-                <div>
+              <div className={"section-heading" + (uiFeatures.useCompactFeedHeader ? " feed-heading-actions" : "")}>
+                {!uiFeatures.useCompactFeedHeader && <div>
                   <h2>Ваша новостная повестка</h2>
                   <p>Подбор с учётом деятельности и связей компании</p>
-                </div>
+                </div>}
                 <button
                   aria-label="Обновить ленту"
                   className="refresh-button"
@@ -2018,7 +2035,7 @@ function App() {
                     ["personal", "Для вас"],
                     ["all", "Все новости"],
                     ["saved", "Сохранённое"],
-                  ].map(([key, label]) => (
+                  ].filter(([key]) => key !== "all" || uiFeatures.showAllNewsTab).map(([key, label]) => (
                     <button
                       key={key}
                       role="tab"
@@ -2073,7 +2090,6 @@ function App() {
                   <option value="high">Высокая</option>
                   <option value="medium">Средняя</option>
                   <option value="low">Низкая</option>
-                  <option value="ready">С готовым разбором</option>
                 </select>
                 {(topic !== "all" || level !== "all" || query) && (
                   <button
@@ -2240,11 +2256,6 @@ function App() {
                 <span>Альфа-Банк</span>
               </div>
               <div className="page-heading">
-                <h1>
-                  Больше контекста.
-                  <br />
-                  <span>Точнее решения.</span>
-                </h1>
                 <p>Материалы банка, которые помогают понять события рынка.</p>
               </div>
               <div className="bank-summary">

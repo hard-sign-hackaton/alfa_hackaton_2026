@@ -314,9 +314,6 @@ class Application:
         candidates = {r['id']: r for r in self.matches.get(company_id, [])}
         with self.lock:
             cards = [self.card(company_id, event, candidates.get(event['id'])) for event in self.events.values()]
-        importance_order = {'high': 3, 'medium': 2, 'low': 1}
-        cards.sort(key=lambda c: (c['id'] in candidates, importance_order.get(c['classification'].get('importance'), 0), c['has_analysis'],
-                                  candidates.get(c['id'], {}).get('retrieval_score', 0), c['published_at']), reverse=True)
         demo = None
         if demo_id:
             try:
@@ -326,6 +323,10 @@ class Application:
             cards = demo['items'] + cards
             candidates.update({c['id']: c for c in demo['items'] if c.get('link') is not None})
             demo = {key: value for key, value in demo.items() if key != 'items'}
+        importance_order = {'high': 3, 'medium': 2, 'low': 1}
+        # Sort the merged feed once. Equal importance/date retain source order.
+        cards.sort(key=lambda c: (importance_order.get(c['classification'].get('importance'), 0),
+                                  datetime.fromisoformat(c['published_at'])), reverse=True)
         return {'company_id': company_id, 'demo': demo, 'items': cards, 'matched_ids': list(candidates),
                 'matching_as_of': (self.links_sync.get('updated_at') or now())[:10] if self.links_initialized else '2026-10-22',
                 'sync': dict(self.links_sync), 'links_available': self.links_initialized,

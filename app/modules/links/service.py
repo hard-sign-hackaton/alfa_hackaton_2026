@@ -79,7 +79,7 @@ class LinkService:
                 self.assess(pair, profile, event)
         return {'matched': count, 'telemetry': self.client.telemetry}
 
-    def match_news(self, news_id, limit=5, *, on_matched=None, on_classified=None):
+    def match_news(self, news_id, limit=5, *, on_matched=None, on_classified=None, on_assessed=None):
         event = self.news.get_news(news_id, as_of=self.as_of)
         classification = self.classification(event)
         if on_classified:
@@ -94,4 +94,6 @@ class LinkService:
                           'limitation': 'Сходство определяет кандидатов, а не доказанное влияние.'}], topics=classification.topics)
             company = self.companies.get_company_profile(hit['id'], as_of=self.as_of)
             self.assess(pair, company, event)
+            if on_assessed:
+                on_assessed()
         return result

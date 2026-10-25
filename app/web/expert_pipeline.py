@@ -60,11 +60,16 @@ class ExpertPipeline:
         report('classifying', 'Классификация новости моделью')
         service = LinkService(self.links, progress=lambda stage: report('assessing', stage))
         selected_state, states = None, {}
+
+        def publish_assessments():
+            report('assessing', 'Обновление важности для подобранных компаний',
+                   matches=self.links.list(news_id=article.id, active_only=True, include_demo=True))
         try:
             limit = max(1, min(5, int(os.environ.get('EXPERT_MATCH_LIMIT', '5'))))
             result = service.match_news(article.id, limit=limit,
                 on_matched=lambda: report('matched', 'Компании подобраны по эмбеддингам'),
-                on_classified=lambda: report('matching', 'Поиск компаний по эмбеддингам'))
+                on_classified=lambda: report('matching', 'Поиск компаний по эмбеддингам'),
+                on_assessed=publish_assessments)
             rows = self.links.list(news_id=article.id, active_only=True, include_demo=True)
             report('matched', 'Подбор завершён · запуск полного разбора', matches=rows)
             for hit in result['candidates']:
