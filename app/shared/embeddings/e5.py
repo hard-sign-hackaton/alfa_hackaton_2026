@@ -15,7 +15,12 @@ class E5Provider:
         # Resolve a moving branch once; persist the immutable Hub commit in the profile.
         if not revision or len(revision) != 40:
             revision = HfApi().model_info(MODEL, revision=revision or 'main').sha
-        self.model = SentenceTransformer(MODEL, revision=revision, device=device or os.getenv('NEWS_EMBEDDING_DEVICE', 'cpu'))
+        options = dict(revision=revision, device=device or os.getenv('NEWS_EMBEDDING_DEVICE', 'cpu'))
+        try:
+            self.model = SentenceTransformer(MODEL, local_files_only=True, **options)
+        except OSError:
+            # The pinned revision may not be cached on the first run.
+            self.model = SentenceTransformer(MODEL, local_files_only=False, **options)
         self.model.eval()
         self.tokenizer = self.model.tokenizer
         if self.model.get_sentence_embedding_dimension() != 384:

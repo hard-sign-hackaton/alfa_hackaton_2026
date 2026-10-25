@@ -92,6 +92,13 @@ class CompanyReader:
         for row in rows:
             activity = SimpleNamespace(okved_codes=[row.get('okved_code') or ''])
             row['matched_topics'] = sorted(industry_topics(activity).intersection(news.topics))
+        # An explicit dataset identifier is a stronger identity signal than thematic proximity.
+        # Keep the actual embedding score; no importance or impact level is inferred here.
+        import re
+        text = news.title + '\n' + news.text
+        mentioned = [row for row in rows if re.search(r'(?<!\w)' + re.escape(row['id']) + r'(?!\w)', text)]
+        if mentioned:
+            rows = mentioned
         rows.sort(key=lambda row: (not bool(row['matched_topics']), -row['similarity'], row['id']))
         return {'news_id': news.id, 'candidates': rows[:limit], 'requires_impact_analysis': True,
                 'topics_used': news.topics, 'candidate_pool_limit': pool,

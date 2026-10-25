@@ -10,10 +10,10 @@ class ExpertExportTests(unittest.TestCase):
     def test_excludes_synthetic_sources_articles_vectors_and_links(self):
         sid = 'a' * 32
         rows = [
-            "INSERT INTO public.news_sources (id, name) VALUES ('expert-demo:" + sid + "', 'Scenario') ON CONFLICT DO NOTHING;",
-            "INSERT INTO public.news_articles (id, title, text) VALUES ('demo:" + sid + ":0', 'ТЕСТ', 'Multi;line\ntext with ''quotes''') ON CONFLICT DO NOTHING;",
-            "INSERT INTO public.news_embeddings (id, article_id, vector) VALUES (1, 'demo:" + sid + ":0', '[1,2]') ON CONFLICT DO NOTHING;",
-            "INSERT INTO public.news_company_links (company_id, news_id) VALUES ('company', 'demo:" + sid + ":0') ON CONFLICT DO NOTHING;",
+            "INSERT INTO public.news_sources (id, name) VALUES ('expert-demo:" + sid + ":U_123', 'Scenario') ON CONFLICT DO NOTHING;",
+            "INSERT INTO public.news_articles (id, title, text) VALUES ('demo:" + sid + ":24', 'ТЕСТ', 'Multi;line\ntext with ''quotes''') ON CONFLICT DO NOTHING;",
+            "INSERT INTO public.news_embeddings (id, article_id, vector) VALUES (1, 'demo:" + sid + ":24', '[1,2]') ON CONFLICT DO NOTHING;",
+            "INSERT INTO public.news_company_links (company_id, news_id) VALUES ('company', 'demo:" + sid + ":24') ON CONFLICT DO NOTHING;",
         ]
         normal = "INSERT INTO public.news_articles (id, text) VALUES ('actual', 'Обычный текст; с ''кавычками''\nи переносом') ON CONFLICT DO NOTHING;"
         result = without_expert_records('\n'.join(rows + [normal]))

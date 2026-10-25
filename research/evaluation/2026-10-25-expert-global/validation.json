@@ -1,0 +1,315 @@
+{
+  "date": "2026-10-25",
+  "scope": "global_expert_scenario",
+  "synthetic_publications": true,
+  "companies": 12,
+  "completed_analyses": 24,
+  "received": 26,
+  "processed_unique": 25,
+  "duplicates": 1,
+  "failed": 0,
+  "observed_final_levels": {
+    "high": 12,
+    "medium": 12,
+    "low": 0
+  },
+  "companies_with_high_and_medium": 12,
+  "method": "Все события прошли рабочий пайплайн. Проблемные разборы повторно проверены реальными моделями на тех же найденных источниках после уточнения качественного анализа. Уровни важности не задавались в текстах событий и не подменялись в ответах.",
+  "limitations": [
+    "Вымышленные события не подтверждают реальные происшествия.",
+    "Это наблюдаемые оценки данного прогона; повторный ответ модели может отличаться.",
+    "supported означает обоснованный условный качественный канал, а не рассчитанный финансовый эффект."
+  ],
+  "results": [
+    {
+      "company_id": "U_128194",
+      "case": "service_tariffs",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:12",
+      "final_importance": "medium",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_128194",
+      "case": "operations_restriction",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:0",
+      "final_importance": "high",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_125887",
+      "case": "service_tariffs",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:13",
+      "final_importance": "medium",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_125887",
+      "case": "operations_restriction",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:1",
+      "final_importance": "high",
+      "status": "supported",
+      "bank_sources": 4
+    },
+    {
+      "company_id": "U_123091",
+      "case": "service_tariffs",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:14",
+      "final_importance": "medium",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_123091",
+      "case": "operations_restriction",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:2",
+      "final_importance": "high",
+      "status": "supported",
+      "bank_sources": 2
+    },
+    {
+      "company_id": "U_122970",
+      "case": "service_tariffs",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:15",
+      "final_importance": "medium",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_122970",
+      "case": "operations_restriction",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:3",
+      "final_importance": "high",
+      "status": "supported",
+      "bank_sources": 4
+    },
+    {
+      "company_id": "U_122506",
+      "case": "service_tariffs",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:16",
+      "final_importance": "medium",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_122506",
+      "case": "operations_restriction",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:4",
+      "final_importance": "high",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_199606",
+      "case": "service_tariffs",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:17",
+      "final_importance": "medium",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_199606",
+      "case": "operations_restriction",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:5",
+      "final_importance": "high",
+      "status": "supported",
+      "bank_sources": 4
+    },
+    {
+      "company_id": "U_210204",
+      "case": "service_tariffs",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:18",
+      "final_importance": "medium",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_210204",
+      "case": "operations_restriction",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:6",
+      "final_importance": "high",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_222900",
+      "case": "service_tariffs",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:19",
+      "final_importance": "medium",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_222900",
+      "case": "operations_restriction",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:7",
+      "final_importance": "high",
+      "status": "supported",
+      "bank_sources": 4
+    },
+    {
+      "company_id": "U_37452",
+      "case": "service_tariffs",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:20",
+      "final_importance": "medium",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_37452",
+      "case": "operations_restriction",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:8",
+      "final_importance": "high",
+      "status": "supported",
+      "bank_sources": 4
+    },
+    {
+      "company_id": "U_46911",
+      "case": "service_tariffs",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:21",
+      "final_importance": "medium",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_46911",
+      "case": "operations_restriction",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:9",
+      "final_importance": "high",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_46827",
+      "case": "service_tariffs",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:22",
+      "final_importance": "medium",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_46827",
+      "case": "operations_restriction",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:10",
+      "final_importance": "high",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_99802",
+      "case": "service_tariffs",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:23",
+      "final_importance": "medium",
+      "status": "supported",
+      "bank_sources": 5
+    },
+    {
+      "company_id": "U_99802",
+      "case": "operations_restriction",
+      "news_id": "demo:8efa7ecf656645108adf709aa00d2288:11",
+      "final_importance": "high",
+      "status": "supported",
+      "bank_sources": 5
+    }
+  ],
+  "coverage": [
+    {
+      "company_id": "U_128194",
+      "levels": [
+        "medium",
+        "high"
+      ],
+      "has_high_and_medium": true
+    },
+    {
+      "company_id": "U_125887",
+      "levels": [
+        "medium",
+        "high"
+      ],
+      "has_high_and_medium": true
+    },
+    {
+      "company_id": "U_123091",
+      "levels": [
+        "medium",
+        "high"
+      ],
+      "has_high_and_medium": true
+    },
+    {
+      "company_id": "U_122970",
+      "levels": [
+        "medium",
+        "high"
+      ],
+      "has_high_and_medium": true
+    },
+    {
+      "company_id": "U_122506",
+      "levels": [
+        "medium",
+        "high"
+      ],
+      "has_high_and_medium": true
+    },
+    {
+      "company_id": "U_199606",
+      "levels": [
+        "medium",
+        "high"
+      ],
+      "has_high_and_medium": true
+    },
+    {
+      "company_id": "U_210204",
+      "levels": [
+        "medium",
+        "high"
+      ],
+      "has_high_and_medium": true
+    },
+    {
+      "company_id": "U_222900",
+      "levels": [
+        "medium",
+        "high"
+      ],
+      "has_high_and_medium": true
+    },
+    {
+      "company_id": "U_37452",
+      "levels": [
+        "medium",
+        "high"
+      ],
+      "has_high_and_medium": true
+    },
+    {
+      "company_id": "U_46911",
+      "levels": [
+        "medium",
+        "high"
+      ],
+      "has_high_and_medium": true
+    },
+    {
+      "company_id": "U_46827",
+      "levels": [
+        "medium",
+        "high"
+      ],
+      "has_high_and_medium": true
+    },
+    {
+      "company_id": "U_99802",
+      "levels": [
+        "medium",
+        "high"
+      ],
+      "has_high_and_medium": true
+    }
+  ]
+}

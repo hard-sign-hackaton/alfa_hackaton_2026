@@ -805,8 +805,6 @@ function App() {
   const [detail, setDetail] = useState<Obj>();
   const [detailError, setDetailError] = useState("");
   const [detailTab, setDetailTab] = useState("analysis");
-  const [related, setRelated] = useState<Obj>();
-  const [relatedError, setRelatedError] = useState("");
   const [job, setJob] = useState<Obj>();
   const [jobError, setJobError] = useState("");
   const [jobStarting, setJobStarting] = useState(false);
@@ -866,7 +864,7 @@ function App() {
       undefined,
       controller.signal,
     )
-      .then((value) => { if (!controller.signal.aborted && value?.company_id === currentCompany.current) setFeed(value); })
+      .then((value) => { if (!controller.signal.aborted && value?.company_id === currentCompany.current) { setFeed(value); if (value.demo) setDemoError(""); } })
       .catch((e) => {
         if (e.name !== "AbortError") setFeedError(e.message);
       })
@@ -928,9 +926,6 @@ function App() {
               setConversationId(undefined);
               setReload((v) => v + 1);
             }
-          } else if (value.kind === "matching") {
-            setRelated(value.matches);
-            setReload((v) => v + 1);
           } else {
             setMessages((old) => [
               ...old,
@@ -990,22 +985,6 @@ function App() {
     setVisibleCount(8);
   }, [query, topic, level, mode]);
   useEffect(() => {
-    setRelated(undefined);
-    setRelatedError("");
-    if (!selectedId) return;
-    const controller = new AbortController();
-    api(
-      "/news-companies?news_id=" + encodeURIComponent(selectedId) + "&company_id=" + encodeURIComponent(companyId) + demoSuffix,
-      undefined,
-      controller.signal,
-    )
-      .then((value) => { if (!controller.signal.aborted) setRelated(value); })
-      .catch((e) => {
-        if (e.name !== "AbortError") setRelatedError(e.message);
-      });
-    return () => controller.abort();
-  }, [selectedId, companyId, reload, demo?.id]);
-  useEffect(() => {
     if (!boot) return;
     const controller = new AbortController();
     let pending = false;
@@ -1014,7 +993,7 @@ function App() {
       pending = true;
       try {
         const value = await api<typeof feed>("/feed?company_id=" + encodeURIComponent(companyId) + demoSuffix, undefined, controller.signal);
-        if (!controller.signal.aborted && value?.company_id === currentCompany.current) setFeed(value);
+        if (!controller.signal.aborted && value?.company_id === currentCompany.current) { setFeed(value); if (value.demo) setDemoError(""); }
         if (demo && selectedId?.startsWith("demo:")) {
           const detailValue = await api("/analysis?company_id=" + encodeURIComponent(companyId) + "&news_id=" + encodeURIComponent(selectedId) + demoSuffix, undefined, controller.signal);
           if (!controller.signal.aborted) setDetail(detailValue);
@@ -1058,8 +1037,7 @@ function App() {
     } catch {}
   }
   function changeCompany(id: string) {
-    if (demo) void api("/expert-demo", { action: "stop", company_id: companyId, demo_id: demo.id }).catch(() => {});
-    setDemo(undefined); setDemoError(""); setExpertOpen(false);
+    setDemoError("");
     setFeed(undefined); setDetail(undefined); setMessages([]); setLoading(true);
     setQuery(""); setTopic("all"); setLevel("all"); setMode("personal");
     setCompanyId(id);
@@ -1094,6 +1072,15 @@ function App() {
     } catch (e: any) { if (currentCompany.current === selectedCompany) setDemoError(e.message); }
     finally { setDemoBusy(false); }
   }
+  async function retryDemo() {
+    if (!demo || demoBusy) return;
+    setDemoBusy(true); setDemoError("");
+    try {
+      const value = await api("/expert-demo", { action: "retry", company_id: companyId, demo_id: demo.id });
+      setDemo(value);
+    } catch (e: any) { setDemoError(e.message); }
+    finally { setDemoBusy(false); }
+  }
   async function stopDemo() {
     if (demo) await api("/expert-demo", { action: "stop", company_id: companyId, demo_id: demo.id }).catch(() => {});
     setDemo(undefined); setSelectedId(undefined); setDemoError(""); setExpertOpen(false); setMode("personal");
@@ -1104,7 +1091,7 @@ function App() {
     setQuery("");
   }
   async function start(
-    kind: "analysis" | "chat" | "matching",
+    kind: "analysis" | "chat",
     prompted?: string,
   ) {
     if (busy || !selectedId || (detail?.is_demo && kind !== "chat")) return;
@@ -1115,11 +1102,7 @@ function App() {
     setJobError("");
     try {
       const value = await api(
-        kind === "chat"
-          ? "/chat"
-          : kind === "matching"
-            ? "/matches"
-            : "/analysis",
+        kind === "chat" ? "/chat" : "/analysis",
         {
           company_id: companyId,
           news_id: selectedId,
@@ -1515,7 +1498,6 @@ function App() {
                       >
                         {[
                           ["analysis", "Разбор"],
-                          ["companies", "Компании"],
                           ["original", "Новость"],
                           ["sources", "Источники"],
                         ].map(([key, title]) => (
@@ -1529,99 +1511,7 @@ function App() {
                           </button>
                         ))}
                       </div>
-                      {detailTab === "companies" ? (
-                        <section className="panel related-panel">
-                          <div className="section-icon">
-                            <Building2 size={20} />
-                            <h2>Компании по этой новости</h2>
-                          </div>
-                          <p>
-                            Сохранённые связи с компаниями. Оценка важности
-                            относится к каждой компании отдельно.
-                          </p>
-                          <Button
-                            view="secondary"
-                            size={40}
-                            loading={!!busy && job?.kind === "matching"}
-                            disabled={
-                              !!busy ||
-                              (!boot.status.live_available || !!detail?.is_demo) ||
-                              !related?.available
-                            }
-                            onClick={() => start("matching")}
-                          >
-                            Подобрать компании
-                          </Button>
-                          {relatedError && <ErrorBox message={relatedError} />}
-                          <div className="related-list">
-                            {related?.items?.length ? (
-                              related.items.map((row: Obj) => (
-                                <article
-                                  className={
-                                    "related-company " +
-                                    (row.company_id === companyId
-                                      ? "current"
-                                      : "")
-                                  }
-                                  key={row.company_id}
-                                >
-                                  <div className="related-company-top">
-                                    <div>
-                                      <span className="eyebrow">
-                                        {row.company_id}
-                                      </span>
-                                      <h3>{shortIndustry(row.company)}</h3>
-                                    </div>
-                                    <Badge
-                                      value={row.importance}
-                                      status={row.importance_status}
-                                    />
-                                  </div>
-                                  <p>{row.company.industry}</p>
-                                  <small>
-                                    {row.company.region} ·{" "}
-                                    {row.analysis_status === "running"
-                                      ? "Разбор готовится…"
-                                      : row.analysis_status === "ready" ||
-                                          row.analysis_status === "partial"
-                                        ? "Разбор подготовлен"
-                                        : "Подробного разбора пока нет"}
-                                  </small>
-                                  {row.importance_reason && (
-                                    <p className="related-reason">
-                                      {row.importance_reason}
-                                    </p>
-                                  )}
-                                  <button
-                                    className="text-link"
-                                    onClick={() => {
-                                      const publication = selectedId;
-                                      changeCompany(row.company_id);
-                                      setSelectedId(publication);
-                                      setDetailTab("analysis");
-                                    }}
-                                  >
-                                    {row.company_id === companyId
-                                      ? "Открыть разбор"
-                                      : "Посмотреть для этой компании"}
-                                    <ArrowRight size={15} />
-                                  </button>
-                                </article>
-                              ))
-                            ) : (
-                              <p className="muted small">
-                                {related
-                                  ? "Связи пока не найдены. Запустите подбор компаний."
-                                  : "Загружаем связи…"}
-                              </p>
-                            )}
-                          </div>
-                          <p className="muted small">
-                            Сходство текстов помогает найти кандидатов и само по
-                            себе не доказывает влияние новости.
-                          </p>
-                        </section>
-                      ) : detailTab === "original" ? (
+                      {detailTab === "original" ? (
                         <section className="panel original-text">
                           <div className="eyebrow">ТЕКСТ ИСТОЧНИКА</div>
                           <h2>{news.title}</h2>
@@ -1709,7 +1599,7 @@ function App() {
                           )}
                         </section>
                       ) : detail.is_demo && !state ? (
-                        <section className="panel demo-wait" role="status">{!["failed", "not_matched", "not_business"].includes(detail.phase) && <Loader2 className="spin" size={24}/>}<h2>{detail.phase === "failed" ? "Не удалось обработать новость" : ["not_matched", "not_business"].includes(detail.phase) ? "Разбор для этой компании не создан" : "Тестовая новость обрабатывается"}</h2><p>{detail.stage || "Идёт реальная обработка"}. {detail.phase === "failed" ? "Результат не подменяется шаблоном. Можно повторить сценарий после устранения ошибки." : ["not_matched", "not_business"].includes(detail.phase) ? "Проверьте фактически подобранные компании на вкладке «Компании»." : "Подбор и разбор выполняются через модели и БД. Результат появится после завершения обработки."}</p></section>
+                        <section className="panel demo-wait" role="status">{!["failed", "not_matched", "not_business"].includes(detail.phase) && <Loader2 className="spin" size={24}/>}<h2>{detail.phase === "failed" ? "Не удалось обработать новость" : ["not_matched", "not_business"].includes(detail.phase) ? "Разбор для этой компании не создан" : "Тестовая новость обрабатывается"}</h2><p>{detail.stage || "Идёт реальная обработка"}. {detail.phase === "failed" ? "Результат не подменяется шаблоном. Можно повторить сценарий после устранения ошибки." : ["not_matched", "not_business"].includes(detail.phase) ? "Подбор не установил связь с выбранной компанией. В ленте «Для вас» доступны подходящие новости." : "Подбор и разбор выполняются через модели и БД. Результат появится после завершения обработки."}</p></section>
                       ) : !state ? (
                         <section className="panel empty-analysis">
                           {detail.link?.importance_reason && (
@@ -2047,7 +1937,7 @@ function App() {
                 </span>
                 <span className="feed-tools"><span>Лента обновляется автоматически</span><button className="expert-toggle" aria-expanded={expertOpen} onClick={() => setExpertOpen(v => !v)}>Сценарий для эксперта</button></span>
               </div>
-              {expertOpen && <ExpertScenario session={feed?.demo || demo} busy={demoBusy} error={demoError} onStart={startDemo} onStop={stopDemo}/>}
+              {expertOpen && <ExpertScenario companyCount={boot.companies.length} session={feed?.demo || demo} busy={demoBusy} error={demoError} onStart={startDemo} onStop={stopDemo} onRetry={retryDemo}/>}
               <div className="hero">
                 <div className="hero-copy">
                   <h1>

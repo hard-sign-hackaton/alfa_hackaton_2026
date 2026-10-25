@@ -85,3 +85,16 @@ class ExpertPipelineTests(unittest.TestCase):
             self.run_pipeline()
         self.runner.assert_not_called()
         self.service.match_news.assert_not_called()
+
+    def test_restart_reuses_actual_committed_result_instead_of_calling_models_again(self):
+        self.links.list.return_value = [{'company_id': 'found', 'analysis_result': self.state, 'analysis_status': 'ready'}]
+        result = self.run_pipeline()
+        self.assertTrue(result['reused_analysis'])
+        self.assertIs(result['state'], self.state)
+        self.runner.assert_not_called()
+        self.service.match_news.assert_not_called()
+
+    def test_failed_review_is_not_replaced_by_an_older_cached_result(self):
+        self.links.list.return_value = [{'company_id': 'found', 'analysis_result': self.state, 'analysis_status': 'failed'}]
+        self.run_pipeline()
+        self.runner.assert_called_once()

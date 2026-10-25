@@ -22,10 +22,10 @@ INSERT_ROW = re.compile(r'^INSERT INTO public\.(?:news_sources|news_articles|new
 def without_expert_records(dump):
     def keep(match):
         literals = re.findall(SQL_LITERAL, match.group())
-        return '' if any(re.fullmatch(r"'(?:demo:[a-f0-9]{32}:[0-3]|expert-demo:[a-f0-9]{32})'", value)
+        return '' if any(re.fullmatch(r"'(?:demo:[a-f0-9]{32}:[0-9]{1,3}|expert-demo:[a-f0-9]{32}(?::[A-Za-z0-9_-]+)?)'", value)
                          for value in literals) else match.group()
     filtered = INSERT_ROW.sub(keep, dump)
-    if re.search(r"'(?:demo:[a-f0-9]{32}:[0-3]|expert-demo:[a-f0-9]{32})'", filtered):
+    if re.search(r"'(?:demo:[a-f0-9]{32}:[0-9]{1,3}|expert-demo:[a-f0-9]{32}(?::[A-Za-z0-9_-]+)?)'", filtered):
         raise ValueError('Could not safely exclude expert records from SQL export')
     return filtered
 

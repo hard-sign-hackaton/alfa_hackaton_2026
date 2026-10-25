@@ -73,6 +73,19 @@ class CompanyAdapterTests(unittest.TestCase):
         self.assertEqual(result['candidates'][0]['matched_topics'], ['automotive'])
         self.assertEqual(result['candidates'][0]['similarity'], .80)
 
+    def test_explicit_company_reference_restricts_candidates_without_faking_vector_score(self):
+        service = Mock()
+        service.search.return_value = [
+            {'id': 'U_123', 'okved_code': '45.31', 'similarity': .95},
+            {'id': 'U_1234', 'okved_code': '45.31', 'similarity': .90},
+        ]
+        event = news()[0].model_copy(update={'title': 'Уведомление для U_1234', 'text': 'Изменение договора U_1234.', 'topics': ['automotive']})
+        with patch.object(self.reader, '_semantic', return_value=service):
+            result = self.reader.match_news(event, as_of=AS_OF, limit=5)
+        self.assertEqual([row['id'] for row in result['candidates']], ['U_1234'])
+        self.assertEqual(result['candidates'][0]['similarity'], .90)
+        self.assertNotIn('importance', result['candidates'][0])
+
     def test_reverse_search_excludes_classified_nonbusiness_without_model(self):
         with patch.object(self.reader, '_semantic') as semantic:
             result = self.reader.match_news(news()[0].model_copy(update={'topics': ['not_business']}), as_of=AS_OF)

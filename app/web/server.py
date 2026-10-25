@@ -43,6 +43,7 @@ class Application:
         self.runtime.mkdir(parents=True, exist_ok=True)
         self.lock = RLock()
         self.executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix='research')
+        self.expert_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix='expert-research')
         self.jobs, self.conversations, self.analyses = {}, {}, {}
         self.runner, self.chat_runner = runner or self.run_analysis, chat_runner or self.run_chat
         self.events, self.companies, self.classifications, self.matches = {}, {}, {}, {}
@@ -60,7 +61,7 @@ class Application:
         from .expert_demo import ExpertDemo
         from .expert_pipeline import ExpertPipeline
         self.expert_pipeline = ExpertPipeline(self.links, self.runner)
-        self.expert_demo = ExpertDemo(processor=self.process_expert, executor=self.executor)
+        self.expert_demo = ExpertDemo(processor=self.process_expert, executor=self.expert_executor, runtime=self.runtime)
         if enable_links and os.environ.get('LINKS_DATABASE_URL'):
             from app.modules.links.repository import LinkRepository
             self.links = LinkRepository(os.environ['LINKS_DATABASE_URL'])
@@ -115,6 +116,7 @@ class Application:
                         raise RuntimeError('Source database unavailable')
                     self.links_sync.update(status='running', stage='Подготовка связей')
                     self.initialize_links()
+                    self.expert_demo.resume()
                     from app.modules.links.service import LinkService
                     service = LinkService(self.links, self.classifications,
                         lambda stage: self.links_sync.update(stage=stage))
@@ -279,12 +281,12 @@ class Application:
         return host.removeprefix('www.')
 
     def demo_control(self, data):
-        if set(data) - {'company_id', 'action', 'demo_id'} or data.get('action') not in ('start', 'stop'):
+        if set(data) - {'company_id', 'action', 'demo_id'} or data.get('action') not in ('start', 'stop', 'retry'):
             raise ApiError(400, 'Некорректная команда сценария')
         company_id = data.get('company_id')
         if not isinstance(company_id, str) or company_id not in self.companies:
             raise ApiError(404, 'Компания не найдена')
-        if data['action'] == 'stop' and (not isinstance(data.get('demo_id'), str) or not re.fullmatch(r'[a-f0-9]{32}', data['demo_id'])):
+        if data['action'] != 'start' and (not isinstance(data.get('demo_id'), str) or not re.fullmatch(r'[a-f0-9]{32}', data['demo_id'])):
             raise ApiError(400, 'Некорректный идентификатор сценария')
         try:
             if data['action'] == 'stop':
@@ -294,7 +296,9 @@ class Application:
                 raise ApiError(503, 'Для сценария нужны ключ моделей и EXPERT_DATABASE_URL')
             if self.database_status != 'connected' or not self.links_initialized:
                 raise ApiError(503, 'Дождитесь подключения базы и подготовки хранилища связей')
-            return self.expert_demo.start(self.companies[company_id])
+            if data['action'] == 'retry':
+                return self.expert_demo.retry(data['demo_id'], company_id)
+            return self.expert_demo.start(list(self.companies.values()), company_id)
         except ValueError as error:
             raise ApiError(409, str(error)) from None
 
@@ -720,6 +724,7 @@ def main():
         application.links_stop.set()
         server.server_close()
         application.executor.shutdown(wait=False, cancel_futures=True)
+        application.expert_executor.shutdown(wait=False, cancel_futures=True)
 
 
 if __name__ == '__main__':
