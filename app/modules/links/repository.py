@@ -59,8 +59,10 @@ class LinkRepository:
             s.flush()
             return output(row)
 
-    def list(self, *, company_id=None, news_id=None, active_only=False):
+    def list(self, *, company_id=None, news_id=None, active_only=False, include_demo=False):
         query = current(select(Link))
+        if not include_demo:
+            query = query.where(Article.source_id.not_like('expert-demo:%'))
         if company_id is not None:
             query = query.where(Link.company_id == company_id)
         if news_id is not None:

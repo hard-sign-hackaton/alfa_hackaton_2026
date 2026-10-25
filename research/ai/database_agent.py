@@ -51,6 +51,11 @@ class DatabaseResearchAgent:
                  'retrieved_sources': [], 'research_stop': 'not_business', 'result': None}
         if hasattr(self.repository, 'news_metadata'):
             state['news_metadata'] = self.repository.news_metadata(news.id)
+        if state.get('news_metadata', {}).get('is_demo'):
+            state['is_demo'] = True
+            messages_notice = '\nСобытие вымышленное, тестовый сценарий. Не представляй его реальным фактом.'
+        else:
+            messages_notice = ''
         if not preparation.classification.business_relevant:
             from contracts import Insight
             state['result'] = Insight(company_id=company.id, news_id=news.id, status='insufficient_data',
@@ -62,7 +67,7 @@ class DatabaseResearchAgent:
         state['ranking'] = rank_pair(company, news.model_copy(update={'topics': preparation.classification.topics}), as_of=self.as_of)
         initial_bank = session.invoke('search_bank_analytics', {'query': bank_query(news, preparation), 'limit': 2})
         state['bank_context_version'] = 1
-        messages = [SystemMessage(content=RESEARCH_SYSTEM), HumanMessage(content=json.dumps({
+        messages = [SystemMessage(content=RESEARCH_SYSTEM + messages_notice), HumanMessage(content=json.dumps({
             'company': company.model_dump(), 'news': news.model_dump(), 'preparation': preparation.model_dump(),
             'question': question, 'as_of': self.as_of.isoformat(), 'initial_bank_search': initial_bank}, ensure_ascii=False))]
         tool_count = 1

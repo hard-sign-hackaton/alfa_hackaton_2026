@@ -13,6 +13,23 @@ ROOT = Path(__file__).resolve().parents[1]
 SECTION = re.compile(r'^--\n-- (?:Data for Name|Name): ([^;]+); Type: (TABLE DATA|SEQUENCE SET); Schema: public; Owner: [^\n]*\n--\n', re.M)
 
 
+# pg_dump --column-inserts uses SQL literals, which may contain real newlines.
+SQL_LITERAL = r"E'(?:\\.|''|[^'])*'|'(?:''|[^'])*'"
+INSERT_ROW = re.compile(r'^INSERT INTO public\.(?:news_sources|news_articles|news_embeddings|news_company_links) '
+                        r'\([^;]+?\) VALUES \((?:' + SQL_LITERAL + r'|[^\';])*\) ON CONFLICT DO NOTHING;', re.M)
+
+
+def without_expert_records(dump):
+    def keep(match):
+        literals = re.findall(SQL_LITERAL, match.group())
+        return '' if any(re.fullmatch(r"'(?:demo:[a-f0-9]{32}:[0-3]|expert-demo:[a-f0-9]{32})'", value)
+                         for value in literals) else match.group()
+    filtered = INSERT_ROW.sub(keep, dump)
+    if re.search(r"'(?:demo:[a-f0-9]{32}:[0-3]|expert-demo:[a-f0-9]{32})'", filtered):
+        raise ValueError('Could not safely exclude expert records from SQL export')
+    return filtered
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--news-database', required=True)
@@ -48,6 +65,7 @@ def main():
         dump = run(service, 'pg_dump', '-U', user, '-d', database, '--data-only', '--no-owner',
                    '--no-acl', '--no-comments', '--column-inserts', '--on-conflict-do-nothing', *table_flags)
         if service == 'postgres':
+            dump = without_expert_records(dump)
             manifest['analysis_coverage'] = json.loads(run(service, 'psql', '-U', user, '-d', database, '-At', '-c',
                 "SELECT json_build_object('active_pairs', count(*) FILTER (WHERE active), "
                 "'analyses', count(analysis_result), "
@@ -61,7 +79,7 @@ def main():
                 "CROSS JOIN jsonb_array_elements(c->'evidence') e WHERE e->>'source_id' LIKE 'bank:%')), "
                 "'supported', count(*) FILTER (WHERE analysis_result->'result'->>'status'='supported'), "
                 "'insufficient_data', count(*) FILTER (WHERE analysis_result->'result'->>'status'='insufficient_data')) "
-                "FROM news_company_links;"))
+                "FROM news_company_links WHERE news_id NOT LIKE 'demo:%';"))
         dump = re.sub(r'^\\(?:un)?restrict[^\n]*\n', '', dump, flags=re.M)
         sections = list(SECTION.finditer(dump))
         if not sections or '\\' in dump[:sections[0].start()]:

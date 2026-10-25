@@ -1,12 +1,22 @@
-import sys
-from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
 import tempfile
 import unittest
-from unittest.mock import patch
 from threading import Event
+from unittest.mock import patch
 
 from app.web.server import Application, ApiError
 from app.web.expert_demo import ExpertDemo
+
+
+class ManualExecutor:
+    def __init__(self):
+        self.tasks = []
+    def submit(self, fn, *args):
+        self.tasks.append((fn, args))
+    def run(self):
+        fn, args = self.tasks.pop(0)
+        fn(*args)
 
 
 class ExpertDemoTests(unittest.TestCase):
@@ -16,77 +26,122 @@ class ExpertDemoTests(unittest.TestCase):
         self.company_id = 'U_37452'
         self.company = self.app.companies[self.company_id]
         self.elapsed = 0
-        self.demo = ExpertDemo(clock=lambda: self.elapsed)
+        self.queue = ManualExecutor()
+        self.calls = []
+        self.snapshot = next(iter(self.app.analyses.values()))
+        self.demo = ExpertDemo(self.processor, self.queue, clock=lambda: self.elapsed, auto_schedule=False)
         self.app.expert_demo = self.demo
 
     def tearDown(self):
         self.app.executor.shutdown(wait=True)
         self.temp.cleanup()
 
-    def test_arrivals_matching_analysis_and_duplicate_follow_server_time(self):
-        session = self.demo.start(self.company)
-        sid = session['id']
-        self.assertEqual(session['items'], [])
+    def processor(self, event, company_id, progress, cancelled):
+        self.calls.append(event['id'])
+        if event['id'].endswith(':3'):
+            return {'duplicate': True, 'duplicate_of': event['id'][:-1] + '0'}
+        row = {'company_id': company_id, 'news_id': event['id'], 'importance': 'low', 'importance_status': 'ready',
+               'analysis_status': 'ready', 'topics': ['financial_markets']}
+        progress('matched', 'Actual matcher callback', matches=[row])
+        state = deepcopy(self.snapshot)
+        state.update(company_id=company_id, news_id=event['id'], event=event, is_demo=True)
+        row['analysis_result'] = state
+        return {'state': state, 'matches': [row]}
+
+    def test_clock_only_delivers_news_and_never_creates_ready_result(self):
+        sid = self.demo.start(self.company)['id']
+        self.assertEqual(self.demo.view(sid, self.company_id)['items'], [])
+        self.elapsed = 600
+        pending = self.demo.view(sid, self.company_id)
+        self.assertEqual(pending['received'], 4)
+        self.assertEqual((pending['ready'], pending['duplicates']), (0, 0))
+        self.assertTrue(all(row['phase'] == 'received' for row in pending['timeline']))
+        self.assertTrue(all(not row['classification'].get('importance') for row in pending['items']))
+        self.assertEqual(self.calls, [])
+        self.queue.run()
+        self.assertEqual(self.demo.view(sid, self.company_id)['ready'], 1)
+        self.queue.run(); self.queue.run(); self.queue.run()
+        done = self.demo.view(sid, self.company_id)
+        self.assertEqual((done['ready'], done['duplicates'], done['status']), (3, 1, 'done'))
+        self.assertEqual(done['analyses'], 3)
+        self.assertNotIn('analysis_result', done['items'][0]['link'])
+        detail = self.demo.analysis(sid, self.company_id, done['items'][0]['id'])
+        self.assertNotIn('analysis_result', detail['matches'][0])
+        self.assertEqual(done['items'][-1]['classification']['importance'], 'low')
+        self.assertEqual(len(self.calls), 4)
+
+    def test_real_progress_is_visible_before_worker_completes(self):
+        started, finish = Event(), Event()
+        def processor(event, company_id, progress, cancelled):
+            progress('embedding', 'Real embedding has started')
+            started.set()
+            self.assertTrue(finish.wait(3))
+            return self.processor(event, company_id, progress, cancelled)
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            demo = ExpertDemo(processor, executor, clock=lambda: self.elapsed, auto_schedule=False)
+            sid = demo.start(self.company)['id']
+            self.elapsed = 2
+            demo.view(sid, self.company_id)
+            self.assertTrue(started.wait(2))
+            pending = demo.view(sid, self.company_id)
+            self.assertEqual(pending['timeline'][0]['phase'], 'embedding')
+            self.assertEqual(pending['ready'], 0)
+            finish.set()
+
+    def test_failure_and_unmatched_are_explicit_not_fabricated_insights(self):
+        for result, expected in [({'state': None, 'matches': []}, 'not_matched'), (RuntimeError('secret'), 'failed')]:
+            def processor(*args):
+                if isinstance(result, Exception):
+                    raise result
+                return result
+            self.demo.processor = processor
+            sid = self.demo.start(self.company)['id']
+            self.elapsed += 2
+            pending = self.demo.view(sid, self.company_id)
+            self.queue.run()
+            after = self.demo.view(sid, self.company_id)
+            self.assertEqual(after['timeline'][0]['phase'], expected)
+            self.assertEqual(after['ready'], 0)
+            self.assertNotIn('secret', str(after))
+            self.demo.stop(sid, self.company_id)
+
+    def test_stop_cancels_queued_work_and_scope_cannot_cross_company(self):
+        sid = self.demo.start(self.company)['id']
         self.elapsed = 2
-        card = self.demo.view(sid, self.company_id)['items'][0]
-        self.assertEqual(card['demo_phase'], 'received')
-        self.assertFalse(card['has_analysis'])
-        self.elapsed = 4
-        self.assertEqual(self.demo.view(sid, self.company_id)['items'][0]['demo_phase'], 'matched')
-        self.assertTrue(self.demo.analysis(sid, self.company_id, card['id'])['matched'])
-        self.assertFalse(self.demo.analysis(sid, self.company_id, card['id'])['ready'])
-        self.elapsed = 7
-        result = self.demo.analysis(sid, self.company_id, card['id'])
-        self.assertTrue(result['ready'])
-        self.assertEqual(result['state']['mode'], 'expert_demo')
-        self.elapsed = 26
-        finished = self.demo.view(sid, self.company_id)
-        self.assertEqual((finished['received'], finished['unique'], finished['ready'], finished['duplicates']), (4, 3, 3, 1))
-        self.assertEqual(finished['status'], 'done')
-        for item in finished['items']:
-            self.assertTrue(item['is_demo'])
-            state = self.demo.analysis(sid, self.company_id, item['id'])['state']
-            from contracts import Insight, CompanyProfile, NewsEvent, validate_evidence
-            validate_evidence(Insight.model_validate(state['result']), CompanyProfile.model_validate(state['company']), NewsEvent.model_validate(state['event']), state['retrieved_sources'])
-
-    def test_scenario_does_not_change_normal_feed_and_cannot_cross_company(self):
-        normal = self.app.feed(self.company_id)
-        original_count = len(self.app.events), len(self.app.analyses)
-        session = self.app.demo_control({'company_id': self.company_id, 'action': 'start'})
-        self.elapsed = 7
-        feed = self.app.feed(self.company_id, session['id'])
-        self.assertEqual(len(feed['items']), len(normal['items']) + 1)
-        self.assertEqual((len(self.app.events), len(self.app.analyses)), original_count)
-        with self.assertRaises(ApiError):
-            self.app.feed('U_128194', session['id'])
-        with self.assertRaises(ApiError):
-            self.app.start_job({'company_id': self.company_id, 'news_id': feed['items'][0]['id']})
-        self.app.demo_control({'company_id': self.company_id, 'demo_id': session['id'], 'action': 'stop'})
+        news_id = self.demo.view(sid, self.company_id)['items'][0]['id']
         with self.assertRaises(ValueError):
-            self.demo.view(session['id'], self.company_id)
-        self.assertEqual(len(self.app.feed(self.company_id)['items']), len(normal['items']))
-
-    def test_unpublished_and_expired_demo_are_not_readable(self):
-        session = self.demo.start(self.company)
+            self.demo.analysis(sid, 'another-company', news_id)
+        self.demo.stop(sid, self.company_id)
+        self.queue.run()
+        self.assertEqual(self.calls, [])
         with self.assertRaises(ValueError):
-            self.demo.analysis(session['id'], self.company_id, 'demo:' + session['id'] + ':0')
+            self.demo.view(sid, self.company_id)
+
+    def test_unpublished_expired_and_duplicate_active_sessions_are_rejected(self):
+        sid = self.demo.start(self.company)['id']
+        with self.assertRaises(ValueError):
+            self.demo.start(self.company)
+        with self.assertRaises(ValueError):
+            self.demo.analysis(sid, self.company_id, 'demo:' + sid + ':0')
         self.elapsed = self.demo.TTL + 1
         with self.assertRaises(ValueError):
-            self.demo.view(session['id'], self.company_id)
+            self.demo.view(sid, self.company_id)
 
-    def test_demo_chat_uses_immutable_ready_state_and_rejects_other_company(self):
-        session = self.demo.start(self.company)
-        self.elapsed = 7
-        news_id = self.demo.view(session['id'], self.company_id)['items'][0]['id']
+    def test_chat_uses_real_ready_result_and_pending_chat_is_rejected(self):
+        sid = self.demo.start(self.company)['id']
+        self.elapsed = 2
+        news_id = self.demo.view(sid, self.company_id)['items'][0]['id']
+        data = {'company_id': self.company_id, 'news_id': news_id, 'demo_id': sid, 'question': 'Какие данные проверить?'}
+        with self.assertRaises(ApiError):
+            self.app.start_job(data, 'chat')
+        self.queue.run()
         called = Event()
         def chat(state, question, history, progress):
             self.assertTrue(state['is_demo'])
-            self.assertEqual(state['company_id'], self.company_id)
+            self.assertEqual(state['news_id'], news_id)
             called.set()
-            return {'answer': {'company_id': state['company_id'], 'news_id': state['news_id'],
-                              'summary': 'Тестовый ответ', 'follow_up_answer': 'Тестовый ответ', 'claims': []}}
+            return {'answer': {'company_id': state['company_id'], 'news_id': news_id, 'summary': 'Test'}}
         self.app.chat_runner = chat
-        data = {'company_id': self.company_id, 'news_id': news_id, 'demo_id': session['id'], 'question': 'Какие данные проверить?'}
         with patch.dict('os.environ', {'LLM_API_KEY': 'test-key'}):
             job = self.app.start_job(data, 'chat')
             self.assertTrue(called.wait(2))
@@ -94,4 +149,9 @@ class ExpertDemoTests(unittest.TestCase):
             with self.assertRaises(ApiError):
                 self.app.start_job({**data, 'company_id': 'U_128194'}, 'chat')
         self.assertNotIn(news_id, self.app.events)
-        self.assertNotIn((self.company_id, news_id), self.app.analyses)
+
+    def test_scenario_requires_real_model_and_ingestion_access(self):
+        with patch.dict('os.environ', {'EXPERT_DATABASE_URL': '', 'LLM_API_KEY': ''}):
+            with self.assertRaises(ApiError) as error:
+                self.app.demo_control({'company_id': self.company_id, 'action': 'start'})
+            self.assertEqual(error.exception.status, 503)

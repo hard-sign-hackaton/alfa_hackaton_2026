@@ -39,6 +39,14 @@ def main():
         raw.execute('GRANT SELECT ON news_articles,companies,news_company_links TO analysis_links_writer')
         raw.execute('GRANT INSERT,UPDATE ON news_company_links TO analysis_links_writer')
         raw.execute('GRANT SELECT,INSERT,UPDATE,DELETE ON analysis_feedback TO analysis_links_writer')
+        demo_password = os.environ.get('EXPERT_WRITER_PASSWORD') or writer_password
+        exists = raw.execute("SELECT 1 FROM pg_roles WHERE rolname = 'analysis_demo_writer'").fetchone()
+        command = 'ALTER ROLE' if exists else 'CREATE ROLE'
+        raw.execute(sql.SQL(command + ' analysis_demo_writer LOGIN PASSWORD {}').format(sql.Literal(demo_password)))
+        raw.execute("ALTER ROLE analysis_demo_writer SET statement_timeout = '10s'")
+        raw.execute('GRANT USAGE ON SCHEMA public TO analysis_demo_writer')
+        raw.execute('GRANT SELECT,INSERT,UPDATE ON news_sources,news_articles,news_embedding_profiles,news_embeddings TO analysis_demo_writer')
+        raw.execute('GRANT USAGE,SELECT ON SEQUENCE news_embeddings_id_seq TO analysis_demo_writer')
     print('Storage ready; source reader and restricted link writer configured')
 
 

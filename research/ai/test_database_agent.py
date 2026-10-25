@@ -87,6 +87,21 @@ class DatabaseAgentTests(unittest.TestCase):
         self.repository = RepositoryFixture()
         self.company, self.news = self.repository.company, self.repository.news
 
+    def test_synthetic_news_metadata_reaches_real_analysis_and_is_marked_in_state(self):
+        self.repository.news_metadata = lambda news_id: {'is_demo': True}
+        client = ClientFixture([AIMessage(content='Done')])
+        state = DatabaseResearchAgent(self.repository, client, as_of=AS_OF).run(self.company.id, self.news.id)
+        self.assertTrue(state['is_demo'])
+        self.assertTrue(client.analyses[0]['news_metadata']['is_demo'])
+        self.assertIn('вымышленное', client.steps[0][0].content)
+
+    def test_synthetic_id_resolves_directly_without_legacy_database(self):
+        reader = __import__('unittest.mock', fromlist=['Mock']).Mock()
+        reader.resolve.return_value = 'demo:' + 'a' * 32 + ':0'
+        repository = PostgresRepository(None, news_reader=reader)
+        with patch.object(repository, '_read', side_effect=AssertionError('Legacy database must not be used')):
+            self.assertEqual(repository.resolve_news_id(reader.resolve.return_value, as_of=AS_OF), reader.resolve.return_value)
+
     def test_model_selects_search_and_evidence_reaches_analysis_and_chat(self):
         client = ClientFixture([calls(('search_bank_analytics', {'query': 'steel'})), AIMessage(content='Done')])
         state = DatabaseResearchAgent(self.repository, client, as_of=AS_OF).run(self.company.id, self.news.id, question='Why?')

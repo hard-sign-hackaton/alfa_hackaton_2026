@@ -79,11 +79,15 @@ class LinkService:
                 self.assess(pair, profile, event)
         return {'matched': count, 'telemetry': self.client.telemetry}
 
-    def match_news(self, news_id, limit=5):
+    def match_news(self, news_id, limit=5, *, on_matched=None, on_classified=None):
         event = self.news.get_news(news_id, as_of=self.as_of)
         classification = self.classification(event)
+        if on_classified:
+            on_classified()
         event = event.model_copy(update={'topics': classification.topics})
         result = self.companies.match_news(event, as_of=self.as_of, limit=limit)
+        if on_matched:
+            on_matched()
         for hit in result['candidates']:
             pair = self.repository.ensure(hit['id'], event.id, method='company_embedding', score=hit['similarity'],
                 reasons=[{'kind': 'semantic', 'matched_topics': hit['matched_topics'],

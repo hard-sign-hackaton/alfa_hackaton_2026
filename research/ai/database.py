@@ -92,6 +92,8 @@ class PostgresRepository:
     def resolve_news_id(self, news_id, *, as_of=None):
         if self.news_reader is None:
             return news_id
+        if news_id.startswith('demo:'):
+            return self.news_reader.resolve(news_id, as_of=as_of)
         rows = self._read("SELECT payload->>'url' AS url FROM news WHERE id = %s", (news_id,))
         return self.news_reader.resolve(news_id, rows[0]['url'] if rows else None, as_of=as_of)
 

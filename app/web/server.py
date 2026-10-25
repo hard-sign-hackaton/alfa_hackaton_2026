@@ -58,7 +58,9 @@ class Application:
         self.links_sync = {'status': 'disabled', 'stage': '', 'updated_at': None}
         self.links_stop = Event()
         from .expert_demo import ExpertDemo
-        self.expert_demo = ExpertDemo()
+        from .expert_pipeline import ExpertPipeline
+        self.expert_pipeline = ExpertPipeline(self.links, self.runner)
+        self.expert_demo = ExpertDemo(processor=self.process_expert, executor=self.executor)
         if enable_links and os.environ.get('LINKS_DATABASE_URL'):
             from app.modules.links.repository import LinkRepository
             self.links = LinkRepository(os.environ['LINKS_DATABASE_URL'])
@@ -287,12 +289,18 @@ class Application:
         try:
             if data['action'] == 'stop':
                 return self.expert_demo.stop(data.get('demo_id'), company_id)
-            self.reload_links()
-            bank = {s['source_id']: s for (cid, _), state in self.analyses.items() if cid == company_id
-                    for s in state.get('retrieved_sources', []) if s.get('kind') == 'bank'}
-            return self.expert_demo.start(self.companies[company_id], list(bank.values()))
+            self.refresh_database()
+            if not os.environ.get('LLM_API_KEY') or not os.environ.get('EXPERT_DATABASE_URL'):
+                raise ApiError(503, 'Для сценария нужны ключ моделей и EXPERT_DATABASE_URL')
+            if self.database_status != 'connected' or not self.links_initialized:
+                raise ApiError(503, 'Дождитесь подключения базы и подготовки хранилища связей')
+            return self.expert_demo.start(self.companies[company_id])
         except ValueError as error:
             raise ApiError(409, str(error)) from None
+
+    def process_expert(self, event, company_id, progress, cancelled):
+        self.expert_pipeline.links = self.links
+        return self.expert_pipeline(event, company_id, progress, cancelled)
 
     def feed(self, company_id, demo_id=None):
         self.refresh_database()
@@ -312,7 +320,7 @@ class Application:
             except ValueError as error:
                 raise ApiError(409, str(error)) from None
             cards = demo['items'] + cards
-            candidates.update({c['id']: c for c in demo['items'] if c['demo_phase'] in ('matched', 'ready')})
+            candidates.update({c['id']: c for c in demo['items'] if c.get('link') is not None})
             demo = {key: value for key, value in demo.items() if key != 'items'}
         return {'company_id': company_id, 'demo': demo, 'items': cards, 'matched_ids': list(candidates),
                 'matching_as_of': (self.links_sync.get('updated_at') or now())[:10] if self.links_initialized else '2026-10-22',
@@ -328,7 +336,8 @@ class Application:
                 value = self.expert_demo.analysis(demo_id, company_id, news_id)
             except ValueError as error:
                 raise ApiError(409, str(error)) from None
-            return {**value, 'company': self.companies[company_id], 'link': None,
+            pair = next((row for row in value['matches'] if row['company_id'] == company_id), None)
+            return {**value, 'company': self.companies[company_id], 'link': pair,
                     'analysis_version': analysis_version(value['state']) if value['state'] else None,
                     'bank_context': describe_bank_context(value['state'])}
         key = self.pair(company_id, news_id)
@@ -398,7 +407,7 @@ class Application:
         demo_state = None
         if isinstance(data.get('news_id'), str) and data['news_id'].startswith('demo:'):
             if kind != 'chat' or not isinstance(data.get('demo_id'), str):
-                raise ApiError(400, 'Для тестовой новости доступны чат и готовый сценарий')
+                raise ApiError(400, 'Тестовая новость обрабатывается автоматически; после разбора доступен чат')
             value = self.analysis(data.get('company_id'), data['news_id'], data['demo_id'])
             demo_state = value['state']
             if not demo_state:
@@ -623,12 +632,9 @@ def make_handler(application, static_root):
                 if url.path == '/api/news-companies':
                     if news_id.startswith('demo:'):
                         value = application.analysis(company_id, news_id, query.get('demo_id', [None])[0])
-                        compact = (value.get('state') or {}).get('brief', {}).get('classification', {})
-                        row = {'company': value['company'], 'company_id': company_id,
-                               'importance': compact.get('importance'), 'importance_status': 'ready' if value['ready'] else 'pending',
-                               'importance_reason': 'Тестовый подбор по деятельности выбранной компании.',
-                               'analysis_status': 'ready' if value['ready'] else 'running'}
-                        return self.send(200, {'items': [row] if value.get('matched') else [], 'available': False, 'is_demo': True})
+                        rows = [{**row, 'company': application.companies[row['company_id']]}
+                                for row in value['matches'] if row['company_id'] in application.companies]
+                        return self.send(200, {'items': rows, 'available': False, 'is_demo': True})
                     return self.send(200, application.news_companies(news_id))
                 if url.path == '/api/bank-sources':
                     return self.send(200, application.bank_sources())

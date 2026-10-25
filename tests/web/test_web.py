@@ -103,9 +103,9 @@ class WebTests(unittest.TestCase):
         self.assertTrue(self.app.card(self.company_id, self.app.events[self.news_id])['short_answer'])
 
     def test_expert_demo_endpoint_is_same_origin_and_rejects_extra_fields(self):
-        with self.post('/api/expert-demo', {'company_id': self.company_id, 'action': 'start'}) as response:
-            session = json.load(response)
-        self.assertEqual(session['company_id'], self.company_id)
+        with self.assertRaises(HTTPError) as error:
+            self.post('/api/expert-demo', {'company_id': self.company_id, 'action': 'start'})
+        self.assertEqual(error.exception.code, 503)
         for data, origin, status in [({'company_id': self.company_id, 'action': 'start'}, 'https://other.test', 403),
                                       ({'company_id': self.company_id, 'action': 'start', 'sql': 'SELECT 1'}, None, 400)]:
             with self.assertRaises(HTTPError) as error:

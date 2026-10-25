@@ -73,6 +73,7 @@ type Card = {
   link?: Obj;
   is_demo?: boolean;
   demo_phase?: string;
+  demo_stage?: string;
 };
 type Bootstrap = {
   companies: Company[];
@@ -1481,7 +1482,7 @@ function App() {
                 <Skeleton />
               ) : (
                 <>
-                  {detail.is_demo && <div className="demo-detail-notice" role="note">Тестовая новость · результат подготовлен для сценария. В чате модель обсуждает вымышленное событие и ищет реальные материалы в базе.</div>}
+                  {detail.is_demo && <div className="demo-detail-notice" role="note">Вымышленная новость · подбор компаний, важность и разбор выполняет рабочий пайплайн. Источники из БД служат контекстом и не подтверждают само событие.</div>}
                   <div className="detail-heading">
                     <div className="eyebrow">РАЗБОР ДЛЯ {companyId}</div>
                     <Badge
@@ -1708,7 +1709,7 @@ function App() {
                           )}
                         </section>
                       ) : detail.is_demo && !state ? (
-                        <section className="panel demo-wait" role="status"><Loader2 className="spin" size={24}/><h2>Тестовая новость обрабатывается</h2><p>Сначала подбирается компания, затем появляется заранее подготовленный разбор. Результат откроется автоматически через несколько секунд.</p></section>
+                        <section className="panel demo-wait" role="status">{!["failed", "not_matched", "not_business"].includes(detail.phase) && <Loader2 className="spin" size={24}/>}<h2>{detail.phase === "failed" ? "Не удалось обработать новость" : ["not_matched", "not_business"].includes(detail.phase) ? "Разбор для этой компании не создан" : "Тестовая новость обрабатывается"}</h2><p>{detail.stage || "Идёт реальная обработка"}. {detail.phase === "failed" ? "Результат не подменяется шаблоном. Можно повторить сценарий после устранения ошибки." : ["not_matched", "not_business"].includes(detail.phase) ? "Проверьте фактически подобранные компании на вкладке «Компании»." : "Подбор и разбор выполняются через модели и БД. Результат появится после завершения обработки."}</p></section>
                       ) : !state ? (
                         <section className="panel empty-analysis">
                           {detail.link?.importance_reason && (
@@ -2274,7 +2275,7 @@ function App() {
                       <div className="card-topic">
                         {card.is_demo && <b className="demo-label">Тестовая новость</b>}
                         {primaryTopic(card)}
-                        {card.is_demo && !card.has_analysis && <span className="demo-processing"><Loader2 size={13} className="spin"/>{card.demo_phase === "received" ? "Получена · подбор компании" : "Компания подобрана · готовим разбор"}</span>}
+                        {card.is_demo && !card.has_analysis && <span className="demo-processing">{!["failed", "not_matched", "not_business"].includes(card.demo_phase || "") && <Loader2 size={13} className="spin"/>}{card.demo_stage || "Обработка"}</span>}
                       </div>
                       <h3>
                         <button onClick={() => setSelectedId(card.id)}>

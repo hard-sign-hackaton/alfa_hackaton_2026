@@ -45,6 +45,8 @@ class NewsReader:
             raise ValueError('Publication missing from news module or not yet published')
         self.metadata[article.id] = {name: article.model_dump(mode='json')[name] for name in
             ('publisher', 'source_id', 'collected_at', 'date_provenance', 'extraction_method', 'limitations')}
+        if article.source_id.startswith('expert-demo:'):
+            self.metadata[article.id]['is_demo'] = True
         return NewsEvent.model_validate(article.ai_event())
 
     def _semantic(self):

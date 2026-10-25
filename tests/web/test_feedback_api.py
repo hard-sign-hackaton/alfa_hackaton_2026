@@ -97,8 +97,16 @@ class FeedbackApiTests(unittest.TestCase):
 
     def test_demo_feedback_scope_is_derived_from_server_state(self):
         clock = [0]
-        self.app.expert_demo.clock = lambda: clock[0]
-        session = self.app.demo_control({'company_id': self.data['company_id'], 'action': 'start'})
+        from app.web.expert_demo import ExpertDemo
+        class ImmediateExecutor:
+            def submit(self, fn, *args):
+                fn(*args)
+        def processor(event, company_id, progress, cancelled):
+            state = copy.deepcopy(self.state)
+            state.update(company_id=company_id, news_id=event['id'], event=event, is_demo=True)
+            return {'state': state, 'matches': [{'company_id': company_id}]}
+        self.app.expert_demo = ExpertDemo(processor, ImmediateExecutor(), clock=lambda: clock[0], auto_schedule=False)
+        session = self.app.expert_demo.start(self.app.companies[self.data['company_id']])
         clock[0] = 7
         news_id = self.app.expert_demo.view(session['id'], self.data['company_id'])['items'][0]['id']
         state = self.app.analysis(self.data['company_id'], news_id, session['id'])['state']

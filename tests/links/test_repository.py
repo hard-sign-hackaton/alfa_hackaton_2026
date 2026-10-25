@@ -139,3 +139,50 @@ class PersistenceTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+    def test_expert_news_vectors_links_and_analysis_are_persistent_but_isolated(self):
+        from app.modules.news.models import NewsSource, Embedding, EmbeddingProfile
+        from app.modules.news.repositories import NewsEmbeddingRepository
+        from app.modules.news.dto import SourceDTO, EmbeddingInput
+        from app.modules.news.identity import input_hash
+        source_id = 'expert-demo:' + self.token
+        demo_id = 'demo:' + self.token + ':0'
+        article = self.article.model_copy(update={'id': demo_id, 'source_id': source_id,
+            'url': 'https://expert-demo.invalid/' + self.token, 'title': 'ТЕСТ: Снижение ставки',
+            'text': 'Вымышленная тестовая публикация: ключевая ставка снижена на один пункт.'})
+        self.news.seed([SourceDTO(source_id, 'Expert scenario', 'expert-demo.invalid', '', '')])
+        profile = {'id': 'expert-test-' + self.token, 'model': 'fixture', 'revision': 'fixture',
+                   'dimensions': 384, 'normalized': True, 'preparation': 'fixture'}
+        vectors = NewsEmbeddingRepository(self.sessions)
+        try:
+            outcome = self.news.save_deduplicated(article, dedup_source_id=source_id)
+            self.assertEqual(outcome.outcome, 'inserted')
+            record = EmbeddingInput(demo_id, article.title, article.text, input_hash(article.title, article.text))
+            vector = [1.] + [0.] * 383
+            vectors.ensure_profile(profile)
+            self.assertTrue(vectors.save_embedding(record, profile['id'], vector, 1))
+            pair = self.links.ensure(self.company_id, demo_id, method='company_embedding', score=.8)
+            self.links.assessment(pair, self.assessment())
+            state = {'company_id': self.company_id, 'news_id': demo_id, 'event': article.ai_event(),
+                     'is_demo': True, 'as_of': datetime.now(timezone.utc).isoformat(), 'result': {'status': 'supported'}}
+            self.assertTrue(self.links.claim_analysis(pair, self.token))
+            self.assertTrue(self.links.analysis(pair, state, run_id=self.token))
+            stored = self.links.list(news_id=demo_id, include_demo=True)
+            self.assertEqual(stored[0]['analysis_result'], state)
+            self.assertEqual(stored[0]['importance'], 'medium')
+            self.assertEqual(self.links.list(news_id=demo_id), [])
+            self.assertNotIn(demo_id, [row.id for row in self.news.list_articles()])
+            self.assertNotIn(demo_id, [row['id'] for row in self.news.search_text('ставка')])
+            self.assertEqual(vectors.search_pg(vector, profile['id'], 5), [])
+            self.assertEqual(self.news.get_article(demo_id).id, demo_id)
+            duplicate = article.model_copy(update={'id': demo_id[:-1] + '3', 'url': article.url + '/copy'})
+            outcome = self.news.save_deduplicated(duplicate, dedup_source_id=source_id)
+            self.assertEqual((outcome.outcome, outcome.original_id), ('duplicate', demo_id))
+            # Source imports ignore synthetic stories during deduplication.
+            normal = article.model_copy(update={'id': self.article.id, 'source_id': self.article.source_id, 'url': self.article.url})
+            self.assertNotEqual(self.news.save_deduplicated(normal).outcome, 'duplicate')
+        finally:
+            with self.sessions.begin() as session:
+                session.execute(delete(Article).where(Article.source_id == source_id))
+                session.execute(delete(EmbeddingProfile).where(EmbeddingProfile.id == profile['id']))
+                session.execute(delete(NewsSource).where(NewsSource.id == source_id))

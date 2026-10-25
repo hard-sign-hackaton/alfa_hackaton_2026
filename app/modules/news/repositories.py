@@ -71,7 +71,9 @@ class NewsRepository:
         with self.session.begin() as s:
             return self._save(s, article)
 
-    def save_deduplicated(self, article, *, embeddings=None):
+    def save_deduplicated(self, article, *, embeddings=None, dedup_source_id=None):
+        if dedup_source_id is not None and (not dedup_source_id.startswith('expert-demo:') or article.source_id != dedup_source_id):
+            raise ValueError('Invalid synthetic deduplication scope')
         with self.session.begin() as s:
             # The shared lock covers comparison, cache writes and article insert.
             # READ COMMITTED observes the preceding collector's committed rows.
@@ -83,6 +85,7 @@ class NewsRepository:
             if s.get(Article, article.id) is None:
                 body = normalized_body(article.text)
                 candidates = list(s.scalars(select(Article).where(
+                    Article.source_id == dedup_source_id if dedup_source_id else Article.source_id.not_like('expert-demo:%'),
                     Article.published_at >= article.published_at - DEDUPLICATION_WINDOW,
                     Article.published_at <= article.published_at + DEDUPLICATION_WINDOW,
                 ).order_by(Article.collected_at, Article.id)))
@@ -153,7 +156,7 @@ class NewsRepository:
     def list_articles(self):
         with self.session() as s:
             return [NewsArticleDTO.model_validate(row.details) for row in s.scalars(
-                select(Article).order_by(Article.published_at, Article.id))]
+                select(Article).where(Article.source_id.not_like('expert-demo:%')).order_by(Article.published_at, Article.id))]
 
     def get_article(self, article_id, *, as_of=None):
         with self.session() as s:
@@ -171,7 +174,7 @@ class NewsRepository:
         vector = func.to_tsvector(RUSSIAN, Article.title + ' ' + Article.text)
         terms = func.websearch_to_tsquery(RUSSIAN, query)
         title_match = func.to_tsvector(RUSSIAN, Article.title).op('@@')(terms)
-        statement = select(*hit_columns(query), title_match.label('title_match')).where(vector.op('@@')(terms), Article.published_at <= search_time(as_of))
+        statement = select(*hit_columns(query), title_match.label('title_match')).where(vector.op('@@')(terms), Article.published_at <= search_time(as_of), Article.source_id.not_like('expert-demo:%'))
         if exclude_id is not None:
             statement = statement.where(Article.id != exclude_id)
         with self.session() as s:
@@ -190,7 +193,7 @@ class NewsEmbeddingRepository:
     def pending(self, profile_id, limit):
         with self.session() as s:
             q = select(Article).outerjoin(Embedding, (Embedding.article_id == Article.id) & (Embedding.profile_id == profile_id))
-            q = q.where((Embedding.id.is_(None)) | (Embedding.input_hash != Article.content_hash)).order_by(Article.id).limit(limit)
+            q = q.where(Article.source_id.not_like('expert-demo:%'), (Embedding.id.is_(None)) | (Embedding.input_hash != Article.content_hash)).order_by(Article.id).limit(limit)
             return [EmbeddingInput(a.id, a.title, a.text, a.content_hash) for a in s.scalars(q)]
 
     def save_embedding(self, article, profile_id, vector, chunk_count):
@@ -216,7 +219,7 @@ class NewsEmbeddingRepository:
                 (1 - distance).label('similarity')).select_from(Embedding)
             statement = statement.join(Article, Article.id == Embedding.article_id).where(
                 Embedding.profile_id == profile_id, Embedding.input_hash == Article.content_hash,
-                Article.published_at <= search_time(as_of))
+                Article.published_at <= search_time(as_of), Article.source_id.not_like('expert-demo:%'))
             if exclude_id is not None:
                 statement = statement.where(Article.id != exclude_id)
             rows = s.execute(statement.order_by(distance, Article.id).limit(top_k)).all()
