@@ -32,20 +32,25 @@ def needs_bank_refresh(state):
                 and not any(s.get('kind') == 'bank' for s in state.get('retrieved_sources', [])))
 
 
-def _short(text, limit=190):
+def _digest_text(text):
     text = ' '.join(text.split())
     text = re.sub(r'^В историческом банковском обзоре\s*\([^)]*\)\s*(?:отмечено|указано),?\s*что\s+', '', text)
     text = re.sub(r'^Банковская аналитика отмечает, что\s+', '', text)
     text = re.split(r';\s*это исторический контекст', text, maxsplit=1)[0]
     if text:
         text = text[0].upper() + text[1:]
+    return text
+
+
+def _short(text, limit=190):
+    text = _digest_text(text)
     if len(text) <= limit:
         return text
-    cut = text[:limit - 1]
-    sentence = re.search(r'[.!?](?=\s)[^.!?]*$', cut)
-    if sentence and sentence.start() >= 100:
-        return cut[:sentence.start() + 1]
-    return cut.rsplit(' ', 1)[0].rstrip(' ,;:') + '…'
+    # The limit is a target: keep a whole first sentence even when it is longer.
+    # Uppercase lookahead avoids treating dates, decimals and "г. указывает" as endings.
+    endings = [match.end() for match in re.finditer(r'[.!?](?:[»”"])?(?=\s+[А-ЯЁA-Z«]|$)', text)]
+    fitting = [end for end in endings if end <= limit]
+    return text[:max(fitting) if fitting else endings[0]] if endings else text
 
 
 def summarize_bank_context(state):
@@ -57,7 +62,8 @@ def summarize_bank_context(state):
                     and e.get('quote') and e['quote'] in sources[e['source_id']].get('text', '')]
         if not evidence or not claim.get('text'):
             continue
-        item = {'text': _short(claim['text']), 'source_ids': list(dict.fromkeys(e['source_id'] for e in evidence)),
+        item = {'text': _short(claim['text']), 'full_text': _digest_text(claim['text']),
+                'source_ids': list(dict.fromkeys(e['source_id'] for e in evidence)),
                 'evidence': evidence, 'method': 'accepted_claim'}
         if claim.get('kind') == 'fact' and item['text'] not in seen and len(highlights) < 1:
             highlights.append(item)
@@ -92,7 +98,7 @@ def summarize_bank_context(state):
             if text in seen:
                 continue
             # A short displayed excerpt is still linked to its exact original sentence.
-            highlights.append({'text': text, 'source_ids': [source_id],
+            highlights.append({'text': text, 'full_text': _digest_text(quote), 'source_ids': [source_id],
                 'evidence': [{'source_id': source_id, 'quote': quote}], 'method': 'excerpt'})
             seen.add(text)
             used_documents.add(document)

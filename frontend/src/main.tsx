@@ -534,6 +534,22 @@ function ChatSources({
   );
 }
 
+function BankDigestText({ item }: { item: Obj }) {
+  const [expanded, setExpanded] = useState(false);
+  const canExpand = item.full_text && item.full_text !== item.text;
+  return (
+    <div className="bank-digest-text">
+      <p>{expanded && canExpand ? item.full_text : item.text}</p>
+      {canExpand && (
+        <button type="button" className="bank-digest-toggle" aria-expanded={expanded}
+          onClick={() => setExpanded(!expanded)}>
+          {expanded ? "Свернуть" : "Показать полностью"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function BankDigest({
   summary,
   sources,
@@ -556,7 +572,7 @@ function BankDigest({
       <div className="eyebrow">КРАТКАЯ ВЫЖИМКА</div>
       {summary.highlights.map((item: Obj, index: number) => (
         <div className="bank-digest-point" key={index}>
-          <p>{item.text}</p>
+          <BankDigestText key={item.full_text || item.text} item={item} />
           <small>
             {item.method === "excerpt"
               ? "Выдержка из материала"
@@ -569,7 +585,7 @@ function BankDigest({
       {summary.impact ? (
         <div className="bank-digest-impact">
           <b>Возможное значение для компании</b>
-          <p>{summary.impact.text}</p>
+          <BankDigestText key={summary.impact.full_text || summary.impact.text} item={summary.impact} />
           <Evidence items={summary.impact.evidence || []} sources={sources} />
         </div>
       ) : (
@@ -1751,6 +1767,10 @@ function App() {
                               <span>{date(state.as_of)}</span>
                             </div>
                           </section>
+                          <BankContext
+                            state={state}
+                            context={detail.bank_context}
+                          />
                           <section className="panel">
                             <div className="section-icon">
                               <Newspaper size={18} />
@@ -1830,10 +1850,6 @@ function App() {
                                 </div>
                               ))}
                           </section>
-                          <BankContext
-                            state={state}
-                            context={detail.bank_context}
-                          />
                           {!!state.result.missing_data?.length && (
                             <section className="panel limitations">
                               <div className="section-icon">

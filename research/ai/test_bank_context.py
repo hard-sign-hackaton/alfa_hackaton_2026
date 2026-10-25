@@ -60,13 +60,14 @@ class BankContextTests(unittest.TestCase):
         self.assertEqual(summary['highlights'][0]['method'], 'excerpt')
         self.assertIsNone(summary['impact'])
 
-    def test_summary_is_bounded_and_does_not_reuse_unverified_bank_claim(self):
+    def test_unpunctuated_excerpt_is_preserved_and_unverified_claim_is_rejected(self):
         sentence = ('Прогноз по инфляции требует проверки исходных допущений ' * 20).strip()
         state = {'retrieved_sources': [{'kind': 'bank', 'source_id': 'bank:one', 'text': sentence}],
                  'result': {'claims': [{'kind': 'fact', 'text': 'Придуманное утверждение',
                                        'evidence': [{'source_id': 'bank:one', 'quote': 'несуществующая цитата'}]}]}}
         item = summarize_bank_context(state)['highlights'][0]
-        self.assertLessEqual(len(item['text']), 190)
+        self.assertEqual(item['text'], sentence)
+        self.assertEqual(item['full_text'], sentence)
         self.assertEqual(item['method'], 'excerpt')
         self.assertEqual(item['evidence'][0]['quote'], sentence)
 
@@ -78,6 +79,34 @@ class BankContextTests(unittest.TestCase):
         self.assertEqual(len(summary['highlights']), 1)
         self.assertTrue(summary['highlights'][0]['text'].startswith('11 сентября ЦБ'))
         self.assertEqual(summary['highlights'][0]['evidence'][0]['quote'], text)
+
+    def test_long_first_sentence_is_never_cut_and_date_is_not_a_sentence_boundary(self):
+        text = ('Аналитика Альфа-Банка от 5 августа 2026 г. указывает на ожидаемое охлаждение '
+                'темпов роста спроса на потребление и на то, что темпы роста продаж автомобилей '
+                'в ближайшие месяцы уйдут в отрицательную область.')
+        source = {'kind': 'bank', 'source_id': 'bank:one', 'text': text}
+        fact = {'kind': 'fact', 'text': text, 'evidence': [{'source_id': 'bank:one', 'quote': text}]}
+        for claims in ([fact], []):
+            with self.subTest(method='accepted_claim' if claims else 'excerpt'):
+                item = summarize_bank_context({'retrieved_sources': [source], 'result': {'claims': claims}})['highlights'][0]
+                self.assertEqual(item['text'], text)
+                self.assertEqual(item['full_text'], text)
+
+    def test_short_preview_retains_continuation_for_fact_and_company_impact(self):
+        first = 'Банк ожидает замедления инфляции и постепенного снижения ключевой ставки.'
+        text = first + (' Это может поддержать спрос, однако сроки зависят от инфляции, '
+                        'денежно-кредитной политики, ожиданий потребителей и изменения стоимости кредитования.') * 3
+        source = {'kind': 'bank', 'source_id': 'bank:one', 'text': text}
+        evidence = [{'source_id': 'bank:one', 'quote': text},
+                    {'source_id': 'company:one:industry', 'quote': 'Торговля'}]
+        state = {'company_id': 'one', 'retrieved_sources': [source], 'result': {'claims': [
+            {'kind': 'fact', 'text': text, 'evidence': evidence},
+            {'kind': 'hypothesis', 'text': text, 'evidence': evidence}]}}
+        summary = summarize_bank_context(state)
+        for item in (summary['highlights'][0], summary['impact']):
+            self.assertEqual(item['text'], first)
+            self.assertEqual(item['full_text'], text)
+            self.assertEqual(item['evidence'][0]['quote'], text)
 
 
 if __name__ == '__main__':
