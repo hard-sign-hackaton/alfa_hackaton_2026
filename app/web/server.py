@@ -2,6 +2,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.cookies import SimpleCookie, CookieError
 import json
 import logging
 import os
@@ -36,7 +37,7 @@ def now():
 
 
 class Application:
-    def __init__(self, root=ROOT, runtime=None, runner=None, chat_runner=None, enable_links=True):
+    def __init__(self, root=ROOT, runtime=None, runner=None, chat_runner=None, enable_links=True, feedback_repository=None):
         self.root = Path(root)
         self.runtime = Path(runtime or os.environ.get('WEB_RUNTIME_DIR', ROOT / 'local_runtime' / 'web'))
         self.runtime.mkdir(parents=True, exist_ok=True)
@@ -48,6 +49,10 @@ class Application:
         self.database_status = 'snapshot'
         self.database_checked = 0.0
         self.links = None
+        self.feedback_repository = feedback_repository
+        if self.feedback_repository is None and enable_links and os.environ.get('LINKS_DATABASE_URL'):
+            from app.modules.feedback.repository import FeedbackRepository
+            self.feedback_repository = FeedbackRepository(os.environ['LINKS_DATABASE_URL'])
         self.link_rows = {}
         self.links_initialized = False
         self.links_sync = {'status': 'disabled', 'stage': '', 'updated_at': None}
@@ -232,7 +237,7 @@ class Application:
                            'analysis_count': len(self.analyses), 'live_available': bool(os.environ.get('LLM_API_KEY')) and self.database_status == 'connected',
                            'updated_at': max((e['published_at'] for e in self.events.values()), default=None),
                            'links_sync': dict(self.links_sync), 'links_count': len(self.link_rows),
-                           'links_available': self.links_initialized},
+                           'links_available': self.links_initialized, 'feedback_available': self.feedback_repository is not None},
             }
 
     def pair(self, company_id, news_id):
@@ -317,19 +322,51 @@ class Application:
 
     def analysis(self, company_id, news_id, demo_id=None):
         from bank_context import describe_bank_context
+        from app.modules.feedback.repository import analysis_version
         if demo_id and news_id.startswith('demo:'):
             try:
                 value = self.expert_demo.analysis(demo_id, company_id, news_id)
             except ValueError as error:
                 raise ApiError(409, str(error)) from None
             return {**value, 'company': self.companies[company_id], 'link': None,
+                    'analysis_version': analysis_version(value['state']) if value['state'] else None,
                     'bank_context': describe_bank_context(value['state'])}
         key = self.pair(company_id, news_id)
         self.reload_links()
         with self.lock:
             state = self.analyses.get(key)
         return {'state': state, 'event': self.events[news_id], 'company': self.companies[company_id],
+                'analysis_version': analysis_version(state) if state else None,
                 'bank_context': describe_bank_context(state), 'link': self.link_rows.get(key)}
+
+    def feedback(self, data, reviewer_id, *, write=False):
+        from app.modules.feedback.repository import analysis_version
+        if set(data) - {'company_id', 'news_id', 'analysis_version', 'vote', 'demo_id'}:
+            raise ApiError(400, 'Некорректные поля оценки')
+        if not isinstance(data.get('company_id'), str) or not isinstance(data.get('news_id'), str):
+            raise ApiError(400, 'Укажите компанию и новость')
+        if data.get('demo_id') is not None and not isinstance(data['demo_id'], str):
+            raise ApiError(400, 'Некорректный сценарий')
+        detail = self.analysis(data['company_id'], data['news_id'], data.get('demo_id'))
+        state = detail['state']
+        if not state:
+            raise ApiError(409, 'Сначала дождитесь готового разбора')
+        version = analysis_version(state)
+        if data.get('analysis_version') != version:
+            raise ApiError(409, 'Разбор обновился. Откройте его заново перед оценкой.')
+        if not self.feedback_repository:
+            raise ApiError(503, 'Хранилище оценок недоступно. Проверьте подключение к базе.')
+        if write and ('vote' not in data or (data['vote'] is not None and (type(data['vote']) is not int or data['vote'] not in (-1, 1)))):
+            raise ApiError(400, 'Оценка должна быть 1, -1 или null')
+        if not detail.get('is_demo') and data.get('demo_id'):
+            raise ApiError(400, 'Сценарий указан для обычной новости')
+        try:
+            result = self.feedback_repository.save(state, reviewer_id, data['vote'], demo_id=data.get('demo_id')) if write else \
+                self.feedback_repository.read(data['company_id'], data['news_id'], version, reviewer_id)
+        except Exception as error:
+            LOG.warning('Feedback storage unavailable (%s)', type(error).__name__)
+            raise ApiError(503, 'Не удалось сохранить или прочитать оценку. Попробуйте ещё раз.') from None
+        return {**result, 'analysis_version': version, 'is_demo': bool(detail.get('is_demo'))}
 
     def bank_sources(self):
         with self.lock:
@@ -358,9 +395,17 @@ class Application:
             raise ApiError(503, 'Не удалось прочитать материал из базы. Попробуйте позже') from None
 
     def start_job(self, data, kind='analysis'):
+        demo_state = None
         if isinstance(data.get('news_id'), str) and data['news_id'].startswith('demo:'):
-            raise ApiError(400, 'Для тестовой новости результат поступает автоматически. Откройте обычную новость для работы с моделями.')
-        company_id, news_id = self.pair(data.get('company_id'), data.get('news_id'))
+            if kind != 'chat' or not isinstance(data.get('demo_id'), str):
+                raise ApiError(400, 'Для тестовой новости доступны чат и готовый сценарий')
+            value = self.analysis(data.get('company_id'), data['news_id'], data['demo_id'])
+            demo_state = value['state']
+            if not demo_state:
+                raise ApiError(409, 'Дождитесь готового тестового разбора')
+            company_id, news_id = data['company_id'], data['news_id']
+        else:
+            company_id, news_id = self.pair(data.get('company_id'), data.get('news_id'))
         if kind == 'matching' and not self.links_initialized:
             raise ApiError(503, 'Хранилище связей ещё не готово')
         if not os.environ.get('LLM_API_KEY') and self.runner == self.run_analysis:
@@ -384,14 +429,14 @@ class Application:
                 question = data.get('question', '')
                 if not isinstance(question, str) or not 1 <= len(question.strip()) <= 1500:
                     raise ApiError(400, 'Вопрос должен содержать от 1 до 1500 символов')
-                if (company_id, news_id) not in self.analyses:
+                if not demo_state and (company_id, news_id) not in self.analyses:
                     raise ApiError(409, 'Сначала подготовьте разбор этой новости')
                 conversation_id = data.get('conversation_id') or uuid4().hex
                 if not isinstance(conversation_id, str) or not re.fullmatch(r'[a-f0-9]{32}', conversation_id):
                     raise ApiError(400, 'Некорректный идентификатор диалога')
                 if conversation_id in self.conversations:
                     conversation = self.conversations[conversation_id]
-                    if conversation['pair'] != (company_id, news_id):
+                    if conversation['pair'] != (company_id, news_id) or conversation.get('demo_id') != (data.get('demo_id') if demo_state else None):
                         raise ApiError(409, 'Этот диалог относится к другой компании и новости')
                     if len(conversation['turns']) >= 10:
                         raise ApiError(409, 'Достигнут лимит диалога. Откройте новость заново')
@@ -401,8 +446,10 @@ class Application:
                     if len(self.conversations) >= 100:
                         raise ApiError(429, 'Достигнут лимит диалогов. Перезапустите сервер')
                     self.conversations[conversation_id] = {'pair': (company_id, news_id), 'turns': [],
-                        'state': self.analyses[(company_id, news_id)]}
+                        'state': demo_state or self.analyses[(company_id, news_id)],
+                        'demo_id': data.get('demo_id') if demo_state else None}
             job = {'id': uuid4().hex, 'kind': kind, 'company_id': company_id, 'news_id': news_id,
+                   'is_demo': bool(demo_state),
                    'status': 'queued', 'stage': 'В очереди', 'created_at': now(), 'conversation_id': conversation_id}
             self.jobs[job['id']] = job
             self.executor.submit(self.execute, job['id'], question)
@@ -530,17 +577,31 @@ def make_handler(application, static_root):
         def log_message(self, *args):
             pass
 
-        def send(self, status, data, content_type='application/json; charset=utf-8'):
+        def send(self, status, data, content_type='application/json; charset=utf-8', headers=None):
             payload = json.dumps(data, ensure_ascii=False).encode() if not isinstance(data, bytes) else data
             self.send_response(status)
             self.send_header('Content-Type', content_type)
             self.send_header('Content-Length', str(len(payload)))
+            for name, value in (headers or {}).items():
+                self.send_header(name, value)
             self.send_header('X-Content-Type-Options', 'nosniff')
             self.send_header('Referrer-Policy', 'no-referrer')
             self.send_header('Cache-Control', 'no-store' if content_type.startswith('application/json') else 'no-cache')
             self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
             self.end_headers()
             self.wfile.write(payload)
+
+        def reviewer(self):
+            cookie = SimpleCookie()
+            try:
+                cookie.load(self.headers.get('Cookie', ''))
+                reviewer = cookie['alfa_feedback'].value if 'alfa_feedback' in cookie else ''
+            except CookieError:
+                reviewer = ''
+            if re.fullmatch(r'[a-f0-9]{32}', reviewer):
+                return reviewer, {}
+            reviewer = uuid4().hex
+            return reviewer, {'Set-Cookie': 'alfa_feedback=' + reviewer + '; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000'}
 
         def do_GET(self):
             try:
@@ -553,6 +614,12 @@ def make_handler(application, static_root):
                     return self.send(200, application.feed(company_id, query.get('demo_id', [None])[0]))
                 if url.path == '/api/analysis':
                     return self.send(200, application.analysis(company_id, news_id, query.get('demo_id', [None])[0]))
+                if url.path == '/api/feedback':
+                    reviewer, headers = self.reviewer()
+                    data = {'company_id': company_id, 'news_id': news_id, 'analysis_version': query.get('analysis_version', [''])[0]}
+                    if query.get('demo_id'):
+                        data['demo_id'] = query['demo_id'][0]
+                    return self.send(200, application.feedback(data, reviewer), headers=headers)
                 if url.path == '/api/news-companies':
                     if news_id.startswith('demo:'):
                         value = application.analysis(company_id, news_id, query.get('demo_id', [None])[0])
@@ -613,7 +680,10 @@ def make_handler(application, static_root):
                     raise ApiError(400, 'Ожидается объект запроса')
                 if self.path == '/api/expert-demo':
                     return self.send(200, application.demo_control(data))
-                if set(data) - {'company_id', 'news_id', 'question', 'conversation_id'}:
+                if self.path == '/api/feedback':
+                    reviewer, headers = self.reviewer()
+                    return self.send(200, application.feedback(data, reviewer, write=True), headers=headers)
+                if set(data) - {'company_id', 'news_id', 'question', 'conversation_id', 'demo_id'}:
                     raise ApiError(400, 'Некорректные поля запроса')
                 if not isinstance(data.get('company_id'), str) or not isinstance(data.get('news_id'), str):
                     raise ApiError(400, 'Укажите компанию и новость')

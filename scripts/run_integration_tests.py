@@ -35,6 +35,7 @@ def main():
     os.environ['COMPANY_TEST_DATABASE_URL'] = url
     os.environ['ANALYTICS_TEST_DATABASE_URL'] = url
     os.environ['LINKS_TEST_DATABASE_URL'] = url
+    os.environ['FEEDBACK_TEST_DATABASE_URL'] = url
     os.environ['STARTUP_TEST_DATABASE_URL'] = admin.set(database=startup_database).render_as_string(hide_password=False)
     os.environ['NEWS_INTEGRATION_ADMIN_URL'] = url
     os.environ['NEWS_DATABASE_URL'] = target.set(username='analysis_news_reader', password=os.environ['NEWS_READER_PASSWORD']).render_as_string(hide_password=False)
@@ -43,6 +44,7 @@ def main():
         [sys.executable, '-m', 'unittest', 'discover', '-s', 'tests/companies', '-v'],
         [sys.executable, '-m', 'unittest', 'discover', '-s', 'tests/analytics', '-v'],
         [sys.executable, '-m', 'unittest', 'discover', '-s', 'tests/links', '-v'],
+        [sys.executable, '-m', 'unittest', 'discover', '-s', 'tests/feedback', '-v'],
         [sys.executable, '-m', 'unittest', 'discover', '-s', 'research/ai', '-p', 'test_*.py'],
         [sys.executable, '-m', 'unittest', 'discover', '-s', 'research/contracts/t01', '-p', 'test_*.py'],
         [sys.executable, 'research/ai/database_integration.py', '-v'],

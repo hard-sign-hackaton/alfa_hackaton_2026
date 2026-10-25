@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import "./style.css";
 import { ExpertScenario } from "./ExpertScenario";
+import { AnalysisFeedback } from "./AnalysisFeedback";
 
 type Obj = Record<string, any>;
 type Company = {
@@ -1089,7 +1090,7 @@ function App() {
     kind: "analysis" | "chat" | "matching",
     prompted?: string,
   ) {
-    if (busy || !selectedId || detail?.is_demo) return;
+    if (busy || !selectedId || (detail?.is_demo && kind !== "chat")) return;
     const pair = mountedPair.current;
     const text = (prompted || question).trim();
     if (kind === "chat" && !text) return;
@@ -1106,7 +1107,7 @@ function App() {
           company_id: companyId,
           news_id: selectedId,
           ...(kind === "chat"
-            ? { question: text, conversation_id: conversationId }
+            ? { question: text, conversation_id: conversationId, ...(detail?.is_demo ? { demo_id: demo?.id } : {}) }
             : {}),
         },
       );
@@ -1464,7 +1465,7 @@ function App() {
                 <Skeleton />
               ) : (
                 <>
-                  {detail.is_demo && <div className="demo-detail-notice" role="note">Тестовая новость · результат подготовлен для сценария. Чат и новые запросы к моделям доступны на обычных новостях.</div>}
+                  {detail.is_demo && <div className="demo-detail-notice" role="note">Тестовая новость · результат подготовлен для сценария. В чате модель обсуждает вымышленное событие и ищет реальные материалы в базе.</div>}
                   <div className="detail-heading">
                     <div className="eyebrow">РАЗБОР ДЛЯ {companyId}</div>
                     <Badge
@@ -1867,6 +1868,7 @@ function App() {
                               Обновить разбор
                             </Button>
                           </div>
+                          <AnalysisFeedback key={detail.analysis_version} companyId={companyId} newsId={selectedId} version={detail.analysis_version} isDemo={!!detail.is_demo} demoId={detail.is_demo ? demo?.id : undefined}/>
                         </>
                       )}
                       {busy && job?.kind !== "chat" && (
@@ -1948,7 +1950,7 @@ function App() {
                             <button
                               key={text}
                               disabled={
-                                !state || !!busy || (!boot.status.live_available || !!detail?.is_demo)
+                                !state || !!busy || !boot.status.live_available
                               }
                               onClick={() => {
                                 setChatOpen(true);
@@ -1981,7 +1983,7 @@ function App() {
                           value={question}
                           onChange={(e) => setQuestion(e.target.value)}
                           maxLength={1500}
-                          disabled={!state || (!boot.status.live_available || !!detail?.is_demo)}
+                          disabled={!state || !boot.status.live_available}
                           rows={2}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
@@ -1997,7 +1999,7 @@ function App() {
                             !question.trim() ||
                             !!busy ||
                             !state ||
-                            (!boot.status.live_available || !!detail?.is_demo)
+                            !boot.status.live_available
                           }
                         >
                           <Send size={18} />

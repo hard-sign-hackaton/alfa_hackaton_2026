@@ -3511,3 +3511,5 @@ button[class*="button__accent"] {
 @media(prefers-reduced-motion:reduce){.news-card:has(.demo-label){animation:none}}
 
 .expert-scenario + .hero{display:none}.expert-scenario{margin-bottom:22px}.expert-scenario .expert-timeline{margin:14px 0}.expert-scenario .expert-actions button{padding:10px 13px}
+
+.analysis-feedback{margin-top:18px}.analysis-feedback h2{font-size:18px;margin:0 0 8px}.analysis-feedback>div>p{font-size:12px;color:var(--muted);margin-bottom:16px}.feedback-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.feedback-actions>button{display:flex;align-items:center;gap:8px;padding:11px 16px;border:1px solid var(--line);border-radius:11px;background:#fff;font-size:13px}.feedback-actions>button[aria-pressed=true]{background:#fff0ee;border-color:#ef3124;color:#c92a20}.feedback-status{font-size:11px;color:var(--muted);margin-top:12px;min-height:16px;overflow-wrap:anywhere}.feedback-status button{background:transparent;color:#b72c24;text-decoration:underline}.feedback-status [role=alert]{color:#b72c24}@media(max-width:480px){.feedback-actions>button{flex:1;justify-content:center;padding:12px 10px}}

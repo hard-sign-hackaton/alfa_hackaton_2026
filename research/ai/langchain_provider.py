@@ -126,7 +126,7 @@ class LangChainClient:
         self._http_client = None
 
     def model_signature(self):
-        return {**self.settings.signature(), 'pipeline_version': 7}
+        return {**self.settings.signature(), 'pipeline_version': 8}
 
     def _model(self, task, max_tokens=None, *, json_response=True):
         if task not in self.settings.routes:
@@ -191,7 +191,10 @@ class LangChainClient:
             metric = {'task': task, 'model': route.model, 'attempt': attempt + 1,
                       'max_tokens': max_tokens, 'latency_ms': None, 'usage': None, 'status': 'invalid'}
             self.telemetry.append(metric)
-            messages = [('system', SYSTEM + '\n' + TASK_INSTRUCTIONS[task]), ('human', '{payload}')]
+            scenario = ('\nnews_context.is_demo=true: открытая новость вымышленная. Обсуждай её как условный '
+                        'тестовый сценарий, не как произошедшее событие. Реальные найденные источники '
+                        'служат контекстом и не подтверждают вымышленное событие.') if data.get('news_context', {}).get('is_demo') else ''
+            messages = [('system', SYSTEM + '\n' + TASK_INSTRUCTIONS[task] + scenario), ('human', '{payload}')]
             if attempt:
                 messages.append(('human', 'Предыдущий ответ не прошёл проверку. Верни полный JSON по схеме, '
                                  'с верными ID. Для фрагментов выбирай существующий fragment_id; '
@@ -352,6 +355,8 @@ class LangChainClient:
         metadata = news_metadata or {}
         data['news_context'] = {'published_at': news.published_at, 'url': news.url,
                                'publisher': metadata.get('publisher'), 'collected_at': metadata.get('collected_at')}
+        if metadata.get('is_demo'):
+            data['news_context']['is_demo'] = True
         if preparation:
             self._validate_news_evidence(preparation.classification, news)
             if preparation.extraction:

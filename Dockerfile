@@ -28,6 +28,7 @@ COPY --chown=researcher:researcher tests/news /app/tests/news
 COPY --chown=researcher:researcher tests/companies /app/tests/companies
 COPY --chown=researcher:researcher tests/analytics /app/tests/analytics
 COPY --chown=researcher:researcher tests/links /app/tests/links
+COPY --chown=researcher:researcher tests/feedback /app/tests/feedback
 COPY --chown=researcher:researcher docs/companies /app/docs/companies
 COPY --chown=researcher:researcher alembic.ini /app/alembic.ini
 USER researcher

@@ -54,6 +54,16 @@ class ChatAgentTests(unittest.TestCase):
         self.assertIn('автокредит', client.steps[0][1].content)
         validate_evidence(Insight.model_validate(turn['answer']), self.company, self.news, turn['retrieved_sources'])
 
+    def test_demo_chat_uses_same_retrieval_but_keeps_fiction_explicit(self):
+        self.state['is_demo'] = True
+        client = ClientFixture([AIMessage(content='Enough')])
+        turn = self.run_chat(client, 'Почему это касается нашей компании?')
+        self.assertEqual([r['tool'] for r in turn['retrieval']['trace']], ['search_news', 'search_bank_analytics'])
+        self.assertTrue(client.analyses[0]['news_metadata']['is_demo'])
+        self.assertIn('вымышленный', client.steps[0][0].content)
+        self.assertTrue(turn['answer']['follow_up_answer'].startswith('Тестовый сценарий.'))
+        self.assertTrue(turn['retrieval']['is_demo'])
+
     def test_followup_retains_question_and_exact_previous_sources_without_mutating_analysis(self):
         original = copy.deepcopy(self.state)
         with patch.object(self.repository, 'search_news', return_value=[other_news()]):

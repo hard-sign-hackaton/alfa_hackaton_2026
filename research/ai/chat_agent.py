@@ -83,7 +83,9 @@ class DatabaseChatAgent:
         initial = []
         for name in ('search_news', 'search_bank_analytics'):
             initial.append({'tool': name, **session.invoke(name, {'query': question.strip()[:200], 'limit': 2})})
-        messages = [SystemMessage(content=CHAT_RESEARCH_SYSTEM), HumanMessage(content=json.dumps({
+        scenario_notice = ('\nОткрытая новость — вымышленный тестовый сценарий. Обсуждай её только условно; '
+            'не выдавай событие за реальный факт. Найденные реальные публикации и обзоры отделяй от сценария.') if state.get('is_demo') else ''
+        messages = [SystemMessage(content=CHAT_RESEARCH_SYSTEM + scenario_notice), HumanMessage(content=json.dumps({
             'company': company.model_dump(), 'opened_news': news.model_dump(),
             'question': question, 'as_of': self.as_of.isoformat(), 'initial_search': initial,
             'history': [{'question': turn['question'],
@@ -118,7 +120,7 @@ class DatabaseChatAgent:
         sources, previous, skipped = self._context(state, history, list(session.sources.values()), company, news)
         self.progress('Отвечаем с проверкой найденных источников')
         result = self.client.analyze(company, news, preparation=preparation, retrieved_sources=sources,
-            question=question, history=previous, news_metadata=state.get('news_metadata'),
+            question=question, history=previous, news_metadata={**(state.get('news_metadata') or {}), 'is_demo': bool(state.get('is_demo'))},
             dialogue=[{'question': turn['question'], 'answer': turn['answer'].get('follow_up_answer') or turn['answer']['summary']}
                       for turn in history[-3:] if turn['answer'] in previous])
         limitations = []
@@ -131,7 +133,10 @@ class DatabaseChatAgent:
         if skipped:
             limitations.append('Часть предыдущих ответов не включена из-за лимита контекста или изменившихся источников.')
         result.missing_data = list(dict.fromkeys(result.missing_data + limitations))
+        if state.get('is_demo'):
+            result.follow_up_answer = 'Тестовый сценарий. ' + (result.follow_up_answer or result.summary)
+            result.missing_data = list(dict.fromkeys(result.missing_data + ['Исходная новость вымышленная; реальные материалы используются только как контекст.']))
         validate_evidence(result, company, news, sources)
         return {'answer': result.model_dump(), 'retrieved_sources': [s.model_dump() for s in sources],
-                'retrieval': {'as_of': self.as_of.isoformat(), 'stop': stop, 'trace': session.trace,
+                'retrieval': {'as_of': self.as_of.isoformat(), 'stop': stop, 'trace': session.trace, 'is_demo': bool(state.get('is_demo')),
                               'fresh_source_ids': list(session.sources), 'limitations': limitations}}

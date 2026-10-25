@@ -2,6 +2,8 @@ import sys
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
+from threading import Event
 
 from app.web.server import Application, ApiError
 from app.web.expert_demo import ExpertDemo
@@ -71,3 +73,25 @@ class ExpertDemoTests(unittest.TestCase):
         self.elapsed = self.demo.TTL + 1
         with self.assertRaises(ValueError):
             self.demo.view(session['id'], self.company_id)
+
+    def test_demo_chat_uses_immutable_ready_state_and_rejects_other_company(self):
+        session = self.demo.start(self.company)
+        self.elapsed = 7
+        news_id = self.demo.view(session['id'], self.company_id)['items'][0]['id']
+        called = Event()
+        def chat(state, question, history, progress):
+            self.assertTrue(state['is_demo'])
+            self.assertEqual(state['company_id'], self.company_id)
+            called.set()
+            return {'answer': {'company_id': state['company_id'], 'news_id': state['news_id'],
+                              'summary': 'Тестовый ответ', 'follow_up_answer': 'Тестовый ответ', 'claims': []}}
+        self.app.chat_runner = chat
+        data = {'company_id': self.company_id, 'news_id': news_id, 'demo_id': session['id'], 'question': 'Какие данные проверить?'}
+        with patch.dict('os.environ', {'LLM_API_KEY': 'test-key'}):
+            job = self.app.start_job(data, 'chat')
+            self.assertTrue(called.wait(2))
+            self.assertTrue(job['is_demo'])
+            with self.assertRaises(ApiError):
+                self.app.start_job({**data, 'company_id': 'U_128194'}, 'chat')
+        self.assertNotIn(news_id, self.app.events)
+        self.assertNotIn((self.company_id, news_id), self.app.analyses)

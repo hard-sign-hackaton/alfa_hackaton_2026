@@ -38,6 +38,7 @@ def main():
         raw.execute('GRANT USAGE ON SCHEMA public TO analysis_links_writer')
         raw.execute('GRANT SELECT ON news_articles,companies,news_company_links TO analysis_links_writer')
         raw.execute('GRANT INSERT,UPDATE ON news_company_links TO analysis_links_writer')
+        raw.execute('GRANT SELECT,INSERT,UPDATE,DELETE ON analysis_feedback TO analysis_links_writer')
     print('Storage ready; source reader and restricted link writer configured')
 
 
