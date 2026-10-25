@@ -9,7 +9,6 @@ import {
   Bookmark,
   Building2,
   Check,
-  CheckCheck,
   ChevronDown,
   ChevronRight,
   CircleHelp,
@@ -256,6 +255,143 @@ function Skeleton() {
     </div>
   );
 }
+const evidenceFieldLabels: Record<string, string> = {
+  okved_class: "ОКВЭД",
+  okved_code: "ОКВЭД",
+  okved_name: "Вид деятельности",
+  counterparties_count: "Контрагентов",
+  amount_rub: "Сумма",
+  share_pct: "Доля",
+  unique_count: "Уникальных контрагентов",
+  top_1_share_pct: "Доля крупнейшего",
+  top_3_share_pct: "Доля топ-3",
+  hhi: "Индекс HHI",
+  incoming_amount_rub: "Поступления",
+  outgoing_amount_rub: "Списания",
+  turnover_rub: "Оборот",
+  incoming_payments_count: "Входящих платежей",
+  outgoing_payments_count: "Исходящих платежей",
+  edges_count: "Связей",
+  unique_counterparties_count: "Уникальных контрагентов",
+  external_counterparties_count: "Внешних контрагентов",
+  intragroup_counterparties_count: "Внутригрупповых контрагентов",
+  intragroup_amount_rub: "Сумма внутри группы",
+  intragroup_share_pct: "Доля внутри группы",
+  average_edge_amount_rub: "Средний платёж",
+  region: "Регион",
+  city: "Город",
+  is_intragroup: "Внутригрупповая",
+};
+function formatEvidenceQuote(quote: string, sourceId: string): string {
+  const text = String(quote ?? "").trim();
+  if (!text) return text;
+  const field = sourceId.split(":").slice(2).join(":");
+
+  if (field === "banking_services") {
+    const tokens = text
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    if (tokens.length && tokens.every((item) => serviceNames[item]))
+      return tokens.map((item) => serviceNames[item]).join(", ");
+  }
+
+  const formatValue = (key: string, value: unknown): string | null => {
+    if (value === null || value === undefined) return null;
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => {
+          if (typeof item === "string")
+            return field === "banking_services"
+              ? serviceNames[item] || item
+              : item;
+          if (typeof item === "object" && item !== null)
+            return Object.values(item as Record<string, unknown>)
+              .filter((part) => typeof part === "string")
+              .join(" ");
+          return String(item);
+        })
+        .join(", ");
+    }
+    if (typeof value === "boolean") return value ? "да" : "нет";
+    const isMoney = key.endsWith("_rub") || field === "annual_revenue_rub";
+    const isPercent = key.endsWith("_pct");
+    const isOkved = key.startsWith("okved") || field.startsWith("okved");
+    if (typeof value === "number") {
+      if (isOkved) return String(value);
+      if (isMoney) return money(value);
+      if (isPercent) return `${value.toLocaleString("ru-RU")}%`;
+      return value.toLocaleString("ru-RU");
+    }
+    if (typeof value === "string") {
+      if (isOkved) return value;
+      if (isMoney && value.trim() !== "" && Number.isFinite(Number(value)))
+        return money(Number(value));
+      if (isPercent && value.trim() !== "" && Number.isFinite(Number(value)))
+        return `${Number(value).toLocaleString("ru-RU")}%`;
+      return field === "banking_services" ? serviceNames[value] || value : value;
+    }
+    return null;
+  };
+
+  const formatEntries = (entries: Array<[string, unknown]>): string => {
+    const seen = new Set<string>();
+    const parts: string[] = [];
+    for (const [key, value] of entries) {
+      const label = evidenceFieldLabels[key];
+      if (!label) continue;
+      const formatted = formatValue(key, value);
+      if (formatted === null) continue;
+      const part = `${label}: ${formatted}`;
+      if (!seen.has(part)) {
+        seen.add(part);
+        parts.push(part);
+      }
+    }
+    return parts.join(" · ");
+  };
+
+  // Extract scalar key/value pairs. This works for broken and deeply nested
+  // fragments such as `{"top_okved": [{"okved_class": "56", ...` that the
+  // backend can produce when a quote is truncated.
+  const pairs: Array<[string, unknown]> = [];
+  const pairPattern =
+    /([a-z0-9_]+)"\s*:\s*("(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?|true|false|null)/gi;
+  for (const match of text.matchAll(pairPattern)) {
+    const key = match[1];
+    if (!evidenceFieldLabels[key]) continue;
+    const raw = match[2];
+    let value: unknown = raw;
+    try {
+      value = JSON.parse(raw);
+    } catch {
+      if (/^-?\d+(?:\.\d+)?$/.test(raw)) value = Number(raw);
+      else if (raw === "true") value = true;
+      else if (raw === "false") value = false;
+      else if (raw === "null") value = null;
+    }
+    pairs.push([key, value]);
+  }
+  const pairText = formatEntries(pairs);
+  if (pairText) return pairText;
+
+  let parsed: unknown;
+  for (const candidate of [text, `{${text}}`, `{"${text}}`]) {
+    try {
+      parsed = JSON.parse(candidate);
+      break;
+    } catch {
+      parsed = undefined;
+    }
+  }
+  if (parsed === undefined) return text;
+  if (Array.isArray(parsed)) return formatValue(field, parsed) ?? text;
+  if (parsed !== null && typeof parsed === "object")
+    return (
+      formatEntries(Object.entries(parsed as Record<string, unknown>)) || text
+    );
+  return formatValue(field, parsed) ?? text;
+}
 function Evidence({
   items,
   sources,
@@ -275,21 +411,26 @@ function Evidence({
           const source = sources[e.source_id];
           const isNews =
             e.source_id.startsWith("news:") || source?.kind === "news";
+          const isData =
+            e.source_id.startsWith("company:") ||
+            e.source_id.startsWith("metric:");
+          const quote = isData
+            ? formatEvidenceQuote(e.quote, e.source_id)
+            : e.quote;
           const href =
             source && source.kind === "news"
               ? safeUrl(source.url || "")
               : undefined;
           const label = isNews
             ? "Текст новости"
-            : source?.title ||
-              (e.source_id.startsWith("company:")
-                ? "Профиль компании"
-                : e.source_id.startsWith("metric:")
-                  ? "Агрегаты платежей"
-                  : "Исходная новость");
+            : e.source_id.startsWith("company:")
+              ? "Профиль компании"
+              : e.source_id.startsWith("metric:")
+                ? "Агрегаты платежей"
+                : source?.title || "Исходная новость";
           return (
             <blockquote key={i}>
-              <p>«{e.quote}»</p>
+              <p>«{quote}»</p>
               <small>
                 {href ? (
                   <a
@@ -2116,12 +2257,6 @@ function App() {
                         {card.is_demo && <b className="demo-label">Тестовая новость</b>}
                         {primaryTopic(card)}
                         {card.is_demo && !card.has_analysis && <span className="demo-processing"><Loader2 size={13} className="spin"/>{card.demo_phase === "received" ? "Получена · подбор компании" : "Компания подобрана · готовим разбор"}</span>}
-                        {card.has_analysis && (
-                          <span>
-                            <CheckCheck size={13} />
-                            Разбор готов
-                          </span>
-                        )}
                       </div>
                       <h3>
                         <button onClick={() => setSelectedId(card.id)}>
@@ -2159,7 +2294,7 @@ function App() {
                           className="card-link"
                           onClick={() => setSelectedId(card.id)}
                         >
-                          {card.has_analysis ? "Открыть разбор" : "Подробнее"}
+                          Подробнее
                           <ArrowRight size={17} />
                         </button>
                       </div>

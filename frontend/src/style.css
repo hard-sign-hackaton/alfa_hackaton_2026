@@ -716,10 +716,6 @@ button[class*="button__accent"] {
     color: #555c66;
     line-height: 1.6;
     margin: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
 }
 .card-bottom {
     border-top: 1px solid #f0f0f2;
