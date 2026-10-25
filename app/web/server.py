@@ -52,6 +52,8 @@ class Application:
         self.links_initialized = False
         self.links_sync = {'status': 'disabled', 'stage': '', 'updated_at': None}
         self.links_stop = Event()
+        from .expert_demo import ExpertDemo
+        self.expert_demo = ExpertDemo()
         if enable_links and os.environ.get('LINKS_DATABASE_URL'):
             from app.modules.links.repository import LinkRepository
             self.links = LinkRepository(os.environ['LINKS_DATABASE_URL'])
@@ -222,7 +224,8 @@ class Application:
         with self.lock:
             return {
                 'companies': [{**c, 'profile_id': profile_id(c['okved'])} for c in self.companies.values()],
-                'profiles': list_profiles(list(self.companies.values())),
+                'profiles': [{**p, 'analysis_count': sum(cid in p['company_ids'] for cid, _ in self.analyses)}
+                             for p in list_profiles(list(self.companies.values()))],
                 'documents': self.documents,
                 'status': {'database': self.database_status, 'news_count': len(self.events),
                            'company_count': len(self.companies), 'document_count': len(self.documents),
@@ -268,7 +271,26 @@ class Application:
                 return name
         return host.removeprefix('www.')
 
-    def feed(self, company_id):
+    def demo_control(self, data):
+        if set(data) - {'company_id', 'action', 'demo_id'} or data.get('action') not in ('start', 'stop'):
+            raise ApiError(400, 'Некорректная команда сценария')
+        company_id = data.get('company_id')
+        if not isinstance(company_id, str) or company_id not in self.companies:
+            raise ApiError(404, 'Компания не найдена')
+        if data['action'] == 'stop' and (not isinstance(data.get('demo_id'), str) or not re.fullmatch(r'[a-f0-9]{32}', data['demo_id'])):
+            raise ApiError(400, 'Некорректный идентификатор сценария')
+        try:
+            if data['action'] == 'stop':
+                return self.expert_demo.stop(data.get('demo_id'), company_id)
+            self.reload_links()
+            bank = {s['source_id']: s for (cid, _), state in self.analyses.items() if cid == company_id
+                    for s in state.get('retrieved_sources', []) if s.get('kind') == 'bank'}
+            return self.expert_demo.start(self.companies[company_id], list(bank.values()))
+        except ValueError as error:
+            raise ApiError(409, str(error)) from None
+
+    def feed(self, company_id, demo_id=None):
+        self.refresh_database()
         if company_id not in self.companies:
             raise ApiError(404, 'Компания не найдена')
         self.reload_links()
@@ -278,14 +300,30 @@ class Application:
         importance_order = {'high': 3, 'medium': 2, 'low': 1}
         cards.sort(key=lambda c: (c['id'] in candidates, importance_order.get(c['classification'].get('importance'), 0), c['has_analysis'],
                                   candidates.get(c['id'], {}).get('retrieval_score', 0), c['published_at']), reverse=True)
-        return {'items': cards, 'matched_ids': list(candidates),
+        demo = None
+        if demo_id:
+            try:
+                demo = self.expert_demo.view(demo_id, company_id)
+            except ValueError as error:
+                raise ApiError(409, str(error)) from None
+            cards = demo['items'] + cards
+            candidates.update({c['id']: c for c in demo['items'] if c['demo_phase'] in ('matched', 'ready')})
+            demo = {key: value for key, value in demo.items() if key != 'items'}
+        return {'company_id': company_id, 'demo': demo, 'items': cards, 'matched_ids': list(candidates),
                 'matching_as_of': (self.links_sync.get('updated_at') or now())[:10] if self.links_initialized else '2026-10-22',
                 'sync': dict(self.links_sync), 'links_available': self.links_initialized,
                 'pending_importance': sum(r['active'] and r['importance_status'] == 'pending' for r in self.link_rows.values()),
                 'matching_note': 'Связи хранятся в базе; сходство не является доказанным влиянием.' if self.links_initialized else 'Сохранённый набор сопоставлений.'}
 
-    def analysis(self, company_id, news_id):
+    def analysis(self, company_id, news_id, demo_id=None):
         from bank_context import describe_bank_context
+        if demo_id and news_id.startswith('demo:'):
+            try:
+                value = self.expert_demo.analysis(demo_id, company_id, news_id)
+            except ValueError as error:
+                raise ApiError(409, str(error)) from None
+            return {**value, 'company': self.companies[company_id], 'link': None,
+                    'bank_context': describe_bank_context(value['state'])}
         key = self.pair(company_id, news_id)
         self.reload_links()
         with self.lock:
@@ -320,6 +358,8 @@ class Application:
             raise ApiError(503, 'Не удалось прочитать материал из базы. Попробуйте позже') from None
 
     def start_job(self, data, kind='analysis'):
+        if isinstance(data.get('news_id'), str) and data['news_id'].startswith('demo:'):
+            raise ApiError(400, 'Для тестовой новости результат поступает автоматически. Откройте обычную новость для работы с моделями.')
         company_id, news_id = self.pair(data.get('company_id'), data.get('news_id'))
         if kind == 'matching' and not self.links_initialized:
             raise ApiError(503, 'Хранилище связей ещё не готово')
@@ -510,10 +550,18 @@ def make_handler(application, static_root):
                 if url.path == '/api/bootstrap':
                     return self.send(200, application.bootstrap())
                 if url.path == '/api/feed':
-                    return self.send(200, application.feed(company_id))
+                    return self.send(200, application.feed(company_id, query.get('demo_id', [None])[0]))
                 if url.path == '/api/analysis':
-                    return self.send(200, application.analysis(company_id, news_id))
+                    return self.send(200, application.analysis(company_id, news_id, query.get('demo_id', [None])[0]))
                 if url.path == '/api/news-companies':
+                    if news_id.startswith('demo:'):
+                        value = application.analysis(company_id, news_id, query.get('demo_id', [None])[0])
+                        compact = (value.get('state') or {}).get('brief', {}).get('classification', {})
+                        row = {'company': value['company'], 'company_id': company_id,
+                               'importance': compact.get('importance'), 'importance_status': 'ready' if value['ready'] else 'pending',
+                               'importance_reason': 'Тестовый подбор по деятельности выбранной компании.',
+                               'analysis_status': 'ready' if value['ready'] else 'running'}
+                        return self.send(200, {'items': [row] if value.get('matched') else [], 'available': False, 'is_demo': True})
                     return self.send(200, application.news_companies(news_id))
                 if url.path == '/api/bank-sources':
                     return self.send(200, application.bank_sources())
@@ -561,7 +609,11 @@ def make_handler(application, static_root):
                     data = json.loads(self.rfile.read(size))
                 except (ValueError, UnicodeDecodeError):
                     raise ApiError(400, 'Некорректный JSON')
-                if not isinstance(data, dict) or set(data) - {'company_id', 'news_id', 'question', 'conversation_id'}:
+                if not isinstance(data, dict):
+                    raise ApiError(400, 'Ожидается объект запроса')
+                if self.path == '/api/expert-demo':
+                    return self.send(200, application.demo_control(data))
+                if set(data) - {'company_id', 'news_id', 'question', 'conversation_id'}:
                     raise ApiError(400, 'Некорректные поля запроса')
                 if not isinstance(data.get('company_id'), str) or not isinstance(data.get('news_id'), str):
                     raise ApiError(400, 'Укажите компанию и новость')

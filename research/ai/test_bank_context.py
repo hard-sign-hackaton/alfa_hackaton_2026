@@ -66,9 +66,18 @@ class BankContextTests(unittest.TestCase):
                  'result': {'claims': [{'kind': 'fact', 'text': 'Придуманное утверждение',
                                        'evidence': [{'source_id': 'bank:one', 'quote': 'несуществующая цитата'}]}]}}
         item = summarize_bank_context(state)['highlights'][0]
-        self.assertLessEqual(len(item['text']), 320)
+        self.assertLessEqual(len(item['text']), 190)
         self.assertEqual(item['method'], 'excerpt')
         self.assertEqual(item['evidence'][0]['quote'], sentence)
+
+    def test_digest_has_one_short_fact_and_retains_original_evidence(self):
+        text = 'В историческом банковском обзоре (Альфа-Банк, 14.09.2026) отмечено, что 11 сентября ЦБ сохранил ключевую ставку на уровне 14%; это исторический контекст предыдущего заседания.'
+        source = {'kind': 'bank', 'source_id': 'bank:one', 'text': text}
+        fact = {'kind': 'fact', 'text': text, 'evidence': [{'source_id': 'bank:one', 'quote': text}]}
+        summary = summarize_bank_context({'retrieved_sources': [source], 'result': {'claims': [fact, fact]}})
+        self.assertEqual(len(summary['highlights']), 1)
+        self.assertTrue(summary['highlights'][0]['text'].startswith('11 сентября ЦБ'))
+        self.assertEqual(summary['highlights'][0]['evidence'][0]['quote'], text)
 
 
 if __name__ == '__main__':

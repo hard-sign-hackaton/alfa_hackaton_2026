@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 
 import psycopg
@@ -51,6 +52,49 @@ def restore(connection, groups, manifest, content):
         return {'status': 'restored', 'counts': counts}
 
 
+def restore_analyses(connection, content):
+    """Fill cached results for identical sources; preserve newer work and edited data."""
+    with connection.transaction():
+        connection.execute('SELECT pg_advisory_xact_lock(16420261023)')
+        # Stage the trusted, checksum-validated snapshot in temporary tables. No
+        # source row or public sequence is changed by this upgrade path.
+        for group in ('news', 'companies', 'links'):
+            body = content[group]
+            for table in GROUPS[group][1]:
+                connection.execute(sql.SQL('CREATE TEMP TABLE {} (LIKE public.{} INCLUDING ALL) ON COMMIT DROP').format(
+                    sql.Identifier('seed_' + table), sql.Identifier(table)))
+                body = body.replace('INSERT INTO public.' + table + ' ', 'INSERT INTO pg_temp.seed_' + table + ' ')
+            body = re.sub(r'^SELECT pg_catalog\.setval\([^\n]+\);\s*$', '', body, flags=re.M)
+            connection.execute(body, prepare=False)
+        columns = [row[0] for row in connection.execute("SELECT column_name FROM information_schema.columns "
+            "WHERE table_schema='public' AND table_name='news_company_links' ORDER BY ordinal_position")]
+        # Matching the complete company snapshot also catches payment edits that
+        # do not change its embedding hash. Collection/import time is not content.
+        updates = ('news_hash', 'company_hash', 'analysis_result', 'analysis_as_of', 'analysis_status',
+                   'importance', 'importance_status', 'importance_reason', 'importance_evidence',
+                   'importance_method', 'error_code')
+        query = sql.SQL('''INSERT INTO public.news_company_links AS target ({columns})
+            SELECT {selected} FROM pg_temp.seed_news_company_links s
+            JOIN pg_temp.seed_companies sc ON sc.id=s.company_id
+            JOIN public.companies c ON c.id=s.company_id
+            JOIN pg_temp.seed_news_articles sn ON sn.id=s.news_id
+            JOIN public.news_articles n ON n.id=s.news_id
+            WHERE to_jsonb(c)-'imported_at'=to_jsonb(sc)-'imported_at'
+              AND to_jsonb(n)-'collected_at'=to_jsonb(sn)-'collected_at'
+              AND s.analysis_result IS NOT NULL AND s.analysis_result->'brief' IS NOT NULL
+              AND s.analysis_as_of<=now() AND c.imported_at<=now() AND n.published_at<=now()
+            ON CONFLICT (news_id,company_id) DO UPDATE SET {updates}, updated_at=now()
+            WHERE target.analysis_status<>'running' AND (
+                target.analysis_result IS NULL OR target.analysis_as_of<EXCLUDED.analysis_as_of OR
+                (target.analysis_as_of=EXCLUDED.analysis_as_of AND
+                 coalesce(target.analysis_result->'brief'->>'short_answer','')=''))''').format(
+            columns=sql.SQL(',').join(map(sql.Identifier, columns)),
+            selected=sql.SQL(',').join(sql.SQL('s.{}').format(sql.Identifier(c)) for c in columns),
+            updates=sql.SQL(',').join(sql.SQL('{}=EXCLUDED.{}').format(sql.Identifier(c), sql.Identifier(c)) for c in updates))
+        count = connection.execute(query).rowcount
+        return {'status': 'updated_analyses', 'count': count}
+
+
 def main():
     enabled = os.environ.get('STARTUP_DATA_ENABLED', 'true').lower()
     if enabled in ('0', 'false', 'no'):
@@ -68,6 +112,7 @@ def main():
         if result['status'] == 'skipped_existing':
             bank = restore(connection, ('bank',), manifest, content)
             print(json.dumps({'database': 'bank', **bank}))
+            print(json.dumps({'database': 'analyses', **restore_analyses(connection, content)}))
     with psycopg.connect(host=os.environ.get('DB_HOST', 'db'), port=int(os.environ.get('DB_PORT', '5432')),
                          dbname=os.environ.get('DB_NAME', 'alfa'), user='postgres',
                          password=os.environ['POSTGRES_PASSWORD'], connect_timeout=10) as connection:

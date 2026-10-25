@@ -32,6 +32,7 @@ import {
   X,
 } from "lucide-react";
 import "./style.css";
+import { ExpertScenario } from "./ExpertScenario";
 
 type Obj = Record<string, any>;
 type Company = {
@@ -53,6 +54,7 @@ type BusinessProfile = {
   initial: string;
   color: string;
   company_ids: string[];
+  analysis_count?: number;
 };
 type Card = {
   id: string;
@@ -69,6 +71,8 @@ type Card = {
   match_reasons: Obj[];
   retrieval_channels: string[];
   link?: Obj;
+  is_demo?: boolean;
+  demo_phase?: string;
 };
 type Bootstrap = {
   companies: Company[];
@@ -471,6 +475,7 @@ function BankContext({ state, context }: { state: Obj; context?: Obj }) {
             summary={context?.summary || state.bank_context?.summary}
             sources={registry}
           />
+          <details className="bank-materials"><summary>Источники и полный контекст · {found.length}<ChevronDown size={16}/></summary>
           <p className="muted small">
             Найдено фрагментов: {found.length} · Использовано в выводах: {used}.
             Материалы без цитат показаны для проверки контекста.
@@ -504,7 +509,8 @@ function BankContext({ state, context }: { state: Obj; context?: Obj }) {
                 ))}
             </details>
           ))}
-          <p className="muted small">
+          </details>
+          <p className="muted small bank-date-note">
             Обзоры и прогнозы относятся к дате публикации; они не подтверждают
             текущие показатели конкретной компании.
           </p>
@@ -611,9 +617,18 @@ function App() {
     }
   });
   const [profileOpen, setProfileOpen] = useState(false);
+  const [expertOpen, setExpertOpen] = useState(false);
+  const [demo, setDemo] = useState<Obj>();
+  const [demoBusy, setDemoBusy] = useState(false);
+  const [demoError, setDemoError] = useState("");
+  const currentCompany = useRef(companyId);
+  currentCompany.current = companyId;
+  const demoSuffix = demo?.id ? "&demo_id=" + encodeURIComponent(demo.id) : "";
   const [section, setSection] = useState<"feed" | "bank" | "company">("feed");
   const [mode, setMode] = useState("personal");
   const [feed, setFeed] = useState<{
+    company_id: string;
+    demo?: Obj;
     items: Card[];
     matched_ids: string[];
     matching_as_of: string;
@@ -688,11 +703,11 @@ function App() {
     setFeed(undefined);
     setVisibleCount(8);
     api<typeof feed>(
-      "/feed?company_id=" + encodeURIComponent(companyId),
+      "/feed?company_id=" + encodeURIComponent(companyId) + demoSuffix,
       undefined,
       controller.signal,
     )
-      .then(setFeed)
+      .then((value) => { if (!controller.signal.aborted && value?.company_id === currentCompany.current) setFeed(value); })
       .catch((e) => {
         if (e.name !== "AbortError") setFeedError(e.message);
       })
@@ -700,7 +715,7 @@ function App() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [boot, companyId, reload]);
+  }, [boot, companyId, reload, demo?.id]);
   useEffect(() => {
     setDetail(undefined);
     setDetailError("");
@@ -717,16 +732,16 @@ function App() {
       "/analysis?company_id=" +
         encodeURIComponent(companyId) +
         "&news_id=" +
-        encodeURIComponent(selectedId),
+        encodeURIComponent(selectedId) + demoSuffix,
       undefined,
       controller.signal,
     )
-      .then(setDetail)
+      .then((value) => { if (!controller.signal.aborted) setDetail(value); })
       .catch((e) => {
         if (e.name !== "AbortError") setDetailError(e.message);
       });
     return () => controller.abort();
-  }, [companyId, selectedId]);
+  }, [companyId, selectedId, demo?.id]);
   useEffect(() => {
     if (!job || !["running", "queued"].includes(job.status)) return;
     const pair = mountedPair.current;
@@ -821,22 +836,37 @@ function App() {
     if (!selectedId) return;
     const controller = new AbortController();
     api(
-      "/news-companies?news_id=" + encodeURIComponent(selectedId),
+      "/news-companies?news_id=" + encodeURIComponent(selectedId) + "&company_id=" + encodeURIComponent(companyId) + demoSuffix,
       undefined,
       controller.signal,
     )
-      .then(setRelated)
+      .then((value) => { if (!controller.signal.aborted) setRelated(value); })
       .catch((e) => {
         if (e.name !== "AbortError") setRelatedError(e.message);
       });
     return () => controller.abort();
-  }, [selectedId, companyId, reload]);
+  }, [selectedId, companyId, reload, demo?.id]);
   useEffect(() => {
-    if (feed?.sync?.status !== "running" && feed?.sync?.status !== "pending")
-      return;
-    const timer = window.setTimeout(() => setReload((v) => v + 1), 5000);
-    return () => clearTimeout(timer);
-  }, [feed]);
+    if (!boot) return;
+    const controller = new AbortController();
+    let pending = false;
+    const refresh = async () => {
+      if (pending) return;
+      pending = true;
+      try {
+        const value = await api<typeof feed>("/feed?company_id=" + encodeURIComponent(companyId) + demoSuffix, undefined, controller.signal);
+        if (!controller.signal.aborted && value?.company_id === currentCompany.current) setFeed(value);
+        if (demo && selectedId?.startsWith("demo:")) {
+          const detailValue = await api("/analysis?company_id=" + encodeURIComponent(companyId) + "&news_id=" + encodeURIComponent(selectedId) + demoSuffix, undefined, controller.signal);
+          if (!controller.signal.aborted) setDetail(detailValue);
+        }
+      } catch (e: any) {
+        if (e.name !== "AbortError" && demo) setDemoError(e.message);
+      } finally { pending = false; }
+    };
+    const timer = window.setInterval(refresh, demo ? 1200 : 10000);
+    return () => { window.clearInterval(timer); controller.abort(); };
+  }, [boot, companyId, demo?.id, selectedId]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -869,6 +899,10 @@ function App() {
     } catch {}
   }
   function changeCompany(id: string) {
+    if (demo) void api("/expert-demo", { action: "stop", company_id: companyId, demo_id: demo.id }).catch(() => {});
+    setDemo(undefined); setDemoError(""); setExpertOpen(false);
+    setFeed(undefined); setDetail(undefined); setMessages([]); setLoading(true);
+    setQuery(""); setTopic("all"); setLevel("all"); setMode("personal");
     setCompanyId(id);
     setSelectedId(undefined);
     rememberCompany(id);
@@ -889,6 +923,22 @@ function App() {
     setMode("personal");
     profileTrigger.current?.focus();
   }
+  async function startDemo() {
+    if (demoBusy) return;
+    const selectedCompany = companyId;
+    setDemoBusy(true); setDemoError("");
+    try {
+      if (demo) await api("/expert-demo", { action: "stop", company_id: companyId, demo_id: demo.id }).catch(() => {});
+      const value = await api("/expert-demo", { action: "start", company_id: selectedCompany });
+      if (currentCompany.current !== selectedCompany) return;
+      setDemo(value); setSelectedId(undefined); setMode("personal"); setTopic("all"); setLevel("all"); setQuery("");
+    } catch (e: any) { if (currentCompany.current === selectedCompany) setDemoError(e.message); }
+    finally { setDemoBusy(false); }
+  }
+  async function stopDemo() {
+    if (demo) await api("/expert-demo", { action: "stop", company_id: companyId, demo_id: demo.id }).catch(() => {});
+    setDemo(undefined); setSelectedId(undefined); setDemoError(""); setExpertOpen(false); setMode("personal");
+  }
   function navigate(next: typeof section) {
     setSection(next);
     setSelectedId(undefined);
@@ -898,7 +948,7 @@ function App() {
     kind: "analysis" | "chat" | "matching",
     prompted?: string,
   ) {
-    if (busy || !selectedId) return;
+    if (busy || !selectedId || detail?.is_demo) return;
     const pair = mountedPair.current;
     const text = (prompted || question).trim();
     if (kind === "chat" && !text) return;
@@ -935,7 +985,7 @@ function App() {
 
   const matched = new Set(feed?.matched_ids || []);
   const filtered = (feed?.items || []).filter((c) => {
-    if (mode === "personal" && !matched.has(c.id) && !c.has_analysis)
+    if (mode === "personal" && !matched.has(c.id) && !c.has_analysis && !c.is_demo)
       return false;
     if (mode === "saved" && !saved.includes(companyId + ":" + c.id))
       return false;
@@ -1198,7 +1248,7 @@ function App() {
                     <span>
                       <b>{profile.title}</b>
                       <small>{profile.description}</small>
-                      <em>Компаний: {profile.company_ids.length}</em>
+                      <em>Компаний: {profile.company_ids.length} · Разборов: {profile.analysis_count || 0}</em>
                     </span>
                     {profile.id === activeProfile?.id ? (
                       <Check size={20} />
@@ -1273,6 +1323,7 @@ function App() {
                 <Skeleton />
               ) : (
                 <>
+                  {detail.is_demo && <div className="demo-detail-notice" role="note">Тестовая новость · результат подготовлен для сценария. Чат и новые запросы к моделям доступны на обычных новостях.</div>}
                   <div className="detail-heading">
                     <div className="eyebrow">РАЗБОР ДЛЯ {companyId}</div>
                     <Badge
@@ -1335,7 +1386,7 @@ function App() {
                             loading={!!busy && job?.kind === "matching"}
                             disabled={
                               !!busy ||
-                              !boot.status.live_available ||
+                              (!boot.status.live_available || !!detail?.is_demo) ||
                               !related?.available
                             }
                             onClick={() => start("matching")}
@@ -1385,10 +1436,9 @@ function App() {
                                   <button
                                     className="text-link"
                                     onClick={() => {
-                                      setCompanyId(row.company_id);
-                                      try {
-                                        rememberCompany(row.company_id);
-                                      } catch {}
+                                      const publication = selectedId;
+                                      changeCompany(row.company_id);
+                                      setSelectedId(publication);
                                       setDetailTab("analysis");
                                     }}
                                   >
@@ -1499,6 +1549,8 @@ function App() {
                             ),
                           )}
                         </section>
+                      ) : detail.is_demo && !state ? (
+                        <section className="panel demo-wait" role="status"><Loader2 className="spin" size={24}/><h2>Тестовая новость обрабатывается</h2><p>Сначала подбирается компания, затем появляется заранее подготовленный разбор. Результат откроется автоматически через несколько секунд.</p></section>
                       ) : !state ? (
                         <section className="panel empty-analysis">
                           {detail.link?.importance_reason && (
@@ -1526,13 +1578,13 @@ function App() {
                             view="primary"
                             size={48}
                             loading={!!busy}
-                            disabled={!boot.status.live_available}
+                            disabled={(!boot.status.live_available || !!detail?.is_demo)}
                             onClick={() => start("analysis")}
                           >
                             Подготовить разбор
                           </Button>
                           <small>Анализ может занять несколько минут.</small>
-                          {!boot.status.live_available && (
+                          {(!boot.status.live_available || !!detail?.is_demo) && (
                             <p className="muted">
                               Новые разборы доступны после подключения базы и
                               ключа моделей на сервере.
@@ -1667,7 +1719,7 @@ function App() {
                             <Button
                               view="transparent"
                               size={40}
-                              disabled={!!busy || !boot.status.live_available}
+                              disabled={!!busy || (!boot.status.live_available || !!detail?.is_demo)}
                               onClick={() => start("analysis")}
                               leftAddons={<RefreshCw size={15} />}
                             >
@@ -1755,7 +1807,7 @@ function App() {
                             <button
                               key={text}
                               disabled={
-                                !state || !!busy || !boot.status.live_available
+                                !state || !!busy || (!boot.status.live_available || !!detail?.is_demo)
                               }
                               onClick={() => {
                                 setChatOpen(true);
@@ -1788,7 +1840,7 @@ function App() {
                           value={question}
                           onChange={(e) => setQuestion(e.target.value)}
                           maxLength={1500}
-                          disabled={!state || !boot.status.live_available}
+                          disabled={!state || (!boot.status.live_available || !!detail?.is_demo)}
                           rows={2}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
@@ -1804,7 +1856,7 @@ function App() {
                             !question.trim() ||
                             !!busy ||
                             !state ||
-                            !boot.status.live_available
+                            (!boot.status.live_available || !!detail?.is_demo)
                           }
                         >
                           <Send size={18} />
@@ -1833,8 +1885,9 @@ function App() {
                   <span className="status-dot green" />
                   ПЕРСОНАЛЬНАЯ ЛЕНТА
                 </span>
-                <span>Набор на {date(boot.status.updated_at, true)}</span>
+                <span className="feed-tools"><span>Лента обновляется автоматически</span><button className="expert-toggle" aria-expanded={expertOpen} onClick={() => setExpertOpen(v => !v)}>Сценарий для эксперта</button></span>
               </div>
+              {expertOpen && <ExpertScenario session={feed?.demo || demo} busy={demoBusy} error={demoError} onStart={startDemo} onStop={stopDemo}/>}
               <div className="hero">
                 <div className="hero-copy">
                   <h1>
@@ -2060,7 +2113,9 @@ function App() {
                         </button>
                       </div>
                       <div className="card-topic">
+                        {card.is_demo && <b className="demo-label">Тестовая новость</b>}
                         {primaryTopic(card)}
+                        {card.is_demo && !card.has_analysis && <span className="demo-processing"><Loader2 size={13} className="spin"/>{card.demo_phase === "received" ? "Получена · подбор компании" : "Компания подобрана · готовим разбор"}</span>}
                         {card.has_analysis && (
                           <span>
                             <CheckCheck size={13} />

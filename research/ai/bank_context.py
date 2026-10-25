@@ -32,8 +32,13 @@ def needs_bank_refresh(state):
                 and not any(s.get('kind') == 'bank' for s in state.get('retrieved_sources', [])))
 
 
-def _short(text, limit=320):
+def _short(text, limit=190):
     text = ' '.join(text.split())
+    text = re.sub(r'^В историческом банковском обзоре\s*\([^)]*\)\s*(?:отмечено|указано),?\s*что\s+', '', text)
+    text = re.sub(r'^Банковская аналитика отмечает, что\s+', '', text)
+    text = re.split(r';\s*это исторический контекст', text, maxsplit=1)[0]
+    if text:
+        text = text[0].upper() + text[1:]
     if len(text) <= limit:
         return text
     cut = text[:limit - 1]
@@ -54,14 +59,14 @@ def summarize_bank_context(state):
             continue
         item = {'text': _short(claim['text']), 'source_ids': list(dict.fromkeys(e['source_id'] for e in evidence)),
                 'evidence': evidence, 'method': 'accepted_claim'}
-        if claim.get('kind') == 'fact' and item['text'] not in seen and len(highlights) < 2:
+        if claim.get('kind') == 'fact' and item['text'] not in seen and len(highlights) < 1:
             highlights.append(item)
             seen.add(item['text'])
         elif claim.get('kind') == 'hypothesis' and impact is None:
             premises = {e['source_id'] for e in claim.get('evidence', [])}
             if any(s.startswith(('company:' + state.get('company_id', '') + ':',
                                  'metric:' + state.get('company_id', '') + ':')) for s in premises):
-                impact = item
+                impact = {**item, 'text': _short(claim['text'], 150)}
     if not highlights:
         # OCR headers are metadata, not a summary. Prefer sentences matching the event;
         # keep original substring evidence even when display whitespace is normalized.
@@ -91,10 +96,10 @@ def summarize_bank_context(state):
                 'evidence': [{'source_id': source_id, 'quote': quote}], 'method': 'excerpt'})
             seen.add(text)
             used_documents.add(document)
-            if len(highlights) == 2:
+            if len(highlights) == 1:
                 break
     return {'highlights': highlights, 'impact': impact,
-            'note': None if impact else 'Влияние этих материалов на компанию в разборе не подтверждено.'}
+            'note': None if impact else 'Прямое влияние на компанию не установлено.'}
 
 
 def describe_bank_context(state):

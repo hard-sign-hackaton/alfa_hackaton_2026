@@ -9,7 +9,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
-from load_startup_data import restore, validate_snapshot
+from load_startup_data import restore, restore_analyses, validate_snapshot
 from sql_snapshots import GROUPS, SEED_ROOT
 
 
@@ -86,6 +86,31 @@ class RestoreTests(unittest.TestCase):
         self.connection.execute("UPDATE news_articles SET title='Пользовательское изменение' WHERE id=(SELECT id FROM news_articles ORDER BY id LIMIT 1)")
         self.assertEqual(self.load()['status'], 'skipped_existing')
         self.assertEqual(self.connection.execute("SELECT count(*) FROM news_articles WHERE title='Пользовательское изменение'").fetchone()[0], 1)
+
+    def test_analysis_upgrade_fills_all_companies_and_is_idempotent(self):
+        self.load()
+        self.connection.execute("SELECT setval('news_embeddings_id_seq',500,true)")
+        self.connection.execute('DELETE FROM news_company_links')
+        self.assertEqual(restore_analyses(self.connection, self.content)['count'], 27)
+        self.assertEqual(self.connection.execute('SELECT count(DISTINCT company_id) FROM news_company_links WHERE analysis_result IS NOT NULL').fetchone()[0], 12)
+        self.assertEqual(restore_analyses(self.connection, self.content)['count'], 0)
+        self.assertEqual(self.connection.execute('SELECT last_value FROM news_embeddings_id_seq').fetchone()[0], 500)
+
+    def test_analysis_upgrade_preserves_newer_and_running_work(self):
+        self.load()
+        self.connection.execute("UPDATE news_company_links SET analysis_as_of=now(),analysis_result=jsonb_set(analysis_result,'{marker}','\"newer\"')")
+        self.assertEqual(restore_analyses(self.connection, self.content)['count'], 0)
+        self.connection.execute("UPDATE news_company_links SET analysis_result=NULL,analysis_status='running'")
+        self.assertEqual(restore_analyses(self.connection, self.content)['count'], 0)
+
+    def test_analysis_upgrade_skips_edited_payments_even_if_embedding_hash_unchanged(self):
+        self.load()
+        company = self.connection.execute('SELECT company_id FROM news_company_links ORDER BY company_id LIMIT 1').fetchone()[0]
+        self.connection.execute("UPDATE companies SET details=jsonb_set(details,'{payments,marker}','true') WHERE id=%s", (company,))
+        self.connection.execute('DELETE FROM news_company_links')
+        restore_analyses(self.connection, self.content)
+        self.assertEqual(self.connection.execute('SELECT count(*) FROM news_company_links WHERE company_id=%s', (company,)).fetchone()[0], 0)
+        self.assertGreater(self.connection.execute('SELECT count(*) FROM news_company_links').fetchone()[0], 0)
 
     def test_empty_bank_group_can_be_added_to_existing_news_without_overwriting_sources(self):
         self.load()
