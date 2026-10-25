@@ -2603,7 +2603,7 @@ function App() {
         </main>
         <footer className="site-footer">
           <span>Альфа-Бизнес · Персональная аналитика</span>
-          <span>Факты. Контекст. Решения.</span>
+          <span>Не является финансовой рекомендацией</span>
         </footer>
       </div>
     </div>
