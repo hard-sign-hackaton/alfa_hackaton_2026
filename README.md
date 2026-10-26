@@ -1,6 +1,6 @@
 # Альфа Хак 2026 — персонализированная новостная аналитика
 
-Сервис связывает внешние новости, контекст компании и аналитические материалы Альфа-Банка. В этой ветке реализованы сбор новостей, их хранение, эмбеддинги и векторный поиск. Исследовательский AI-модуль, UX-прототип и контракты находятся отдельно; объединенный продуктовый backend пока не реализован.
+Сервис связывает внешние новости, контекст компании и аналитические материалы Альфа-Банка. Система собирает новости, подбирает релевантные компании, оценивает важность событий и готовит разборы с опорой на банковскую аналитику. В приложении также есть чат по материалам, оценки полезности разборов и демонстрационный сценарий поступления новостей.
 
 ## Коммит для проверки
 **TODO**
@@ -25,11 +25,54 @@
 11. Слева в навигационной панели можно перейти на вкладку "Аналитика Альфа-Банка". В ней указаны все аналитические материалы, использующиеся в работе системы.
 12. В навигационной панели во вкладке "Моя компания" можно найти всю информацию о компании, которая используется для работы системы.
 
-## Навигация
+## Архитектура системы
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ frontend — React + Vite                                                      │
+│ лента · карточка новости · чат · профили · сценарий · оценки                 │
+└──────────────────────────────────────┬───────────────────────────────────────┘
+                                       │ HTTP /api/* (same-origin)
+┌──────────────────────────────────────▼───────────────────────────────────────┐
+│ app/web — ThreadingHTTPServer                                                │
+│ bootstrap · feed · analysis · chat · jobs · bank · feedback · expert-demo    │
+│ очередь фоновых задач (до 2) · links sync · feedback · статика               │
+└────────────────────┬─────────────────────────────────────────┬───────────────┘
+                     │ SQL                                     │ Вызовы агента
+┌────────────────────▼─────────────────────┐   ┌───────────────▼───────────────┐
+│ PostgreSQL + pgvector                    │   │ research/ai                   │
+│ `alfa_news`: news · companies · bank     │◄──│ DatabaseResearchAgent         │
+│ links · feedback · analyses              │   │ chat · ranking · bank context │
+│ эмбеддинги и pgvector-поиск              │   │ retrieval · readers → SQL     │
+└─────────────┬────────────────────────────┘   └───────────────┬───────────────┘
+              │ SQL                                            │ LLM API
+┌─────────────▼────────────────────────────┐   ┌───────────────▼───────────────┐
+│ Подготовка данных (CLI, offline)         │   │ LLM provider                  │
+│ news: parse → normalize → dedup → E5     │   │ classification · analysis     │
+│ companies: snapshot → profiles → E5      │   │ chat                          │
+│ analytics: PDF → chunks → E5             │   └───────────────────────────────┘
+└────────────┬─────────────────────────────┘
+             │ SQL
+┌────────────▼─────────────────────────────────────────────────────────────────┐
+│ Источники и старт                                                            │
+│ RSS/HTTP/sitemap · JSON-снимок компаний · PDF/Markdown банка                 │
+│ database/seeds → data-init → PostgreSQL                                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+Основные потоки:
+
+- **Подготовка данных.** `app/modules/news` собирает публикации, нормализует, дедуплицирует и считает E5-эмбеддинги; `companies` импортирует снимок и строит профили; `analytics` разбирает банковские PDF на чанки. Результаты пишутся в PostgreSQL.
+- **Онлайн-запрос.** `frontend` ходит только в `app/web` по `/api/*`. Сервер читает и пишет PostgreSQL, ставит `analysis`, `chat` и `matches` в очередь (до двух задач) и возвращает статус через `/api/jobs/{id}`.
+- **Исследование.** `app/web` вызывает `research/ai`: агент через readers читает новости, компании и банковские чанки, обращается к LLM и возвращает разбор или ответ. `app/web` сохраняет результат в `news_company_links`.
+- **Сценарий и старт.** `expert_demo` живёт в `app/web` и проводит тестовые публикации через обычный путь `news → links → analysis`; `data-init` восстанавливает `database/seeds` при первом запуске.
+
+## Навигация по проекту
 
 | Каталог / файл | Назначение |
 | --- | --- |
-| [app/__main__.py](app/__main__.py) | `python -m app`: общий `db upgrade` и CLI новостей, компаний и аналитики |
+| [app/web/openapi.yaml](app/web/openapi.yaml) | OpenAPI 3.0.3 для HTTP API, с которым работает frontend |
+| [app/\_\_main\_\_.py](app/__main__.py) | `python -m app`: общий `db upgrade` и CLI новостей, компаний и аналитики |
 | [app/shared/db](app/shared/db/) | SQLAlchemy Base, Engine, фабрика сессий и запуск Alembic-миграций |
 | [app/shared/embeddings](app/shared/embeddings/) | Интерфейс embedding-провайдера и локальная E5; общая для новостей, компаний и аналитики |
 | [app/modules/news](app/modules/news/) | Новости: DTO, парсеры, гибридная дедупликация, ORM-модели, репозитории, сервисы и CLI |
@@ -38,7 +81,6 @@
 | [app/modules/links](app/modules/links/) | Связи новость—компания: подбор, важность, статусы и сохранённые разборы |
 | [app/modules/feedback](app/modules/feedback/) | Оценки полезности разборов и версии анализа |
 | [app/web](app/web/) | Same-origin HTTP API, фоновая синхронизация связей, чат, экспертный сценарий и отраслевые профили |
-| [app/web/openapi.yaml](app/web/openapi.yaml) | OpenAPI 3.0.3 для HTTP API, с которым работает frontend |
 | [frontend](frontend/) | React/Vite-интерфейс: `main.tsx` — лента, карточка и чат; `ExpertScenario.tsx` — сценарий; `AnalysisFeedback.tsx` — оценки |
 | [migrations](migrations/) и [alembic.ini](alembic.ini) | Общая история изменений схемы PostgreSQL |
 | [database/seeds](database/seeds/) | SQL-снимок стартовых данных (новости, компании, банк, связи, legacy) и `manifest.json` |
@@ -52,26 +94,6 @@
 | [scripts/init_news_reader.py](scripts/init_news_reader.py) | Миграции и роли чтения/записи для основной БД |
 | [scripts/precompute_analyses.py](scripts/precompute_analyses.py) | Пакетный предрасчёт полных разборов и кратких сводок |
 | [scripts/restore_news_dump.py](scripts/restore_news_dump.py) | Загрузка дампа из файла или по HTTPS в отдельную пустую БД |
-| [docs/startup-data.md](docs/startup-data.md) | Стартовые SQL-снимки, поведение `data-init` и ограничения |
-| [docs/web.md](docs/web.md) | Запуск web, API, модели, связи и ограничения |
-| [docs/expert-scenario.md](docs/expert-scenario.md) | Общий сценарий тестовых новостей и фактическая обработка |
-| [docs/analysis-feedback.md](docs/analysis-feedback.md) | Хранение, API и метрики оценок разборов |
-| [docs/companies-pipeline.md](docs/companies-pipeline.md) | Импорт, профили, эмбеддинги и поиск компаний |
-| [docs/news-company-links.md](docs/news-company-links.md) | Связи, важность, фоновые обновления и роли БД |
-| [docs/news-pipeline.md](docs/news-pipeline.md) | Подробный запуск новостного пайплайна, параметры и ограничения |
-| [docs/news-deduplication.md](docs/news-deduplication.md) | Гибридная дедупликация новостей |
-| [docs/matching-improvements.md](docs/matching-improvements.md) | Подбор компаний и улучшение качества связей |
-| [docs/news-agent-integration.md](docs/news-agent-integration.md) | Подключение новостей и компаний к исследовательскому агенту |
-| [docs/bank-agent-integration.md](docs/bank-agent-integration.md) | Банковские источники в исследовании компании |
-| [docs/chat-retrieval.md](docs/chat-retrieval.md) | RAG-поиск и ограничения чата |
-| [docs/precomputed-analysis.md](docs/precomputed-analysis.md) | Предрасчёт разборов, обновление банковского контекста и экспорт |
-| [docs/analytics-storage.md](docs/analytics-storage.md) | Схема, манифест, импорт PDF/чанков, эмбеддинги и поиск аналитики |
-| [docs/news-database-handoff.md](docs/news-database-handoff.md) | Передача дампа, восстановление и подключение AI-части |
-| [docs/companies](docs/companies/) | Снимок компаний и описание его JSON-структуры |
-| [docs/test-tours](docs/test-tours/) | Пользовательские тест-туры: сквозные сценарии от лица руководителей крупного бизнеса |
-| [docs/test-tours/00-full-walkthrough.md](docs/test-tours/00-full-walkthrough.md) | Большой тест-тур: показывает основной функционал приложения |
-| [docs/archive](docs/archive/) | Архив первых прогонов и проверок раскладки |
-| [docs/news-pgvector-checks.json](docs/news-pgvector-checks.json) | Проверки текущего поиска через PostgreSQL |
 | [research/news](research/news/) | Исходное исследование N01/N02: проверки источников, сохранённые материалы и первый сборщик |
 | [research/ai](research/ai/) | Исследовательский агент, ранжирование, модели входов/выходов и эксперименты |
 | [research/bank](research/bank/) | Извлечение PDF и подготовка чанков банковской аналитики |
