@@ -1,0 +1,1637 @@
+openapi: 3.0.3
+info:
+  title: Alfa Hack 2026 — Web API
+  version: 1.0.0
+  description: |
+    HTTP API веб-приложения Alfa Hack 2026. Спецификация описывает контракт,
+    который использует React-интерфейс из `frontend/`, и служебные маршруты
+    обратного поиска.
+
+    Базовый адрес локального запуска — `http://127.0.0.1:8080`; фронтенд
+    обращается к путям относительно `/api`. Аутентификации нет: приложение
+    рассчитано на локальный запуск, а cookie `alfa_feedback` служит только
+    анонимным идентификатором оценки, не авторизацией.
+
+    Общие правила POST-запросов:
+
+    * `Content-Type` должен быть `application/json` (параметр charset
+      допускается); иначе возвращается `415`.
+    * Тело запроса — JSON-объект размером от 1 до 16000 байт; иначе
+      возвращается `413`, а для некорректного JSON или не-объекта — `400`.
+    * Если браузер передал `Origin`, его netloc должен совпадать с `Host`;
+      иначе возвращается `403`. Запросы без `Origin` (например, curl) разрешены.
+    * Неизвестные поля, кроме перечисленных в схеме конкретного маршрута,
+      отклоняются с `400`.
+
+    Ошибки имеют единый вид `{"error": "<сообщение>"}`. JSON-ответы отдаются
+    с `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`,
+    `Referrer-Policy: no-referrer` и строгой CSP.
+
+    `POST /api/analysis`, `POST /api/chat` и `POST /api/matches` запускают
+    фоновую задачу и возвращают `202` с объектом `Job`. Результат нужно
+    забирать через `GET /api/jobs/{jobId}`. Для анализа после завершения
+    задачи фронтенд заново запрашивает `GET /api/analysis`.
+  license:
+    name: Internal hackathon project
+paths:
+  /api/bootstrap:
+    get:
+      tags: [system]
+      summary: Стартовые данные приложения
+      operationId: getBootstrap
+      description: |
+        Возвращает компании, отраслевые профили для навигации, каталог
+        банковских документов и состояние источников. Компании содержат
+        `profile_id`, вычисленный по ОКВЭД.
+      responses:
+        '200':
+          description: Стартовые данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BootstrapResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/feed:
+    get:
+      tags: [feed]
+      summary: Персональная лента новостей
+      operationId: getFeed
+      description: |
+        Возвращает новости для выбранной компании, сохранённые разборы,
+        признаки важности и сведения о связях. Если передан `demo_id`,
+        в начало ленты добавляются карточки активного экспертного сценария.
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdQuery'
+        - $ref: '#/components/parameters/DemoIdQuery'
+      responses:
+        '200':
+          description: Лента компании
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/analysis:
+    get:
+      tags: [analysis]
+      summary: Сохранённый разбор новости
+      operationId: getAnalysis
+      description: |
+        Возвращает полный разбор пары «компания — новость», исходное событие,
+        версию разбора для оценки, банковский контекст и строку связи.
+        `state` равен `null`, если разбора ещё нет. Для тестовой новости
+        обязателен `demo_id`.
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdQuery'
+        - $ref: '#/components/parameters/NewsIdQuery'
+        - $ref: '#/components/parameters/DemoIdQuery'
+      responses:
+        '200':
+          description: Разбор или пустое состояние
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [analysis]
+      summary: Запустить новый разбор
+      operationId: startAnalysis
+      description: |
+        Ставит в очередь полный разбор пары «компания — новость». Повторный
+        запрос той же пары во время выполнения возвращает существующую задачу.
+        Тестовые новости обрабатываются автоматически и здесь не принимаются.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalysisStartRequest'
+      responses:
+        '202':
+          description: Задача поставлена в очередь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/chat:
+    post:
+      tags: [chat]
+      summary: Задать вопрос по разбору
+      operationId: startChat
+      description: |
+        Запускает фоновый ответ по контексту выбранного разбора. Контекст и
+        история диалога формируются сервером; клиент передаёт только вопрос.
+        Для тестовой новости обязателен `demo_id`, а разбор должен быть готов.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatStartRequest'
+      responses:
+        '202':
+          description: Задача чата поставлена в очередь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/jobs/{jobId}:
+    get:
+      tags: [jobs]
+      summary: Состояние фоновой задачи
+      operationId: getJob
+      description: |
+        Отдаёт текущее состояние задачи. Пока задача в `queued` или `running`,
+        клиент опрашивает этот маршрут. Поля `answer`, `retrieved_sources`,
+        `retrieval` появляются у чата, `matches` — у задачи подбора, а
+        `error` — у неуспешной задачи.
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          description: 32-символьный hex-идентификатор задачи
+          schema:
+            type: string
+            pattern: '^[a-f0-9]{32}$'
+      responses:
+        '200':
+          description: Состояние задачи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/matches:
+    post:
+      tags: [service]
+      summary: Запустить подбор компаний для новости
+      operationId: startMatches
+      description: |
+        Служебный маршрут обратного поиска. Запускает подбор компаний для
+        новости и сохраняет связи; после завершения задачи результат доступен
+        в поле `matches`. Текущий интерфейс этот маршрут напрямую не вызывает.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchesStartRequest'
+      responses:
+        '202':
+          description: Задача подбора поставлена в очередь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/news-companies:
+    get:
+      tags: [service]
+      summary: Компании, связанные с новостью
+      operationId: getNewsCompanies
+      description: |
+        Обратный поиск: возвращает активные связи новости с компаниями.
+        Для обычной новости достаточно `news_id`. Для тестовой новости
+        дополнительно нужны `demo_id` и `company_id`. Текущий интерфейс
+        использует этот маршрут только как служебный.
+      parameters:
+        - $ref: '#/components/parameters/NewsIdQuery'
+        - $ref: '#/components/parameters/CompanyIdOptionalQuery'
+        - $ref: '#/components/parameters/DemoIdQuery'
+      responses:
+        '200':
+          description: Связанные компании
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsCompaniesResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/bank-sources:
+    get:
+      tags: [bank]
+      summary: Банковские источники из готовых разборов
+      operationId: getBankSources
+      description: |
+        Возвращает уникальные банковские фрагменты, найденные в сохранённых
+        разборах. Элементы имеют `kind: bank` и пригодны для отображения в
+        разделе «Банк».
+      responses:
+        '200':
+          description: Список банковских фрагментов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Source'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/bank-document:
+    get:
+      tags: [bank]
+      summary: Документ банка и его чанки
+      operationId: getBankDocument
+      description: |
+        Возвращает карточку документа из манифеста и, если база доступна,
+        до 500 чанков в исходном порядке. В режиме снимка или при недоступной
+        базе возвращается `available: false` и пустой `chunks`, а не ошибка.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: Идентификатор документа из манифеста
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Документ и доступные чанки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankDocumentResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/feedback:
+    get:
+      tags: [feedback]
+      summary: Текущая оценка разбора
+      operationId: getFeedback
+      description: |
+        Читает оценку для текущего анонимного посетителя. Если cookie
+        `alfa_feedback` ещё нет, сервер создаёт 32-символьный reviewer id и
+        устанавливает HttpOnly cookie `SameSite=Lax` на один год. Оценка
+        привязана к паре «компания — новость» и версии разбора.
+      parameters:
+        - $ref: '#/components/parameters/CompanyIdQuery'
+        - $ref: '#/components/parameters/NewsIdQuery'
+        - $ref: '#/components/parameters/AnalysisVersionQuery'
+        - $ref: '#/components/parameters/DemoIdQuery'
+      responses:
+        '200':
+          description: Оценка или `null`
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/FeedbackCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      tags: [feedback]
+      summary: Сохранить или удалить оценку
+      operationId: saveFeedback
+      description: |
+        Сохраняет оценку `1` или `-1`, либо удаляет её при `vote: null`.
+        `analysis_version` должен совпадать с текущей версией разбора, иначе
+        возвращается `409`. Повторная оценка заменяет предыдущую.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+      responses:
+        '200':
+          description: Сохранённая оценка
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/FeedbackCookie'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedbackResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/expert-demo:
+    post:
+      tags: [expert-demo]
+      summary: Управление общим экспертным сценарием
+      operationId: controlExpertDemo
+      description: |
+        Запускает, останавливает или повторяет общий сценарий тестовых
+        новостей. `start` создаёт глобальный сеанс для всех компаний и
+        возвращает его представление; повторный `start` возвращает активный
+        сеанс. `stop` и `retry` требуют `demo_id` и возвращают соответственно
+        `{"status":"stopped"}` или обновлённое представление сеанса.
+        Для запуска нужны `LLM_API_KEY`, `EXPERT_DATABASE_URL`, доступная
+        база и подготовленное хранилище связей.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpertDemoRequest'
+      responses:
+        '200':
+          description: Сеанс сценария или подтверждение остановки
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/DemoSession'
+                  - $ref: '#/components/schemas/ExpertDemoStopped'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+components:
+  parameters:
+    CompanyIdQuery:
+      name: company_id
+      in: query
+      required: true
+      description: Идентификатор компании, например `U_37452`
+      schema:
+        type: string
+    CompanyIdOptionalQuery:
+      name: company_id
+      in: query
+      required: false
+      description: Идентификатор компании; обязателен для тестовой новости
+      schema:
+        type: string
+    NewsIdQuery:
+      name: news_id
+      in: query
+      required: true
+      description: Идентификатор публикации; для тестовой — `demo:<session>:<index>`
+      schema:
+        type: string
+    DemoIdQuery:
+      name: demo_id
+      in: query
+      required: false
+      description: Идентификатор активного экспертного сценария
+      schema:
+        type: string
+        pattern: '^[a-f0-9]{32}$'
+    AnalysisVersionQuery:
+      name: analysis_version
+      in: query
+      required: true
+      description: SHA-256 версии разбора из `GET /api/analysis`
+      schema:
+        type: string
+        pattern: '^[a-f0-9]{64}$'
+
+  headers:
+    FeedbackCookie:
+      description: |
+        Анонимный идентификатор посетителя. Устанавливается, если cookie ещё
+        нет; HttpOnly, SameSite=Lax, Path=/, Max-Age=31536000.
+      schema:
+        type: string
+        example: alfa_feedback=0123456789abcdef0123456789abcdef; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000
+
+  responses:
+    BadRequest:
+      description: Некорректные поля, JSON или параметры запроса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Origin не совпадает с Host
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Компания, новость, документ или задача не найдены
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Состояние изменилось, сценарий завершён или разбор ещё не готов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PayloadTooLarge:
+      description: Тело запроса пустое или больше 16000 байт
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnsupportedMediaType:
+      description: Ожидается Content-Type application/json
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Уже выполняются два запроса или достигнут лимит диалогов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Внутренняя ошибка без раскрытия секретов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServiceUnavailable:
+      description: Недоступны модель, база, хранилище связей или настроен сценарий
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Понятное пользователю сообщение без внутренних деталей
+      example:
+        error: Компания не найдена
+
+    JsonObject:
+      type: object
+      additionalProperties: true
+      description: Свободный JSON-объект с полями соответствующего источника
+
+    LinksSync:
+      type: object
+      required: [status, stage, updated_at]
+      properties:
+        status:
+          type: string
+          enum: [disabled, pending, running, done, failed]
+        stage:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+      example:
+        status: done
+        stage: Связи обновлены
+        updated_at: '2026-10-26T09:56:54.291828+00:00'
+
+    CompanyPayments:
+      type: object
+      description: |
+        Агрегаты платежей компании из аналитического снимка. Набор полей
+        может расширяться; фиксированные ниже — основные для интерфейса.
+      properties:
+        totals:
+          type: object
+          additionalProperties: true
+          properties:
+            edges_count:
+              type: integer
+            turnover_rub:
+              type: number
+            incoming_amount_rub:
+              type: number
+            outgoing_amount_rub:
+              type: number
+            intragroup_share_pct:
+              type: number
+            intragroup_amount_rub:
+              type: number
+            average_edge_amount_rub:
+              type: number
+            incoming_payments_count:
+              type: integer
+            outgoing_payments_count:
+              type: integer
+            unique_counterparties_count:
+              type: integer
+            external_counterparties_count:
+              type: integer
+            intragroup_counterparties_count:
+              type: integer
+        geography:
+          type: object
+          additionalProperties: true
+          properties:
+            top_cities:
+              type: array
+              items:
+                $ref: '#/components/schemas/CityShare'
+            top_regions:
+              type: array
+              items:
+                $ref: '#/components/schemas/RegionShare'
+        top_okved:
+          type: array
+          items:
+            $ref: '#/components/schemas/OkvedShare'
+        two_way_links:
+          type: object
+          additionalProperties: true
+        counterparties:
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+
+    CityShare:
+      type: object
+      properties:
+        city: {type: string}
+        share_pct: {type: number}
+        amount_rub: {type: number}
+        counterparties_count: {type: integer}
+      additionalProperties: true
+
+    RegionShare:
+      type: object
+      properties:
+        region: {type: string}
+        share_pct: {type: number}
+        amount_rub: {type: number}
+        counterparties_count: {type: integer}
+      additionalProperties: true
+
+    OkvedShare:
+      type: object
+      properties:
+        share_pct: {type: number}
+        amount_rub: {type: number}
+        okved_name: {type: string}
+        okved_class: {type: string}
+        counterparties_count: {type: integer}
+        top_codes:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+            properties:
+              share_pct: {type: number}
+              amount_rub: {type: number}
+              okved_code: {type: string}
+              okved_name: {type: string}
+              counterparties_count: {type: integer}
+      additionalProperties: true
+
+    Company:
+      type: object
+      required: [id, industry, okved, region, revenue_rub, services, countries, stage]
+      properties:
+        id:
+          type: string
+          example: U_37452
+        industry:
+          type: string
+        okved:
+          type: string
+          example: '46.43'
+        region:
+          type: string
+        revenue_rub:
+          type: integer
+          format: int64
+        payments:
+          $ref: '#/components/schemas/CompanyPayments'
+        services:
+          type: array
+          items: {type: string}
+        countries:
+          type: array
+          items: {type: string}
+        stage:
+          type: string
+          nullable: true
+        profile_id:
+          type: string
+          description: Отраслевой профиль; присутствует только в `/api/bootstrap`
+          enum: [automotive, appliances, logistics, real_estate, other]
+      additionalProperties: true
+
+    BusinessProfile:
+      type: object
+      required: [id, title, description, initial, color, company_ids]
+      properties:
+        id: {type: string}
+        title: {type: string}
+        description: {type: string}
+        initial: {type: string}
+        color: {type: string}
+        company_ids:
+          type: array
+          items: {type: string}
+        analysis_count:
+          type: integer
+          description: Число готовых разборов компаний профиля
+      additionalProperties: true
+
+    BankDocument:
+      type: object
+      required: [id, source_name, title, doc_type, published_at, language, tags]
+      properties:
+        id: {type: string}
+        source_name: {type: string}
+        title: {type: string}
+        subtitle: {type: string}
+        doc_type: {type: string}
+        published_at:
+          type: string
+          format: date
+        language: {type: string}
+        tags:
+          type: array
+          items: {type: string}
+        ignore_headings:
+          type: array
+          items: {type: string}
+        metadata:
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+
+    BootstrapStatus:
+      type: object
+      required:
+        - database
+        - news_count
+        - company_count
+        - document_count
+        - analysis_count
+        - live_available
+        - links_sync
+        - links_count
+        - links_available
+        - feedback_available
+      properties:
+        database:
+          type: string
+          enum: [connected, snapshot, unavailable]
+        news_count: {type: integer}
+        company_count: {type: integer}
+        document_count: {type: integer}
+        analysis_count: {type: integer}
+        live_available: {type: boolean}
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        links_sync:
+          $ref: '#/components/schemas/LinksSync'
+        links_count: {type: integer}
+        links_available: {type: boolean}
+        feedback_available: {type: boolean}
+      additionalProperties: true
+
+    BootstrapResponse:
+      type: object
+      required: [companies, profiles, documents, status]
+      properties:
+        companies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+        profiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/BusinessProfile'
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/BankDocument'
+        status:
+          $ref: '#/components/schemas/BootstrapStatus'
+      additionalProperties: true
+
+    NewsEvent:
+      type: object
+      required: [id, title, text, url, published_at]
+      properties:
+        id: {type: string}
+        title: {type: string}
+        text: {type: string}
+        url:
+          type: string
+          format: uri
+        published_at:
+          type: string
+          format: date-time
+        topics:
+          type: array
+          items: {type: string}
+        regions:
+          type: array
+          items: {type: string}
+        countries:
+          type: array
+          items: {type: string}
+        publisher:
+          type: string
+        is_demo:
+          type: boolean
+        target_company_id:
+          type: string
+        is_repeat:
+          type: boolean
+      additionalProperties: true
+
+    Evidence:
+      type: object
+      required: [quote, source_id]
+      properties:
+        quote: {type: string}
+        source_id: {type: string}
+      additionalProperties: true
+
+    Claim:
+      type: object
+      required: [kind, text, evidence]
+      properties:
+        kind:
+          type: string
+          enum: [fact, hypothesis]
+        text: {type: string}
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+      additionalProperties: true
+
+    Source:
+      type: object
+      required: [source_id, kind, text]
+      properties:
+        source_id: {type: string}
+        kind:
+          type: string
+          description: Тип источника, например `news`, `bank`, `company` или `metric`
+        title:
+          type: string
+          nullable: true
+        text: {type: string}
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        locator:
+          type: string
+          nullable: true
+        url:
+          type: string
+          format: uri
+          nullable: true
+        company_id:
+          type: string
+          nullable: true
+        is_demo: {type: boolean}
+        publisher:
+          type: string
+          nullable: true
+        collected_at:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: true
+
+    Classification:
+      type: object
+      properties:
+        topics:
+          type: array
+          items: {type: string}
+        importance:
+          type: string
+          nullable: true
+          enum: [high, medium, low]
+        business_relevant:
+          type: boolean
+        importance_method:
+          type: string
+          nullable: true
+        importance_reason:
+          type: string
+          nullable: true
+        importance_evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+        news_id:
+          type: string
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+      additionalProperties: true
+
+    BriefEvidence:
+      type: object
+      properties:
+        importance:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+        news_summary:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+        short_answer:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+      additionalProperties: true
+
+    Brief:
+      type: object
+      required: [status, news_summary, short_answer, classification, evidence]
+      properties:
+        status: {type: string}
+        company_id: {type: string}
+        news_id: {type: string}
+        news_summary: {type: string}
+        short_answer: {type: string}
+        classification:
+          $ref: '#/components/schemas/Classification'
+        evidence:
+          $ref: '#/components/schemas/BriefEvidence'
+      additionalProperties: true
+
+    AnalysisResult:
+      type: object
+      required: [status, summary, claims, missing_data]
+      properties:
+        company_id: {type: string}
+        news_id: {type: string}
+        status: {type: string}
+        summary: {type: string}
+        claims:
+          type: array
+          items:
+            $ref: '#/components/schemas/Claim'
+        missing_data:
+          type: array
+          items: {type: string}
+        follow_up_answer:
+          type: string
+          nullable: true
+      additionalProperties: true
+
+    BankContextHighlight:
+      type: object
+      required: [text, source_ids, evidence, method]
+      properties:
+        text: {type: string}
+        full_text: {type: string}
+        source_ids:
+          type: array
+          items: {type: string}
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+        method: {type: string}
+      additionalProperties: true
+
+    BankContextSummary:
+      type: object
+      required: [highlights, impact, note]
+      properties:
+        highlights:
+          type: array
+          items:
+            $ref: '#/components/schemas/BankContextHighlight'
+        impact:
+          anyOf:
+            - $ref: '#/components/schemas/BankContextHighlight'
+            - enum: [null]
+        note:
+          type: string
+          nullable: true
+      additionalProperties: true
+
+    BankContext:
+      type: object
+      required: [status, source_ids, cited_source_ids, retrieved_count, cited_count, summary]
+      properties:
+        status:
+          type: string
+          enum: [used, retrieved, unavailable, incomplete, not_found, not_searched]
+        source_ids:
+          type: array
+          items: {type: string}
+        cited_source_ids:
+          type: array
+          items: {type: string}
+        retrieved_count: {type: integer}
+        cited_count: {type: integer}
+        summary:
+          $ref: '#/components/schemas/BankContextSummary'
+      additionalProperties: true
+
+    MatchReason:
+      type: object
+      properties:
+        kind: {type: string}
+        okved: {type: string}
+        query: {type: string}
+        source_id: {type: string}
+        limitation: {type: string}
+        lexical_query: {type: string}
+        turnover_share_pct: {type: number}
+      additionalProperties: true
+
+    LinkBase:
+      type: object
+      required: [news_id, company_id, active]
+      properties:
+        news_id: {type: string}
+        company_id: {type: string}
+        news_hash: {type: string}
+        company_hash: {type: string}
+        active: {type: boolean}
+        match_method:
+          type: string
+          nullable: true
+        match_score:
+          type: number
+          nullable: true
+        match_reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchReason'
+        topics:
+          type: array
+          items: {type: string}
+        importance:
+          type: string
+          nullable: true
+          enum: [high, medium, low]
+        importance_status:
+          type: string
+          nullable: true
+        importance_reason:
+          type: string
+          nullable: true
+        importance_evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+        importance_method:
+          type: string
+          nullable: true
+        importance_attempts:
+          type: integer
+        analysis_status:
+          type: string
+          nullable: true
+        analysis_run_id:
+          type: string
+          nullable: true
+        analysis_as_of:
+          type: string
+          format: date-time
+          nullable: true
+        error_code:
+          type: string
+          nullable: true
+        matched_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: true
+
+    FeedLink:
+      type: object
+      properties:
+        importance_status:
+          type: string
+          nullable: true
+        analysis_status:
+          type: string
+          nullable: true
+        match_method:
+          type: string
+          nullable: true
+        match_score:
+          type: number
+          nullable: true
+        importance_evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+      additionalProperties: true
+
+    FeedCard:
+      type: object
+      required: [id, title, text, url, published_at, classification, has_analysis, match_reasons, retrieval_channels]
+      properties:
+        id: {type: string}
+        title: {type: string}
+        text:
+          type: string
+          description: Текст публикации, обрезанный до 1500 символов
+        url:
+          type: string
+          format: uri
+        published_at:
+          type: string
+          format: date-time
+        topics:
+          type: array
+          items: {type: string}
+        regions:
+          type: array
+          items: {type: string}
+        countries:
+          type: array
+          items: {type: string}
+        publisher: {type: string}
+        classification:
+          $ref: '#/components/schemas/Classification'
+        has_analysis: {type: boolean}
+        brief:
+          anyOf:
+            - $ref: '#/components/schemas/Brief'
+            - enum: [null]
+        short_answer:
+          type: string
+          nullable: true
+        analysis_status:
+          type: string
+          nullable: true
+        match_reasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchReason'
+        retrieval_channels:
+          type: array
+          items: {type: string}
+        link:
+          anyOf:
+            - $ref: '#/components/schemas/FeedLink'
+            - enum: [null]
+        is_demo: {type: boolean}
+        demo_phase:
+          type: string
+          enum: [scheduled, received, ingesting, embedding, classifying, matching, matched, assessing, analyzing, ready, not_matched, not_business, failed, duplicate, cancelled]
+        demo_stage: {type: string}
+        demo_order: {type: integer}
+      additionalProperties: true
+
+    DemoPhase:
+      type: string
+      enum: [scheduled, received, ingesting, embedding, classifying, matching, matched, assessing, analyzing, ready, not_matched, not_business, failed, duplicate, cancelled]
+
+    DemoTimelineEntry:
+      type: object
+      required: [title, phase, stage]
+      properties:
+        title: {type: string}
+        phase:
+          $ref: '#/components/schemas/DemoPhase'
+        stage: {type: string}
+        duplicate_of:
+          type: string
+          nullable: true
+      additionalProperties: true
+
+    DemoSession:
+      type: object
+      required:
+        - id
+        - company_id
+        - status
+        - elapsed_seconds
+        - duration_seconds
+        - expected_unique
+        - expected_received
+        - company_count
+        - global
+        - received
+        - unique
+        - ready
+        - processed
+        - analyses
+        - failed
+        - duplicates
+        - timeline
+        - is_demo
+      properties:
+        id:
+          type: string
+          pattern: '^[a-f0-9]{32}$'
+        company_id: {type: string}
+        status:
+          type: string
+          enum: [running, done, failed]
+        elapsed_seconds: {type: integer}
+        duration_seconds: {type: integer}
+        expected_unique: {type: integer}
+        expected_received: {type: integer}
+        company_count: {type: integer}
+        global: {type: boolean}
+        received: {type: integer}
+        unique: {type: integer}
+        ready: {type: integer}
+        processed: {type: integer}
+        analyses: {type: integer}
+        failed: {type: integer}
+        duplicates: {type: integer}
+        timeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/DemoTimelineEntry'
+        items:
+          type: array
+          description: |
+            Карточки сценария. Присутствуют в ответе `/api/expert-demo`;
+            в `GET /api/feed` это поле не передаётся.
+          items:
+            $ref: '#/components/schemas/FeedCard'
+        is_demo: {type: boolean}
+      additionalProperties: true
+
+    AnalysisLink:
+      allOf:
+        - $ref: '#/components/schemas/LinkBase'
+        - type: object
+          properties:
+            analysis_result:
+              anyOf:
+                - $ref: '#/components/schemas/AnalysisState'
+                - enum: [null]
+
+    NewsCompanyLink:
+      allOf:
+        - $ref: '#/components/schemas/LinkBase'
+        - type: object
+          required: [company]
+          properties:
+            company:
+              $ref: '#/components/schemas/Company'
+
+    Preparation:
+      type: object
+      properties:
+        classification:
+          $ref: '#/components/schemas/Classification'
+        extraction:
+          $ref: '#/components/schemas/JsonObject'
+      additionalProperties: true
+
+    AnalysisState:
+      type: object
+      required: [company_id, news_id, as_of, event, result]
+      properties:
+        mode: {type: string}
+        as_of:
+          type: string
+          format: date-time
+        brief:
+          anyOf:
+            - $ref: '#/components/schemas/Brief'
+            - enum: [null]
+        event:
+          $ref: '#/components/schemas/NewsEvent'
+        trace:
+          type: array
+          items:
+            $ref: '#/components/schemas/JsonObject'
+        result:
+          $ref: '#/components/schemas/AnalysisResult'
+        company:
+          $ref: '#/components/schemas/JsonObject'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/JsonObject'
+        news_id: {type: string}
+        ranking:
+          $ref: '#/components/schemas/JsonObject'
+        telemetry:
+          type: array
+          items:
+            $ref: '#/components/schemas/JsonObject'
+        company_id: {type: string}
+        preparation:
+          $ref: '#/components/schemas/Preparation'
+        bank_context:
+          $ref: '#/components/schemas/BankContext'
+        bank_metadata:
+          $ref: '#/components/schemas/JsonObject'
+        news_metadata:
+          $ref: '#/components/schemas/JsonObject'
+        research_stop:
+          type: string
+          nullable: true
+        retrieved_sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/Source'
+        bank_context_version:
+          oneOf:
+            - type: string
+            - type: integer
+        is_demo: {type: boolean}
+      additionalProperties: true
+
+    FeedResponse:
+      type: object
+      required: [company_id, items, matched_ids, matching_as_of, sync, links_available, pending_importance, matching_note]
+      properties:
+        company_id: {type: string}
+        demo:
+          anyOf:
+            - $ref: '#/components/schemas/DemoSession'
+            - enum: [null]
+          description: Представление активного сценария без поля items или null
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedCard'
+        matched_ids:
+          type: array
+          items: {type: string}
+        matching_as_of:
+          type: string
+          format: date
+        sync:
+          $ref: '#/components/schemas/LinksSync'
+        links_available: {type: boolean}
+        pending_importance: {type: integer}
+        matching_note: {type: string}
+      additionalProperties: true
+
+    AnalysisResponse:
+      type: object
+      required: [state, event, company, analysis_version, bank_context, link]
+      properties:
+        state:
+          anyOf:
+            - $ref: '#/components/schemas/AnalysisState'
+            - enum: [null]
+        event:
+          $ref: '#/components/schemas/NewsEvent'
+        company:
+          $ref: '#/components/schemas/Company'
+        analysis_version:
+          type: string
+          nullable: true
+          pattern: '^[a-f0-9]{64}$'
+        bank_context:
+          $ref: '#/components/schemas/BankContext'
+        link:
+          anyOf:
+            - $ref: '#/components/schemas/AnalysisLink'
+            - enum: [null]
+        is_demo: {type: boolean}
+        ready: {type: boolean}
+        phase:
+          $ref: '#/components/schemas/DemoPhase'
+        stage: {type: string}
+        matched: {type: boolean}
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/LinkBase'
+      additionalProperties: true
+
+    AnalysisStartRequest:
+      type: object
+      required: [company_id, news_id]
+      properties:
+        company_id: {type: string}
+        news_id: {type: string}
+      additionalProperties: false
+
+    ChatStartRequest:
+      type: object
+      required: [company_id, news_id, question]
+      properties:
+        company_id: {type: string}
+        news_id: {type: string}
+        question:
+          type: string
+          minLength: 1
+          maxLength: 1500
+        conversation_id:
+          type: string
+          pattern: '^[a-f0-9]{32}$'
+        demo_id:
+          type: string
+          pattern: '^[a-f0-9]{32}$'
+      additionalProperties: false
+
+    MatchesStartRequest:
+      type: object
+      required: [company_id, news_id]
+      properties:
+        company_id: {type: string}
+        news_id: {type: string}
+      additionalProperties: false
+
+    Retrieval:
+      type: object
+      properties:
+        as_of:
+          type: string
+          format: date-time
+        fresh_source_ids:
+          type: array
+          items: {type: string}
+        trace:
+          type: array
+          items:
+            $ref: '#/components/schemas/JsonObject'
+      additionalProperties: true
+
+    ChatAnswer:
+      type: object
+      description: |
+        Ответ чата. Набор полей зависит от провайдера модели; интерфейс
+        использует `summary`, `follow_up_answer` и `claims`.
+      properties:
+        company_id: {type: string}
+        news_id: {type: string}
+        status: {type: string}
+        summary: {type: string}
+        claims:
+          type: array
+          items:
+            $ref: '#/components/schemas/Claim'
+        missing_data:
+          type: array
+          items: {type: string}
+        follow_up_answer:
+          type: string
+          nullable: true
+      additionalProperties: true
+
+    Job:
+      type: object
+      required: [id, kind, company_id, news_id, is_demo, status, stage, created_at]
+      properties:
+        id:
+          type: string
+          pattern: '^[a-f0-9]{32}$'
+        kind:
+          type: string
+          enum: [analysis, chat, matching]
+        company_id: {type: string}
+        news_id: {type: string}
+        is_demo: {type: boolean}
+        status:
+          type: string
+          enum: [queued, running, done, failed]
+        stage: {type: string}
+        created_at:
+          type: string
+          format: date-time
+        conversation_id:
+          type: string
+          nullable: true
+          pattern: '^[a-f0-9]{32}$'
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        error:
+          type: string
+          nullable: true
+        matches:
+          anyOf:
+            - $ref: '#/components/schemas/NewsCompaniesResponse'
+            - enum: [null]
+        answer:
+          anyOf:
+            - $ref: '#/components/schemas/ChatAnswer'
+            - enum: [null]
+        retrieved_sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/Source'
+        retrieval:
+          $ref: '#/components/schemas/Retrieval'
+      additionalProperties: true
+
+    NewsCompaniesResponse:
+      type: object
+      required: [items, available]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewsCompanyLink'
+        available: {type: boolean}
+        sync:
+          $ref: '#/components/schemas/LinksSync'
+        is_demo: {type: boolean}
+      additionalProperties: true
+
+    BankDocumentChunk:
+      type: object
+      required: [id, text, pages, section_path]
+      properties:
+        id: {type: string}
+        text: {type: string}
+        pages:
+          type: array
+          items: {type: integer}
+        section_path:
+          type: array
+          items: {type: string}
+      additionalProperties: true
+
+    BankDocumentResponse:
+      type: object
+      required: [document, available, chunks]
+      properties:
+        document:
+          $ref: '#/components/schemas/BankDocument'
+        available: {type: boolean}
+        chunks:
+          type: array
+          items:
+            $ref: '#/components/schemas/BankDocumentChunk'
+      additionalProperties: true
+
+    FeedbackRequest:
+      type: object
+      required: [company_id, news_id, analysis_version, vote]
+      properties:
+        company_id: {type: string}
+        news_id: {type: string}
+        analysis_version:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+        vote:
+          anyOf:
+            - type: integer
+              enum: [-1, 1]
+            - enum: [null]
+          description: 1 — полезно, -1 — не полезно, null — удалить оценку
+        demo_id:
+          type: string
+          pattern: '^[a-f0-9]{32}$'
+      additionalProperties: false
+
+    FeedbackResponse:
+      type: object
+      required: [vote, analysis_version, is_demo]
+      properties:
+        vote:
+          anyOf:
+            - type: integer
+              enum: [-1, 1]
+            - enum: [null]
+        analysis_version:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+        is_demo: {type: boolean}
+      example:
+        vote: 1
+        analysis_version: 029698a0c544c37c49d0f06e1b3411f731c408bf508104b89a6188d35fd3bf77
+        is_demo: false
+
+    ExpertDemoRequest:
+      type: object
+      required: [action, company_id]
+      properties:
+        action:
+          type: string
+          enum: [start, stop, retry]
+        company_id: {type: string}
+        demo_id:
+          type: string
+          pattern: '^[a-f0-9]{32}$'
+          description: Обязателен для stop и retry; для start не используется
+      additionalProperties: false
+
+    ExpertDemoStopped:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [stopped]

@@ -32,6 +32,7 @@
 | [app/modules/links](app/modules/links/) | Связи новость—компания: подбор, важность, статусы и сохранённые разборы |
 | [app/modules/feedback](app/modules/feedback/) | Оценки полезности разборов и версии анализа |
 | [app/web](app/web/) | Same-origin HTTP API, фоновая синхронизация связей, чат, экспертный сценарий и отраслевые профили |
+| [app/web/openapi.yaml](app/web/openapi.yaml) | OpenAPI 3.0.3 для HTTP API, с которым работает frontend |
 | [frontend](frontend/) | React/Vite-интерфейс: `main.tsx` — лента, карточка и чат; `ExpertScenario.tsx` — сценарий; `AnalysisFeedback.tsx` — оценки |
 | [migrations](migrations/) и [alembic.ini](alembic.ini) | Общая история изменений схемы PostgreSQL |
 | [database/seeds](database/seeds/) | SQL-снимок стартовых данных (новости, компании, банк, связи, legacy) и `manifest.json` |
@@ -169,6 +170,7 @@ app/
     ├── expert_demo.py
     ├── expert_news.py
     ├── expert_pipeline.py
+    ├── openapi.yaml
     ├── profiles.py
     └── server.py
 ```
@@ -201,6 +203,6 @@ frontend/
 
 `app/modules/feedback` хранит анонимные оценки версий разбора: `FeedbackRepository` связывает компанию, новость, версию анализа и идентификатор браузера, не сохраняя имена и контакты.
 
-`app/web` — same-origin HTTP API и фоновая обработка: `bootstrap`, лента, разбор, чат, задания, оценки, банковские источники и экспертный сценарий. `profiles.py` группирует компании по отраслям для навигации; `expert_demo.py`, `expert_news.py` и `expert_pipeline.py` моделируют поступление тестовых новостей и проводят их через обычные сохранение, дедупликацию, подбор и разбор. `frontend` на React/Vite отображает ленту, карточку новости с вкладками, чат, профили, сценарий и оценки.
+`app/web` — same-origin HTTP API и фоновая обработка: `bootstrap`, лента, разбор, чат, задания, оценки, банковские источники и экспертный сценарий. `profiles.py` группирует компании по отраслям для навигации; `expert_demo.py`, `expert_news.py` и `expert_pipeline.py` моделируют поступление тестовых новостей и проводят их через обычные сохранение, дедупликацию, подбор и разбор. Контракт HTTP API описан в [app/web/openapi.yaml](app/web/openapi.yaml). `frontend` на React/Vite отображает ленту, карточку новости с вкладками, чат, профили, сценарий и оценки.
 
 Стартовый SQL-набор в `database/seeds` восстанавливает `data-init`: новости, компании, банковскую аналитику, связи, оценки важности и готовые разборы. Повторный запуск сохраняет существующие данные и догружает только пустые справочные группы; подробности — в [docs/startup-data.md](docs/startup-data.md).
