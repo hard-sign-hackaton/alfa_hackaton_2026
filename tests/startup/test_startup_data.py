@@ -123,6 +123,17 @@ class RestoreTests(unittest.TestCase):
         self.assertEqual(self.connection.execute("SELECT count(*) FROM news_articles WHERE title='Сохранить'").fetchone()[0], 1)
         self.assertEqual(restore(self.connection, ('bank',), self.manifest, self.content)['status'], 'skipped_existing')
 
+    def test_empty_companies_group_can_be_added_to_existing_news_without_overwriting_news(self):
+        self.load()
+        self.connection.execute('TRUNCATE company_groups, companies, company_embedding_profiles, company_embeddings CASCADE')
+        self.connection.execute("UPDATE news_articles SET title='Сохранить' WHERE id=(SELECT id FROM news_articles ORDER BY id LIMIT 1)")
+        self.assertEqual(self.load()['status'], 'skipped_existing')
+        result = restore(self.connection, ('companies',), self.manifest, self.content)
+        self.assertEqual(result['status'], 'restored')
+        self.assertEqual(result['counts']['companies'], 12)
+        self.assertEqual(self.connection.execute("SELECT count(*) FROM news_articles WHERE title='Сохранить'").fetchone()[0], 1)
+        self.assertEqual(restore(self.connection, ('companies',), self.manifest, self.content)['status'], 'skipped_existing')
+
     def test_partial_existing_database_is_not_filled_or_overwritten(self):
         self.connection.execute("INSERT INTO company_embedding_profiles(id,model,revision,dimensions,normalized,preparation) VALUES ('existing','local','revision',384,true,'existing')")
         self.assertEqual(self.load()['status'], 'skipped_existing')

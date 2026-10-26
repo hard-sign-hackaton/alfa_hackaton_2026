@@ -112,6 +112,11 @@ def main():
         if result['status'] == 'skipped_existing':
             bank = restore(connection, ('bank',), manifest, content)
             print(json.dumps({'database': 'bank', **bank}))
+            # Companies are reference data and do not depend on news. A pipeline
+            # run may create news before web starts; in that case the combined
+            # restore above is skipped and companies must still be filled.
+            companies = restore(connection, ('companies',), manifest, content)
+            print(json.dumps({'database': 'companies', **companies}))
             print(json.dumps({'database': 'analyses', **restore_analyses(connection, content)}))
     with psycopg.connect(host=os.environ.get('DB_HOST', 'db'), port=int(os.environ.get('DB_PORT', '5432')),
                          dbname=os.environ.get('DB_NAME', 'alfa'), user='postgres',
